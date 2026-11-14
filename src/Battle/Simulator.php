@@ -14,6 +14,8 @@ final class Simulator
     public const TURNS = 300;
     /** How much better, on the scale of standing(), a beast waiting must be than the one out for a side to switch. */
     public const SWITCH_MARGIN = 0.5;
+    /** think(): how many times each thing a side could do is played on, and for how many turns at most. */
+    public const ROLLOUTS = 4, AHEAD = 40;
 
     /**
      * @param array<string, array> $beasts
@@ -72,6 +74,56 @@ final class Simulator
         return self::pick($b, $side);
     }
 
+    /**
+     * What a side that thinks ahead does: each thing it could do — any move it can use, any beast it could send in — is
+     * played on ROLLOUTS times against a side that only weighs damage, and it does what came out best. So a move that
+     * does no damage, the weather, a switch are used when they win battles, by no weight of ours.
+     */
+    public static function think(Battle $b, int $side, int $seed): array
+    {
+        $options = array_map(fn(int $i) => ['move', $i], $b->usable($side));
+        foreach ($b->parties[$side] as $i => $f) {
+            if ($i !== $b->active[$side] && !$f->fainted()) {
+                $options[] = ['switch', $i];
+            }
+        }
+        if (count($options) <= 1) {
+            return $options[0] ?? ['move', 0];
+        }
+        $best = $options[0];
+        $most = -INF;
+        foreach ($options as $option) {
+            $worth = 0.0;
+            for ($k = 0; $k < self::ROLLOUTS; $k++) {
+                $c = $b->copy(Rng::seeded($seed * 31 + $k)); // the same rolls for each option
+                $other = self::pick($c, 1 - $side);
+                $c->turn(...($side === 0 ? [$option, $other] : [$other, $option]));
+                for ($t = 0; $c->winner === null && $t < self::AHEAD; $t++) {
+                    $c->turn(self::pick($c, 0), self::pick($c, 1));
+                }
+                $worth += self::worth($c, $side);
+            }
+            if ($worth > $most) {
+                [$best, $most] = [$option, $worth];
+            }
+        }
+        return $best;
+    }
+
+    /** How a battle played on came out for a side: won 1, lost 0, and in between by the hp each party has left. */
+    private static function worth(Battle $b, int $side): float
+    {
+        $left = [];
+        foreach ([0, 1] as $s) {
+            $left[$s] = array_sum(array_map(fn(Fighter $f) => $f->hp / $f->maxHp, $b->parties[$s])) / count($b->parties[$s]);
+        }
+        return match ($b->winner) {
+            $side => 1.0 + 0.1 * $left[$side],
+            1 - $side => -0.1 * $left[1 - $side],
+            default => 0.5 + 0.4 * ($left[$side] - $left[1 - $side]),
+        };
+    }
+
     private function fighter(string $id, int $level): Fighter
     {
         return new Fighter($id, $this->beasts[$id], $level, $this->learnsets[$id], $this->moves);
@@ -79,16 +131,21 @@ final class Simulator
 
     /**
      * One battle of party $a against party $b at $level: 0 when $a wins, 1 when $b does, -1 for neither.
+     * $think: both sides think ahead (think()); else both only weigh damage, and switch on standing.
      * @param list<string> $a
      * @param list<string> $b
      */
-    public function battle(array $a, array $b, int $level, int $seed): int
+    public function battle(array $a, array $b, int $level, int $seed, bool $think = false): int
     {
         $battle = new Battle([array_map(fn(string $id) => $this->fighter($id, $level), $a), array_map(fn(string $id) => $this->fighter($id, $level), $b)],
             $this->elements, $this->moves, Rng::seeded($seed));
         $switched = [false, false];
         while ($battle->winner === null && $battle->turns < self::TURNS) {
-            $battle->turn(self::pickOrSwitch($battle, 0, $switched), self::pickOrSwitch($battle, 1, $switched));
+            $at = $seed * 1000 + $battle->turns;
+            $battle->turn(
+                $think ? self::think($battle, 0, $at * 2) : self::pickOrSwitch($battle, 0, $switched),
+                $think ? self::think($battle, 1, $at * 2 + 1) : self::pickOrSwitch($battle, 1, $switched),
+            );
         }
         return $battle->winner ?? -1;
     }
@@ -97,7 +154,7 @@ final class Simulator
      * Every pair one on one, $rounds battles each: how often the first of a pair beat the second, from 0 to 1, a draw counting half.
      * @return array<string, array<string, float>>
      */
-    public function table(int $level, int $rounds): array
+    public function table(int $level, int $rounds, bool $think = false): array
     {
         $ids = array_keys($this->beasts);
         $wins = [];
@@ -108,7 +165,7 @@ final class Simulator
                 }
                 $won = 0.0;
                 for ($r = 0; $r < $rounds; $r++) {
-                    $w = $this->battle([$a], [$b], $level, ($i * 1000 + $j) * 1000 + $r);
+                    $w = $this->battle([$a], [$b], $level, ($i * 1000 + $j) * 1000 + $r, $think);
                     $won += $w === 0 ? 1.0 : ($w === -1 ? 0.5 : 0.0);
                 }
                 $wins[$a][$b] = $won / $rounds;
@@ -124,7 +181,7 @@ final class Simulator
      * @param list<string> $field
      * @return array<string, float>
      */
-    public function parties(array $field, int $size, int $level, int $battles, int $seed): array
+    public function parties(array $field, int $size, int $level, int $battles, int $seed, bool $think = false): array
     {
         $rng = Rng::seeded($seed);
         $draw = function () use ($rng, $field, $size): array {
@@ -140,7 +197,7 @@ final class Simulator
         $won = $played = array_fill_keys($field, 0.0);
         for ($n = 0; $n < $battles; $n++) {
             [$a, $b] = [$draw(), $draw()];
-            $w = $this->battle($a, $b, $level, $seed * 100000 + $n);
+            $w = $this->battle($a, $b, $level, $seed * 100000 + $n, $think);
             foreach ([0 => $a, 1 => $b] as $side => $party) {
                 foreach ($party as $id) {
                     $played[$id]++;

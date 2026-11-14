@@ -46,6 +46,14 @@ final class Battle
         $this->chart = new Elements($elements);
     }
 
+    /** The battle as it stands, to play on from apart: its beasts copied, its log empty, its rolls from $rng. */
+    public function copy(Rng $rng): self
+    {
+        $copy = new self(array_map(fn(array $party) => array_map(fn(Fighter $f) => clone $f, $party), $this->parties), $this->elements, $this->moves, $rng);
+        [$copy->active, $copy->weather, $copy->weatherLeft, $copy->turns, $copy->winner] = [$this->active, $this->weather, $this->weatherLeft, $this->turns, $this->winner];
+        return $copy;
+    }
+
     public function fighter(int $side): Fighter
     {
         return $this->parties[$side][$this->active[$side]];

@@ -46,7 +46,7 @@ return [
     'lushu' => [
         'name' => '鹿蜀', 'kind' => 'strange', 'range' => 1, 'mountain' => '杻阳之山', 'starter' => true,
         'elements' => ['fire'], 'why' => '赤尾。',
-        'tier' => 3, 'stats' => ['hp' => 85, 'atk' => 65, 'def' => 75, 'spa' => 75, 'spd' => 80, 'spe' => 80],
+        'tier' => 3, 'stats' => ['hp' => 85, 'atk' => 70, 'def' => 75, 'spa' => 70, 'spd' => 80, 'spe' => 80],
         'catch' => 45, 'exp' => 161, 'growth' => 'mediumSlow',
         'looks' => '形如马，白首，身有虎纹，赤尾。',
         'sound' => '如人歌唱。',
@@ -55,7 +55,7 @@ return [
     'xuangui' => [
         'name' => '旋龟', 'kind' => 'strange', 'range' => 1, 'mountain' => '杻阳之山', 'starter' => true,
         'elements' => ['water'], 'why' => '生于怪水中。',
-        'tier' => 3, 'stats' => ['hp' => 85, 'atk' => 55, 'def' => 95, 'spa' => 90, 'spd' => 90, 'spe' => 45],
+        'tier' => 3, 'stats' => ['hp' => 80, 'atk' => 50, 'def' => 90, 'spa' => 95, 'spd' => 90, 'spe' => 55],
         'catch' => 45, 'exp' => 161, 'growth' => 'mediumSlow',
         'looks' => '怪水中的龟，鸟首，虺尾。',
         'sound' => '如劈木。',
@@ -73,8 +73,8 @@ return [
     'lei' => [
         'name' => '类', 'kind' => 'strange', 'range' => 1, 'mountain' => '亶爰之山',
         'elements' => ['fire'], 'why' => '征兆、栖居、形貌都无可据，取南山经的本地属性。',
-        'tier' => 2, 'stats' => ['hp' => 60, 'atk' => 50, 'def' => 50, 'spa' => 70, 'spd' => 65, 'spe' => 65],
-        'catch' => 120, 'exp' => 121, 'growth' => 'mediumFast',
+        'tier' => 2, 'stats' => ['hp' => 65, 'atk' => 55, 'def' => 50, 'spa' => 75, 'spd' => 70, 'spe' => 70],
+        'catch' => 120, 'exp' => 129, 'growth' => 'mediumFast',
         'looks' => '形如狸而有长毛。',
         'lore' => '自为雌雄。食之不妒。',
     ],
@@ -116,8 +116,8 @@ return [
     'chiru' => [
         'name' => '赤鱬', 'kind' => 'strange', 'range' => 1, 'mountain' => '青丘之山',
         'elements' => ['water'], 'why' => '生于英水中。',
-        'tier' => 2, 'stats' => ['hp' => 65, 'atk' => 40, 'def' => 55, 'spa' => 80, 'spd' => 75, 'spe' => 70],
-        'catch' => 120, 'exp' => 129, 'growth' => 'mediumFast',
+        'tier' => 2, 'stats' => ['hp' => 70, 'atk' => 40, 'def' => 55, 'spa' => 85, 'spd' => 75, 'spe' => 75],
+        'catch' => 120, 'exp' => 134, 'growth' => 'mediumFast',
         'looks' => '英水中的鱼，鱼身人面。',
         'sound' => '如鸳鸯。',
         'unchecked' => '功效一句在所查版本中残缺，待另一版本核对后补上。',
@@ -145,8 +145,8 @@ return [
     'changyou' => [
         'name' => '长右', 'kind' => 'strange', 'range' => 2, 'mountain' => '长右之山',
         'elements' => ['water'], 'why' => '见则大水。',
-        'tier' => 3, 'stats' => ['hp' => 80, 'atk' => 70, 'def' => 65, 'spa' => 95, 'spd' => 75, 'spe' => 65],
-        'catch' => 60, 'exp' => 158, 'growth' => 'mediumFast',
+        'tier' => 3, 'stats' => ['hp' => 85, 'atk' => 65, 'def' => 65, 'spa' => 100, 'spd' => 80, 'spe' => 70],
+        'catch' => 60, 'exp' => 163, 'growth' => 'mediumFast',
         'looks' => '形如禺而四耳。',
         'sound' => '如人呻吟。',
         'omen' => '见则郡县大水。',
@@ -195,8 +195,8 @@ return [
     'gudiao' => [
         'name' => '蛊雕', 'kind' => 'strange', 'range' => 2, 'mountain' => '鹿吴之山',
         'elements' => ['water', 'metal'], 'why' => '生于水中；有角。',
-        'tier' => 3, 'stats' => ['hp' => 75, 'atk' => 85, 'def' => 75, 'spa' => 95, 'spd' => 70, 'spe' => 80],
-        'catch' => 45, 'exp' => 168, 'growth' => 'mediumSlow',
+        'tier' => 3, 'stats' => ['hp' => 75, 'atk' => 80, 'def' => 70, 'spa' => 90, 'spd' => 65, 'spe' => 75],
+        'catch' => 45, 'exp' => 159, 'growth' => 'mediumSlow',
         'looks' => '水中的兽，形如雕而有角。',
         'sound' => '如婴儿。',
         'lore' => '食人。',
@@ -227,8 +227,8 @@ return [
     'quru' => [
         'name' => '瞿如', 'kind' => 'strange', 'range' => 3, 'mountain' => '祷过之山',
         'elements' => ['wood'], 'why' => '鸟。',
-        'tier' => 2, 'stats' => ['hp' => 55, 'atk' => 50, 'def' => 50, 'spa' => 75, 'spd' => 60, 'spe' => 80],
-        'catch' => 120, 'exp' => 124, 'growth' => 'mediumFast',
+        'tier' => 2, 'stats' => ['hp' => 60, 'atk' => 50, 'def' => 50, 'spa' => 80, 'spd' => 65, 'spe' => 85],
+        'catch' => 120, 'exp' => 131, 'growth' => 'mediumFast',
         'looks' => '形如鵁，白首，三足，人面。',
         'sound' => '叫的就是自己的名字。',
     ],
@@ -262,7 +262,7 @@ return [
     'yong' => [
         'name' => '顒', 'kind' => 'strange', 'range' => 3, 'mountain' => '令丘之山',
         'elements' => ['fire', 'wood'], 'why' => '见则天下大旱；鸟。',
-        'tier' => 3, 'stats' => ['hp' => 70, 'atk' => 50, 'def' => 60, 'spa' => 95, 'spd' => 75, 'spe' => 80],
+        'tier' => 3, 'stats' => ['hp' => 75, 'atk' => 50, 'def' => 65, 'spa' => 90, 'spd' => 75, 'spe' => 75],
         'catch' => 60, 'exp' => 150, 'growth' => 'mediumFast',
         'looks' => '形如枭，人面，四目而有耳。',
         'sound' => '叫的就是自己的名字。',

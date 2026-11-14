@@ -11,14 +11,15 @@ use Shanhai\Data;
 
 $level = (int)($argv[1] ?? 50);
 $rounds = (int)($argv[2] ?? 30);
+$think = in_array('think', $argv, true); // both sides think ahead: slower, and they use every kind of move
 $beasts = Data::beasts();
 $elements = Data::elements();
-$table = (new Simulator($beasts, Data::learnsets(), Data::moves(), $elements))->table($level, $rounds);
+$table = (new Simulator($beasts, Data::learnsets(), Data::moves(), $elements))->table($level, $rounds, $think);
 $field = array_filter(array_keys($beasts), fn(string $id) => in_array($beasts[$id]['tier'], [2, 3], true));
 $pct = fn(float $x) => str_pad(round($x * 100) . '%', 6, ' ', STR_PAD_LEFT);
 $head = fn() => implode('', array_map(fn(array $e) => str_pad($e['name'], 7, ' ', STR_PAD_LEFT), $elements)) . "    even\n";
 
-printf("level %d, %d battles a pair, tiers 2 and 3\n\nmain element against main element (row beats column)\n    %s", $level, $rounds, $head());
+printf("%slevel %d, %d battles a pair, tiers 2 and 3\n\nmain element against main element (row beats column)\n    %s", $think ? 'thinking ahead; ' : '', $level, $rounds, $head());
 foreach (array_keys($elements) as $a) {
     $row = [];
     foreach (array_keys($elements) as $d) {

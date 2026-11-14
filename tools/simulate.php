@@ -9,13 +9,14 @@ use Shanhai\Data;
 
 $level = (int)($argv[1] ?? 50);
 $rounds = (int)($argv[2] ?? 40);
+$think = in_array('think', $argv, true); // both sides think ahead: slower, and they use every kind of move
 $beasts = Data::beasts();
 $elements = Data::elements();
-$table = (new Simulator($beasts, Data::learnsets(), Data::moves(), $elements))->table($level, $rounds);
+$table = (new Simulator($beasts, Data::learnsets(), Data::moves(), $elements))->table($level, $rounds, $think);
 $rate = array_map(fn(array $row) => array_sum($row) / count($row), $table);
 $pct = fn(float $x) => str_pad((string)round($x * 100), 3, ' ', STR_PAD_LEFT) . '%';
 
-printf("level %d, %d battles a pair\n\nby beast, the strongest first\n", $level, $rounds);
+printf("%slevel %d, %d battles a pair\n\nby beast, the strongest first\n", $think ? 'thinking ahead; ' : '', $level, $rounds);
 arsort($rate);
 foreach ($rate as $id => $r) {
     $b = $beasts[$id];

@@ -11,13 +11,14 @@ use Shanhai\Data;
 $level = (int)($argv[1] ?? 50);
 $battles = (int)($argv[2] ?? 4000);
 $size = (int)($argv[3] ?? 3);
+$think = in_array('think', $argv, true); // both sides think ahead: slower, and they use every kind of move
 $beasts = Data::beasts();
 $elements = Data::elements();
 $field = array_values(array_filter(array_keys($beasts), fn(string $id) => in_array($beasts[$id]['tier'], [2, 3], true)));
-$rate = (new Simulator($beasts, Data::learnsets(), Data::moves(), $elements))->parties($field, $size, $level, $battles, 1);
+$rate = (new Simulator($beasts, Data::learnsets(), Data::moves(), $elements))->parties($field, $size, $level, $battles, 1, $think);
 $pct = fn(float $x) => str_pad(round($x * 100) . '%', 4, ' ', STR_PAD_LEFT);
 
-printf("level %d, %d battles of parties of %d, tiers 2 and 3\n\nhow often a party with the beast in it won\n", $level, $battles, $size);
+printf("%slevel %d, %d battles of parties of %d, tiers 2 and 3\n\nhow often a party with the beast in it won\n", $think ? 'thinking ahead; ' : '', $level, $battles, $size);
 arsort($rate);
 foreach ($rate as $id => $r) {
     printf("  %s  tier %d  %-11s %s%s\n", $pct($r), $beasts[$id]['tier'], implode('/', $beasts[$id]['elements']), $beasts[$id]['name'], ($beasts[$id]['starter'] ?? false) ? '  (to choose from)' : '');
