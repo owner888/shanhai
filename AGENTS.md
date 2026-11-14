@@ -30,6 +30,11 @@ Entry point for coding agents and contributors. `docs/rules.md` is the rule of t
 13. Reuse MyPHP's own (`Plugins\Scene`, `Plugins\Game`) before writing anything beside it; what it lacks is fixed
     there, after asking. Read its `AGENTS.md` and `docs/ui/scene3d.md` before touching the drawing.
 14. File modes are left as they are: after editing, `git diff --summary` shows no mode change.
+15. **Numbers come first** (the developer's rule): the formulas and their constants — damage, stats from base
+    values, experience, what strong and weak multiply by, critical hits, catching — are the reference games'
+    second generation's exactly, each read from its source, never recalled, and listed in `docs/numbers.md`
+    (written with M2) with where it was read; none is retuned by feel. The tables of our own beasts and moves
+    are built inside the same ranges. A question of balance is settled by the numbers before anything else.
 
 ## Layout
 
@@ -51,6 +56,7 @@ data/beasts.php    the beasts: from the classic (mountain, looks, lore), and the
 data/maps/*.php    a map each: rows of tiles, warps, signs, NPCs and triggers with their scripts
 tests/             php tests/run.php [name]: world, script, data (check()/same(), no PHPUnit)
 docs/rules.md      the rule of the game
+docs/roadmap.md    the order of the work, and when each step is done
 ```
 
 ## How it works
@@ -73,8 +79,13 @@ docs/rules.md      the rule of the game
 
 ## Roadmap
 
-- **M1** (here): maps in 3D, the fixed camera, walking, what blocks, doors, NPCs, signs, triggers, scripts.
-- **M2**: battle — the engine in PHP alone with tests (damage, order, status, switching), then its scene and menus.
-- **M3**: wild beasts in tall grass, catching, the party, the bag, experience and growth, saving; `choose` in scripts.
-- **M4**: the first range whole — its mountains, a cave, the first trial.
-- Then, range by range, the rest of the classic's beasts.
+`docs/roadmap.md` has the order, what each step makes and when it is done. In short:
+
+- **Decided**: no evolution; v0.1's beasts are the whole Southern Mountains (南山经); the elements are settled
+  after the catalogue of the classic's beasts, by what they are.
+- **Phase 0, foundations** (documents and data): M1 accepted on the developer's machine → the numbers'
+  baseline (`docs/numbers.md`) → the catalogue of beasts → the elements' table → the tiers of stats and moves.
+- **Phase 1, battle** (M2): the engine in PHP alone with tests → a simulator that checks the tables → its scene and menus.
+- **Phase 2, the loop** (M3): wild beasts, catching, the party, the bag, growth, saving, `choose` in scripts.
+- **Phase 3, v0.1** (M4): the Southern Mountains' maps, a cave, the first trial.
+- **Phase 4**: the other ranges, phones, models, sound.

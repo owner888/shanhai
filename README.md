@@ -28,8 +28,9 @@ php tests/run.php
 ## 进度
 
 - [x] M1 地图：3D 图块地图、固定视角、格子移动、门、NPC、告示牌、触发器、事件脚本
-- [ ] M2 战斗
-- [ ] M3 遇敌、收服、队伍、背包、成长、存档
-- [ ] M4 《南山经》之首全部山系
+- [ ] 阶段 0 打地基：数值基线、《南山经》图鉴、属性表、数值档位
+- [ ] 阶段 1 战斗
+- [ ] 阶段 2 遇敌、收服、队伍、背包、成长、存档
+- [ ] 阶段 3 v0.1：《南山经》全篇
 
-规则见 [docs/rules.md](docs/rules.md)，开发约定见 [AGENTS.md](AGENTS.md)。
+规则见 [docs/rules.md](docs/rules.md)，路线图见 [docs/roadmap.md](docs/roadmap.md)，开发约定见 [AGENTS.md](AGENTS.md)。
