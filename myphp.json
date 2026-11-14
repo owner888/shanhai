@@ -1,0 +1,8 @@
+{
+  "name": "山海",
+  "identifier": "com.owner888.shanhai",
+  "version": "0.1.0",
+  "entry": "app.php",
+  "out": "build",
+  "framework": "../myphp"
+}
