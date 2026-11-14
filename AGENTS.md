@@ -54,6 +54,7 @@ src/Play.php       MyPHP's Game: keys and gamepad into Controls, World::step, dr
 data/game.php      where a new game starts
 data/elements.php  the five elements: what each overcomes and feeds, physical or special, its region
 data/tiers.php     the five tiers a beast's numbers are built in: bands measured from the reference's distribution
+data/moves.php     the moves: element (or none), power, accuracy, uses, effect, and what in the classic each comes from
 data/beasts.php    the beasts, as the classic has them (kind, range, mountain, looks, sound, omen, lore), and the game's own
                    (elements with why, tier, stats, catch rate, base experience, growth)
 docs/bestiary.md   the catalogue: what is in, what is still to be checked, what is still to be read
