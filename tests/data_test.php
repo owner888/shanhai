@@ -13,6 +13,7 @@ use Shanhai\World\Dir;
 $maps = Data::maps();
 $beasts = Data::beasts();
 $elements = Data::elements();
+$tiers = Data::tiers();
 
 $scripts = [];
 foreach ($maps as $map) {
@@ -80,12 +81,31 @@ foreach ($beasts as $id => $b) {
     $names[$b['name']] = true;
     check(in_array($b['kind'], ['strange', 'common'], true), "$id is strange or common");
     check($b['mountain'] !== '' && $b['looks'] !== '', "$id has a mountain and its looks");
-    check(array_diff(array_keys($b), ['name', 'kind', 'range', 'mountain', 'elements', 'why', 'looks', 'note', 'sound', 'omen', 'lore', 'unchecked', 'starter']) === [], "$id has only the fields there are");
+    check(array_diff(array_keys($b), ['name', 'kind', 'range', 'mountain', 'elements', 'why', 'tier', 'stats', 'catch', 'exp', 'growth', 'looks', 'note', 'sound', 'omen', 'lore', 'unchecked', 'starter']) === [], "$id has only the fields there are");
     check(in_array(count($b['elements']), [1, 2], true) && count(array_unique($b['elements'])) === count($b['elements']), "$id has one element, or two that differ");
     foreach ($b['elements'] as $e) {
         check(isset($elements[$e]), "$id's element is one there is: $e");
     }
     check(($b['why'] ?? '') !== '', "$id says what in the text settles its elements");
+    // Its numbers, inside its tier's bands (docs/numbers.md 11).
+    $tier = $tiers[$b['tier']] ?? null;
+    check($tier !== null, "$id is in a tier there is");
+    same(['hp', 'atk', 'def', 'spa', 'spd', 'spe'], array_keys($b['stats']), "$id has the six stats, in order");
+    $total = array_sum($b['stats']);
+    check($tier !== null && $total >= $tier['total'][0] && $total <= $tier['total'][1], "$id's stats add up inside its tier's band: $total");
+    check(min($b['stats']) >= 20 && max($b['stats']) <= 130, "$id's stats are each from 20 to 130");
+    $share = max($b['stats']) / $total;
+    check($share >= 0.18 && $share <= 0.32, "$id's highest stat is 18% to 32% of the total: " . round($share, 2));
+    check($tier !== null && in_array($b['catch'], $tier['catch'], true), "$id's catch rate is one of its tier's");
+    check($tier !== null && $b['exp'] >= $tier['exp'][0] && $b['exp'] <= $tier['exp'][1], "$id's base experience is inside its tier's band");
+    check($tier !== null && in_array($b['growth'], $tier['growth'], true), "$id's growth rate is one of its tier's");
+    // A beast hits hardest with moves of its own element, so its better attacking stat is that element's.
+    $special = $elements[$b['elements'][0]]['category'] === 'special';
+    check($special ? $b['stats']['spa'] >= $b['stats']['atk'] : $b['stats']['atk'] >= $b['stats']['spa'],
+        "$id's better attacking stat is its main element's: " . ($special ? 'special attack' : 'attack'));
+    if ($b['kind'] === 'common') {
+        check($b['tier'] <= 2, "$id, an ordinary animal, is in the first two tiers");
+    }
     foreach (['looks', 'note', 'sound', 'omen', 'lore', 'unchecked'] as $field) {
         check(($b[$field] ?? 'x') !== '', "$id's $field, when given, says something");
     }
@@ -120,6 +140,16 @@ foreach ($elements as $a => $_) {
     }
 }
 same([5, 5], [$doubles, $halves], 'five cells of 25 double, five halve');
+
+same([1, 2, 3, 4, 5], array_keys($tiers), 'five tiers');
+$top = 0;
+foreach ($tiers as $n => $t) {
+    check($t['total'][0] > $top && $t['total'][1] >= $t['total'][0], "tier $n's band is above the one before");
+    $top = $t['total'][1];
+}
+$starters = array_filter($beasts, fn(array $b) => $b['starter'] ?? false);
+same(1, count(array_unique(array_map(fn(array $b) => array_sum($b['stats']), $starters))), 'the three to choose from have the same total');
+same(1, count(array_unique(array_column($starters, 'tier'))), 'and are of one tier');
 
 // The three to choose from press one another round: each has the better of one and the worse of one.
 // What a beast's own element does against another beast, as a ratio: 2, 1 or a half, multiplied over the other's elements.

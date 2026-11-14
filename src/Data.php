@@ -27,6 +27,12 @@ final class Data
         return require self::DIR . '/elements.php';
     }
 
+    /** @return array<int, array> tier => its bands */
+    public static function tiers(): array
+    {
+        return require self::DIR . '/tiers.php';
+    }
+
     /** @return array<string, array> beast id => its entry */
     public static function beasts(): array
     {
