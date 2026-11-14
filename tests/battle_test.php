@@ -203,6 +203,17 @@ $play = function (int $seed) use ($elements): array {
 $sim = new \Shanhai\Battle\Simulator(Data::beasts(), Data::learnsets(), Data::moves(), $elements);
 same($sim->battle(['lushu', 'lili', 'zhu'], ['xuangui', 'huahuai', 'zhi'], 40, 3), $sim->battle(['lushu', 'lili', 'zhu'], ['xuangui', 'huahuai', 'zhi'], 40, 3), 'a battle of parties, with switching, replays from its seed');
 check(in_array($sim->battle(['lushu'], ['xuangui'], 40, 1), [0, 1, -1], true), 'and ends');
+$kept = $sim->kept('huahuai', 50);
+same(4, count($kept), 'a beast keeps four moves');
+same(1, count(array_filter($kept, fn(string $m) => Data::moves()[$m]['power'] === 0)), 'one of them the last it learned that does no damage');
+check(in_array('landslide', $kept, true), 'and its strongest among the rest');
+check(throws(fn() => new Fighter('lushu', Data::beasts()['lushu'], 5, Data::learnsets()['lushu'], Data::moves(), keeps: ['scorch'])), 'a beast keeps no move it has not learned yet');
+same($sim->battle(['lushu', 'lili'], ['xuangui', 'zhu'], 40, 5, true), $sim->battle(['lushu', 'lili'], ['xuangui', 'zhu'], 40, 5, true), 'with both sides thinking ahead, too');
+$mk = fn(string $id) => new Fighter($id, Data::beasts()[$id], 40, Data::learnsets()[$id], Data::moves());
+$b = new Battle([[$mk('lushu')], [$mk('xuangui')]], $elements, Data::moves(), Rng::seeded(1));
+$before = [$b->fighter(0)->hp, $b->fighter(1)->hp, $b->turns];
+$b->copy(Rng::seeded(2))->turn(['move', 0], ['move', 0]);
+same($before, [$b->fighter(0)->hp, $b->fighter(1)->hp, $b->turns], 'a copy played on leaves the battle as it was');
 $first = $play(7);
 check($first[0] !== null, 'a battle of the game\'s beasts ends: ' . json_encode($first));
 same($first, $play(7), 'the same seed, the same battle');

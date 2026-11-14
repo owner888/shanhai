@@ -124,9 +124,45 @@ final class Simulator
         };
     }
 
+    /**
+     * Which four moves a beast keeps, of those it has learned by $level, when a player who chose with care had it: its
+     * three strongest that do damage, no two of one element, and the last it learned that does none. With no such move,
+     * or too few of the others, the strongest left fill the four.
+     * @return list<string>
+     */
+    public function kept(string $id, int $level): array
+    {
+        $damage = $none = [];
+        foreach ($this->learnsets[$id] as [$at, $move]) {
+            if ($at <= $level) {
+                if ($this->moves[$move]['power'] > 0) {
+                    $damage[] = $move;
+                } else {
+                    $none[] = $move;
+                }
+            }
+        }
+        usort($damage, fn(string $a, string $b) => $this->moves[$b]['power'] * $this->moves[$b]['accuracy'] <=> $this->moves[$a]['power'] * $this->moves[$a]['accuracy']);
+        $keep = $none === [] ? [] : [end($none)];
+        $elements = [];
+        foreach ($damage as $move) { // the strongest of each element first
+            $e = $this->moves[$move]['element'] ?? '';
+            if (count($keep) < 4 && !isset($elements[$e])) {
+                $keep[] = $move;
+                $elements[$e] = true;
+            }
+        }
+        foreach ($damage as $move) {
+            if (count($keep) < 4 && !in_array($move, $keep, true)) {
+                $keep[] = $move;
+            }
+        }
+        return $keep;
+    }
+
     private function fighter(string $id, int $level): Fighter
     {
-        return new Fighter($id, $this->beasts[$id], $level, $this->learnsets[$id], $this->moves);
+        return new Fighter($id, $this->beasts[$id], $level, $this->learnsets[$id], $this->moves, keeps: $this->kept($id, $level));
     }
 
     /**

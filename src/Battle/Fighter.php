@@ -23,7 +23,8 @@ final class Fighter
 
     /**
      * @param array $species its entry of data/beasts.php
-     * @param list<array{0: int, 1: string}> $learnset its moves by level; it knows the last four it has learned
+     * @param list<array{0: int, 1: string}> $learnset its moves by level; it knows the last four it has learned,
+     *        unless $keeps says which four of those it has learned it kept
      * @param array<string, array> $moves data/moves.php
      * @param array{atk: int, def: int, spe: int, spc: int} $dvs
      */
@@ -35,6 +36,7 @@ final class Fighter
         array $moves,
         array $dvs = ['atk' => 8, 'def' => 8, 'spe' => 8, 'spc' => 8],
         int $statExp = 0,
+        ?array $keeps = null,
     ) {
         $base = $species['stats'];
         $this->maxHp = $this->hp = Formulas::stat($base['hp'], Formulas::hpDv($dvs['atk'], $dvs['def'], $dvs['spe'], $dvs['spc']), $statExp, $level, true);
@@ -51,7 +53,10 @@ final class Fighter
                 $known[] = $move;
             }
         }
-        foreach (array_slice($known, -4) as $move) {
+        foreach ($keeps ?? array_slice($known, -4) as $move) {
+            if (!in_array($move, $known, true)) {
+                throw new \InvalidArgumentException("$id has not learned $move by level $level");
+            }
             $this->moves[] = ['id' => $move, 'pp' => $moves[$move]['pp']];
         }
     }
