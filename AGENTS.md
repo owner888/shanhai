@@ -58,6 +58,7 @@ tests/             php tests/run.php [name]: world, script, data (check()/same()
 docs/rules.md      the rule of the game
 docs/roadmap.md    the order of the work, and when each step is done
 docs/numbers.md    the numbers' baseline: each formula and constant, and where it was read
+docs/elements.md   the elements' table and how a beast's elements are settled (a draft until the developer approves it)
 ```
 
 ## How it works
