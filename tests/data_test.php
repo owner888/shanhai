@@ -166,25 +166,28 @@ foreach ([['xuangui', 'lushu'], ['lushu', 'guanguan'], ['guanguan', 'xuangui']] 
 
 // The moves, inside the bands measured from the reference (docs/numbers.md 10.4).
 $moves = Data::moves();
-$statuses = ['burn', 'poison', 'paralyze', 'sleep', 'confuse', 'flinch', 'rain', 'sun', 'sandstorm', 'crit'];
+$statuses = ['burn', 'poison', 'paralyze', 'sleep', 'confuse', 'flinch', 'rain', 'sun', 'sandstorm', 'crit', 'heal', 'drain'];
+$without = 0;
 $perElement = [];
 $names = [];
 foreach ($moves as $id => $m) {
     check(preg_match('/^[a-z]+$/', $id) === 1, "the move $id has a plain id");
     check(!isset($names[$m['name']]), "the move $id's name is its alone: {$m['name']}");
     $names[$m['name']] = true;
-    check(array_diff(array_keys($m), ['name', 'element', 'power', 'accuracy', 'pp', 'effect', 'from']) === [], "the move $id has only the fields there are");
+    check(array_diff(array_keys($m), ['name', 'element', 'power', 'accuracy', 'pp', 'effect', 'only', 'from']) === [], "the move $id has only the fields there are");
     check($m['element'] === null || isset($elements[$m['element']]), "the move $id is of an element there is, or of none");
     check(($m['from'] ?? '') !== '', "the move $id says what in the classic it comes from");
     check(in_array($m['accuracy'], [100, 95, 90, 85, 80, 75, 70], true), "the move $id's accuracy is one of those in use");
     check($m['pp'] % 5 === 0 && $m['pp'] >= 5 && $m['pp'] <= 40, "the move $id's uses are a multiple of five from 5 to 40");
     if (isset($m['effect'])) {
         [$what, $chance] = $m['effect'];
-        check(in_array($what, $statuses, true) || preg_match('/^(up|down):(atk|def|spa|spd|spe):[12]$/', $what) === 1, "the move $id's effect is one there is: $what");
+        check(in_array($what, $statuses, true) || preg_match('/^(up|down):(atk|def|spa|spd|spe|acc|eva):[12]$/', $what) === 1, "the move $id's effect is one there is: $what");
         check(in_array($chance, [10, 20, 30, 50, 100], true), "the move $id's effect has a chance in use");
     }
+    check(!isset($m['only']) || isset($beasts[$m['only']]), "the move $id is only a beast's there is");
     if ($m['power'] === 0) {
         check(isset($m['effect']) && $m['effect'][1] === 100, "the move $id, with no power, has an effect that is the move");
+        $without++;
         continue;
     }
     $perElement[$m['element'] ?? 'none'][] = $m['power'];
@@ -200,10 +203,11 @@ foreach ($moves as $id => $m) {
     check($m['power'] <= 100 || $m['accuracy'] <= 90, "the move $id, of power over 100, can miss");
     check($m['power'] <= 120, "the move $id is of power 120 at most");
 }
+check($without / count($moves) >= 0.3, 'three moves in ten or more do no damage: ' . $without . ' of ' . count($moves));
 foreach (array_keys($elements) as $e) {
     $powers = $perElement[$e] ?? [];
     sort($powers);
-    check(count($powers) === 4 && $powers[0] === 40 && $powers[3] >= 110, "$e has four moves that do damage, from 40 to 110 or more: " . implode(' ', $powers));
+    check(count($powers) >= 7 && $powers[0] === 40 && end($powers) >= 110, "$e has seven moves or more that do damage, from 40 to 110 or more: " . implode(' ', $powers));
 }
 
 same(['你好，', '世界'], Text::wrap('你好，世界', 6), 'a CJK character takes two columns');
