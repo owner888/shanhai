@@ -51,12 +51,13 @@ src/Data.php       reads data/
 src/Render/Stage.php  a map's 3D scene: instanced tiles, trees, rocks, walls, the actors' figures, the fixed camera
 src/Play.php       MyPHP's Game: keys and gamepad into Controls, World::step, draws the Stage and the dialog box
 data/game.php      where a new game starts
-data/elements.php  the nine elements and what each is strong against
-data/beasts.php    the beasts: from the classic (mountain, looks, lore), and the game's own (element, stats)
+data/beasts.php    the beasts, as the classic has them: kind, range, mountain, looks, sound, omen, lore
+docs/bestiary.md   the catalogue: what is in, what is still to be checked, what is still to be read
 data/maps/*.php    a map each: rows of tiles, warps, signs, NPCs and triggers with their scripts
 tests/             php tests/run.php [name]: world, script, data (check()/same(), no PHPUnit)
 docs/rules.md      the rule of the game
 docs/roadmap.md    the order of the work, and when each step is done
+docs/numbers.md    the numbers' baseline: each formula and constant, and where it was read
 ```
 
 ## How it works

@@ -1,5 +1,5 @@
 <?php
-// The data files, checked as written: maps, their scripts, the elements, the beasts.
+// The data files, checked as written: maps, their scripts, the beasts.
 declare(strict_types=1);
 
 namespace Shanhai\Tests;
@@ -11,7 +11,6 @@ use Shanhai\Script\Vm;
 use Shanhai\World\Dir;
 
 $maps = Data::maps();
-$elements = Data::elements();
 $beasts = Data::beasts();
 
 $scripts = [];
@@ -64,27 +63,26 @@ foreach (Tile::KINDS as [$kind]) {
 }
 check(isset(Stage::LOOKS['player']), 'the stage draws the player');
 
-same(9, count($elements), 'nine elements');
-foreach ($elements as $id => $e) {
-    same(2, count($e['strong']), "$id is strong against two");
-    foreach ($e['strong'] as $other) {
-        check(isset($elements[$other]) && $other !== $id, "$id is strong against an element there is, not itself: $other");
-    }
+same(30, count($beasts), 'the beasts of the Southern Mountains: 12, 9 and 9 over its three ranges');
+foreach ([1 => 12, 2 => 9, 3 => 9] as $range => $count) {
+    same($count, count(array_filter($beasts, fn(array $b) => $b['range'] === $range)), "range $range");
 }
-
-same(10, count($beasts), 'the ten beasts of the first range');
-same(3, count(array_filter($beasts, fn(array $b) => $b['starter'] ?? false)), 'three to choose from at the start');
-$starters = array_keys(array_filter($beasts, fn(array $b) => $b['starter'] ?? false));
-foreach ($starters as $a) {
-    $beats = array_filter($starters, fn(string $b) => in_array($beasts[$b]['element'], $elements[$beasts[$a]['element']]['strong'], true));
-    same(1, count($beats), "$a is strong against one of the other two");
-}
+same(['guanguan', 'lushu', 'xuangui'], (function () use ($beasts) {
+    $ids = array_keys(array_filter($beasts, fn(array $b) => $b['starter'] ?? false));
+    sort($ids);
+    return $ids;
+})(), 'the three to choose from at the start');
+$names = [];
 foreach ($beasts as $id => $b) {
-    check(isset($elements[$b['element']]), "$id has an element there is");
-    check($b['name'] !== '' && $b['mountain'] !== '' && $b['looks'] !== '', "$id has a name, a mountain and its looks");
-    check($b['lore'] !== '' || isset($b['unchecked']), "$id has its lore, or says what is still to be checked");
-    same(6, count($b['stats']), "$id has six stats");
-    check(min($b['stats']) >= 1 && max($b['stats']) <= 255, "$id's stats are within 1 to 255");
+    check(preg_match('/^[a-z]+$/', $id) === 1, "$id is a plain id");
+    check(!isset($names[$b['name']]), "$id's name is its alone: {$b['name']}");
+    $names[$b['name']] = true;
+    check(in_array($b['kind'], ['strange', 'common'], true), "$id is strange or common");
+    check($b['mountain'] !== '' && $b['looks'] !== '', "$id has a mountain and its looks");
+    check(array_diff(array_keys($b), ['name', 'kind', 'range', 'mountain', 'looks', 'note', 'sound', 'omen', 'lore', 'unchecked', 'starter']) === [], "$id has only the fields there are");
+    foreach (['looks', 'note', 'sound', 'omen', 'lore', 'unchecked'] as $field) {
+        check(($b[$field] ?? 'x') !== '', "$id's $field, when given, says something");
+    }
 }
 
 same(['你好，', '世界'], Text::wrap('你好，世界', 6), 'a CJK character takes two columns');

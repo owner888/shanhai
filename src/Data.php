@@ -21,12 +21,6 @@ final class Data
         return $maps;
     }
 
-    /** @return array<string, array> element id => [name, strong: list of element ids] */
-    public static function elements(): array
-    {
-        return require self::DIR . '/elements.php';
-    }
-
     /** @return array<string, array> beast id => its entry */
     public static function beasts(): array
     {
