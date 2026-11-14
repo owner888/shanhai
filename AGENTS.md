@@ -24,7 +24,7 @@ Entry point for coding agents and contributors. `docs/rules.md` is the rule of t
 10. **A rule that can be a test is a test** (`tests/data_test.php` checks every map, script and beast as written):
     add the check with the rule, not a note to remember it.
 11. Delete dead code when you touch it; never comment it out.
-12. **The rules never draw, the drawing never rules**: `src/World`, `src/Script`, `src/Data.php`, `src/Text.php` and
+12. **The rules never draw, the drawing never rules**: `src/World`, `src/Script`, `src/Data.php`, `src/Elements.php`, `src/Text.php` and
     `data/` are PHP alone, with no MyPHP class, so the tests need no window; `src/Render` and `src/Play.php` read the
     World and decide nothing.
 13. Reuse MyPHP's own (`Plugins\Scene`, `Plugins\Game`) before writing anything beside it; what it lacks is fixed
@@ -48,17 +48,19 @@ src/World/         the game outside battle, with no drawing: Dir, Tile (the char
 src/Script/Vm.php  the event script interpreter: say, flags, jumps, face, move, warp, give; check() as written
 src/Text.php       the dialog box's measures and line breaking
 src/Data.php       reads data/
+src/Elements.php   what a move of one element does against a beast of others (double, even, half, in tenths)
 src/Render/Stage.php  a map's 3D scene: instanced tiles, trees, rocks, walls, the actors' figures, the fixed camera
 src/Play.php       MyPHP's Game: keys and gamepad into Controls, World::step, draws the Stage and the dialog box
 data/game.php      where a new game starts
-data/beasts.php    the beasts, as the classic has them: kind, range, mountain, looks, sound, omen, lore
+data/elements.php  the five elements: what each overcomes and feeds, physical or special, its region
+data/beasts.php    the beasts, as the classic has them (kind, range, mountain, looks, sound, omen, lore), and their elements with why
 docs/bestiary.md   the catalogue: what is in, what is still to be checked, what is still to be read
 data/maps/*.php    a map each: rows of tiles, warps, signs, NPCs and triggers with their scripts
 tests/             php tests/run.php [name]: world, script, data (check()/same(), no PHPUnit)
 docs/rules.md      the rule of the game
 docs/roadmap.md    the order of the work, and when each step is done
 docs/numbers.md    the numbers' baseline: each formula and constant, and where it was read
-docs/elements.md   the elements' table and how a beast's elements are settled (a draft until the developer approves it)
+docs/elements.md   the elements' table and how a beast's elements are settled
 ```
 
 ## How it works

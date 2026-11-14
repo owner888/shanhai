@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Shanhai\Tests;
 
-use Shanhai\{Data, Text};
+use Shanhai\{Data, Elements, Text};
 use Shanhai\Render\Stage;
 use Shanhai\World\Tile;
 use Shanhai\Script\Vm;
@@ -12,6 +12,7 @@ use Shanhai\World\Dir;
 
 $maps = Data::maps();
 $beasts = Data::beasts();
+$elements = Data::elements();
 
 $scripts = [];
 foreach ($maps as $map) {
@@ -79,10 +80,58 @@ foreach ($beasts as $id => $b) {
     $names[$b['name']] = true;
     check(in_array($b['kind'], ['strange', 'common'], true), "$id is strange or common");
     check($b['mountain'] !== '' && $b['looks'] !== '', "$id has a mountain and its looks");
-    check(array_diff(array_keys($b), ['name', 'kind', 'range', 'mountain', 'looks', 'note', 'sound', 'omen', 'lore', 'unchecked', 'starter']) === [], "$id has only the fields there are");
+    check(array_diff(array_keys($b), ['name', 'kind', 'range', 'mountain', 'elements', 'why', 'looks', 'note', 'sound', 'omen', 'lore', 'unchecked', 'starter']) === [], "$id has only the fields there are");
+    check(in_array(count($b['elements']), [1, 2], true) && count(array_unique($b['elements'])) === count($b['elements']), "$id has one element, or two that differ");
+    foreach ($b['elements'] as $e) {
+        check(isset($elements[$e]), "$id's element is one there is: $e");
+    }
+    check(($b['why'] ?? '') !== '', "$id says what in the text settles its elements");
     foreach (['looks', 'note', 'sound', 'omen', 'lore', 'unchecked'] as $field) {
         check(($b[$field] ?? 'x') !== '', "$id's $field, when given, says something");
     }
+}
+
+// The five elements: each overcomes one and feeds one, in two rings of five (docs/elements.md).
+same(['wood', 'fire', 'earth', 'metal', 'water'], array_keys($elements), 'the five elements');
+foreach (['overcomes', 'feeds'] as $relation) {
+    $at = 'wood'; $ring = [];
+    for ($i = 0; $i < 5; $i++) {
+        $ring[] = $at;
+        $at = $elements[$at][$relation];
+    }
+    check($at === 'wood' && count(array_unique($ring)) === 5, "what each $relation goes round all five");
+}
+foreach ($elements as $id => $e) {
+    check($e['overcomes'] !== $e['feeds'], "$id overcomes one and feeds another");
+    check(in_array($e['category'], ['physical', 'special'], true), "$id is physical or special");
+}
+$chart = new Elements($elements);
+same(Elements::DOUBLE, $chart->factor('water', 'fire'), 'water overcomes fire: double');
+same(Elements::HALF, $chart->factor('water', 'wood'), 'water feeds wood: half');
+same(Elements::EVEN, $chart->factor('fire', 'water'), 'what is overcome hits back evenly');
+same(Elements::EVEN, $chart->factor('fire', 'fire'), 'an element hits itself evenly');
+same([Elements::DOUBLE, Elements::HALF], $chart->factors('earth', ['water', 'metal']), 'two elements multiply in turn');
+same([], $chart->factors('wood', ['water', 'metal']), 'and none when both are even');
+$doubles = $halves = 0;
+foreach ($elements as $a => $_) {
+    foreach ($elements as $d => $_) {
+        $doubles += $chart->factor($a, $d) === Elements::DOUBLE ? 1 : 0;
+        $halves += $chart->factor($a, $d) === Elements::HALF ? 1 : 0;
+    }
+}
+same([5, 5], [$doubles, $halves], 'five cells of 25 double, five halve');
+
+// The three to choose from press one another round: each has the better of one and the worse of one.
+// What a beast's own element does against another beast, as a ratio: 2, 1 or a half, multiplied over the other's elements.
+$against = function (string $a, string $b) use ($beasts, $chart): float {
+    $ratio = 1.0;
+    foreach ($chart->factors($beasts[$a]['elements'][0], $beasts[$b]['elements']) as $f) {
+        $ratio *= $f / Elements::EVEN;
+    }
+    return $ratio;
+};
+foreach ([['xuangui', 'lushu'], ['lushu', 'guanguan'], ['guanguan', 'xuangui']] as [$a, $b]) {
+    check($against($a, $b) > $against($b, $a), "$a has the better of $b");
 }
 
 same(['你好，', '世界'], Text::wrap('你好，世界', 6), 'a CJK character takes two columns');
