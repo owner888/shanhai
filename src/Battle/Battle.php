@@ -164,25 +164,8 @@ final class Battle
         $critical = false;
         $tenths = [];
         if ($m['power'] > 0) {
-            $physical = $m['element'] === null || $this->elements[$m['element']]['category'] === 'physical';
-            [$atk, $def] = $physical ? ['atk', 'def'] : ['spa', 'spd'];
             $critical = $this->rng->byte() < Formulas::CRITICAL[$effect === 'crit' ? 2 : 0];
-            // 3.1: a critical hit takes both stats as they are without stages, when the defender's stage is not below the attacker's.
-            $raw = $critical && $t->stages[$def] >= $u->stages[$atk];
-            $damage = Formulas::damage($u->level, $m['power'], $raw ? $u->stats[$atk] : $u->stat($atk), $raw ? $t->stats[$def] : $t->stat($def), $critical);
-            if ($m['element'] !== null) {
-                $weather = self::WEATHER[$this->weather ?? ''][$m['element']] ?? null;
-                if ($weather !== null) {
-                    $damage = Formulas::times($damage, $weather);
-                }
-                if (in_array($m['element'], $u->species['elements'], true)) {
-                    $damage = Formulas::sameElement($damage);
-                }
-                $tenths = $this->chart->factors($m['element'], $t->species['elements']);
-                foreach ($tenths as $f) {
-                    $damage = Formulas::times($damage, $f);
-                }
-            }
+            [$damage, $tenths] = $this->damage($u, $t, $m, $critical);
             if ($damage >= 2) {
                 $damage = Formulas::vary($damage, Formulas::varyRoll($this->rng));
             }
@@ -214,6 +197,49 @@ final class Battle
             return;
         }
         $this->effect($side, $effect, $foeYetToAct, $m['power'] === 0);
+    }
+
+    /**
+     * 3.1 to 3.3: what a move of power does to $t before the random spread, and the elements' factors it met, in tenths.
+     * @return array{0: int, 1: list<int>}
+     */
+    private function damage(Fighter $u, Fighter $t, array $m, bool $critical): array
+    {
+        $physical = $m['element'] === null || $this->elements[$m['element']]['category'] === 'physical';
+        [$atk, $def] = $physical ? ['atk', 'def'] : ['spa', 'spd'];
+        // 3.1: a critical hit takes both stats as they are without stages, when the defender's stage is not below the attacker's.
+        $raw = $critical && $t->stages[$def] >= $u->stages[$atk];
+        $damage = Formulas::damage($u->level, $m['power'], $raw ? $u->stats[$atk] : $u->stat($atk), $raw ? $t->stats[$def] : $t->stat($def), $critical);
+        $tenths = [];
+        if ($m['element'] !== null) {
+            $weather = self::WEATHER[$this->weather ?? ''][$m['element']] ?? null;
+            if ($weather !== null) {
+                $damage = Formulas::times($damage, $weather);
+            }
+            if (in_array($m['element'], $u->species['elements'], true)) {
+                $damage = Formulas::sameElement($damage);
+            }
+            $tenths = $this->chart->factors($m['element'], $t->species['elements']);
+            foreach ($tenths as $f) {
+                $damage = Formulas::times($damage, $f);
+            }
+        }
+        return [$damage, $tenths];
+    }
+
+    /**
+     * What the side's move would do to the other's beast now, with no critical hit and before the random spread, times
+     * its chance to hit: what a side that only weighs damage goes by. 0 for a move that does none.
+     */
+    public function estimate(int $side, int $which): float
+    {
+        $u = $this->fighter($side);
+        $t = $this->fighter(1 - $side);
+        $m = $this->moves[$u->moves[$which]['id']];
+        if ($m['power'] === 0) {
+            return 0.0;
+        }
+        return $this->damage($u, $t, $m, false)[0] * Formulas::accuracy($m['accuracy'], $u->stages['acc'], $t->stages['eva']) / 255;
     }
 
     /** What a move does besides damage. $told: the effect is the whole move, so its failing is said. */

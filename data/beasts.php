@@ -46,7 +46,7 @@ return [
     'lushu' => [
         'name' => '鹿蜀', 'kind' => 'strange', 'range' => 1, 'mountain' => '杻阳之山', 'starter' => true,
         'elements' => ['fire'], 'why' => '赤尾。',
-        'tier' => 3, 'stats' => ['hp' => 75, 'atk' => 65, 'def' => 65, 'spa' => 90, 'spd' => 75, 'spe' => 90],
+        'tier' => 3, 'stats' => ['hp' => 85, 'atk' => 60, 'def' => 75, 'spa' => 80, 'spd' => 80, 'spe' => 80],
         'catch' => 45, 'exp' => 161, 'growth' => 'mediumSlow',
         'looks' => '形如马，白首，身有虎纹，赤尾。',
         'sound' => '如人歌唱。',
@@ -64,7 +64,7 @@ return [
     'lu' => [
         'name' => '鯥', 'kind' => 'strange', 'range' => 1, 'mountain' => '柢山',
         'elements' => ['earth'], 'why' => '居于山陵。',
-        'tier' => 2, 'stats' => ['hp' => 80, 'atk' => 75, 'def' => 70, 'spa' => 40, 'spd' => 55, 'spe' => 40],
+        'tier' => 2, 'stats' => ['hp' => 80, 'atk' => 75, 'def' => 65, 'spa' => 35, 'spd' => 70, 'spe' => 35],
         'catch' => 120, 'exp' => 121, 'growth' => 'mediumFast',
         'looks' => '形如牛，居于山陵，蛇尾，胁下生翼。',
         'sound' => '如留牛。',
@@ -107,7 +107,7 @@ return [
     'guanguan' => [
         'name' => '灌灌', 'kind' => 'strange', 'range' => 1, 'mountain' => '青丘之山', 'starter' => true,
         'elements' => ['wood'], 'why' => '鸟。',
-        'tier' => 3, 'stats' => ['hp' => 70, 'atk' => 60, 'def' => 65, 'spa' => 95, 'spd' => 80, 'spe' => 90],
+        'tier' => 3, 'stats' => ['hp' => 70, 'atk' => 50, 'def' => 65, 'spa' => 100, 'spd' => 80, 'spe' => 95],
         'catch' => 45, 'exp' => 161, 'growth' => 'mediumSlow',
         'looks' => '形如鸠。',
         'sound' => '如人呵斥。',
@@ -127,7 +127,7 @@ return [
     'lili' => [
         'name' => '狸力', 'kind' => 'strange', 'range' => 2, 'mountain' => '柜山',
         'elements' => ['earth'], 'why' => '见则多土功。',
-        'tier' => 3, 'stats' => ['hp' => 80, 'atk' => 90, 'def' => 75, 'spa' => 45, 'spd' => 60, 'spe' => 70],
+        'tier' => 3, 'stats' => ['hp' => 80, 'atk' => 95, 'def' => 75, 'spa' => 40, 'spd' => 70, 'spe' => 60],
         'catch' => 75, 'exp' => 147, 'growth' => 'mediumFast',
         'looks' => '形如豚，足上有距。',
         'sound' => '如狗吠。',
@@ -154,7 +154,7 @@ return [
     'huahuai' => [
         'name' => '猾褢', 'kind' => 'strange', 'range' => 2, 'mountain' => '尧光之山',
         'elements' => ['earth'], 'why' => '见则有大繇；穴居。',
-        'tier' => 3, 'stats' => ['hp' => 95, 'atk' => 95, 'def' => 80, 'spa' => 40, 'spd' => 65, 'spe' => 55],
+        'tier' => 3, 'stats' => ['hp' => 95, 'atk' => 95, 'def' => 75, 'spa' => 35, 'spd' => 80, 'spe' => 50],
         'catch' => 75, 'exp' => 150, 'growth' => 'mediumFast',
         'looks' => '形如人而有猪鬣，穴居，冬天蛰伏。',
         'sound' => '如斫木。',
@@ -206,21 +206,21 @@ return [
     'xi' => [
         'name' => '犀', 'kind' => 'common', 'range' => 3, 'mountain' => '祷过之山',
         'elements' => ['metal'], 'why' => '有角。',
-        'tier' => 2, 'stats' => ['hp' => 80, 'atk' => 85, 'def' => 90, 'spa' => 30, 'spd' => 45, 'spe' => 40],
+        'tier' => 2, 'stats' => ['hp' => 90, 'atk' => 85, 'def' => 80, 'spa' => 30, 'spd' => 45, 'spe' => 40],
         'catch' => 90, 'exp' => 124, 'growth' => 'mediumFast',
         'looks' => '似水牛，猪头，黑身，三角。', 'note' => '形貌据郭璞注。',
     ],
     'si' => [
         'name' => '兕', 'kind' => 'common', 'range' => 3, 'mountain' => '祷过之山',
         'elements' => ['metal'], 'why' => '有角。',
-        'tier' => 2, 'stats' => ['hp' => 85, 'atk' => 90, 'def' => 80, 'spa' => 30, 'spd' => 45, 'spe' => 45],
+        'tier' => 2, 'stats' => ['hp' => 90, 'atk' => 90, 'def' => 75, 'spa' => 30, 'spd' => 45, 'spe' => 45],
         'catch' => 90, 'exp' => 126, 'growth' => 'mediumFast',
         'looks' => '似水牛，青色，一角。', 'note' => '形貌据郭璞注。',
     ],
     'xiang' => [
         'name' => '象', 'kind' => 'common', 'range' => 3, 'mountain' => '祷过之山',
         'elements' => ['metal'], 'why' => '有长牙。',
-        'tier' => 2, 'stats' => ['hp' => 105, 'atk' => 85, 'def' => 85, 'spa' => 35, 'spd' => 60, 'spe' => 30],
+        'tier' => 2, 'stats' => ['hp' => 110, 'atk' => 85, 'def' => 80, 'spa' => 35, 'spd' => 60, 'spe' => 30],
         'catch' => 75, 'exp' => 134, 'growth' => 'mediumSlow',
         'looks' => '兽中最大的，长鼻，长牙。', 'note' => '形貌据郭璞注。',
     ],
@@ -262,8 +262,8 @@ return [
     'yong' => [
         'name' => '顒', 'kind' => 'strange', 'range' => 3, 'mountain' => '令丘之山',
         'elements' => ['fire', 'wood'], 'why' => '见则天下大旱；鸟。',
-        'tier' => 3, 'stats' => ['hp' => 70, 'atk' => 55, 'def' => 60, 'spa' => 105, 'spd' => 80, 'spe' => 85],
-        'catch' => 60, 'exp' => 159, 'growth' => 'mediumFast',
+        'tier' => 3, 'stats' => ['hp' => 70, 'atk' => 50, 'def' => 60, 'spa' => 95, 'spd' => 75, 'spe' => 80],
+        'catch' => 60, 'exp' => 150, 'growth' => 'mediumFast',
         'looks' => '形如枭，人面，四目而有耳。',
         'sound' => '叫的就是自己的名字。',
         'omen' => '见则天下大旱。',
@@ -271,8 +271,8 @@ return [
     'yuanchu' => [
         'name' => '鵷鶵', 'kind' => 'strange', 'range' => 3, 'mountain' => '南禺之山',
         'elements' => ['wood'], 'why' => '鸟。',
-        'tier' => 4, 'stats' => ['hp' => 85, 'atk' => 65, 'def' => 80, 'spa' => 105, 'spd' => 100, 'spe' => 95],
-        'catch' => 45, 'exp' => 201, 'growth' => 'slow',
+        'tier' => 4, 'stats' => ['hp' => 85, 'atk' => 55, 'def' => 80, 'spa' => 115, 'spd' => 100, 'spe' => 100],
+        'catch' => 45, 'exp' => 203, 'growth' => 'slow',
         'looks' => '凤一类的鸟。', 'note' => '形貌据郭璞注，正文未载。',
     ],
 ];
