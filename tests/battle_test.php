@@ -200,6 +200,9 @@ $play = function (int $seed) use ($elements): array {
     }
     return [$b->winner, $b->turns, count($b->log)];
 };
+$sim = new \Shanhai\Battle\Simulator(Data::beasts(), Data::learnsets(), Data::moves(), $elements);
+same($sim->battle(['lushu', 'lili', 'zhu'], ['xuangui', 'huahuai', 'zhi'], 40, 3), $sim->battle(['lushu', 'lili', 'zhu'], ['xuangui', 'huahuai', 'zhi'], 40, 3), 'a battle of parties, with switching, replays from its seed');
+check(in_array($sim->battle(['lushu'], ['xuangui'], 40, 1), [0, 1, -1], true), 'and ends');
 $first = $play(7);
 check($first[0] !== null, 'a battle of the game\'s beasts ends: ' . json_encode($first));
 same($first, $play(7), 'the same seed, the same battle');

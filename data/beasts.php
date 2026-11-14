@@ -46,7 +46,7 @@ return [
     'lushu' => [
         'name' => '鹿蜀', 'kind' => 'strange', 'range' => 1, 'mountain' => '杻阳之山', 'starter' => true,
         'elements' => ['fire'], 'why' => '赤尾。',
-        'tier' => 3, 'stats' => ['hp' => 85, 'atk' => 60, 'def' => 75, 'spa' => 80, 'spd' => 80, 'spe' => 80],
+        'tier' => 3, 'stats' => ['hp' => 85, 'atk' => 65, 'def' => 75, 'spa' => 75, 'spd' => 80, 'spe' => 80],
         'catch' => 45, 'exp' => 161, 'growth' => 'mediumSlow',
         'looks' => '形如马，白首，身有虎纹，赤尾。',
         'sound' => '如人歌唱。',
@@ -55,7 +55,7 @@ return [
     'xuangui' => [
         'name' => '旋龟', 'kind' => 'strange', 'range' => 1, 'mountain' => '杻阳之山', 'starter' => true,
         'elements' => ['water'], 'why' => '生于怪水中。',
-        'tier' => 3, 'stats' => ['hp' => 85, 'atk' => 60, 'def' => 100, 'spa' => 80, 'spd' => 95, 'spe' => 40],
+        'tier' => 3, 'stats' => ['hp' => 85, 'atk' => 55, 'def' => 95, 'spa' => 90, 'spd' => 90, 'spe' => 45],
         'catch' => 45, 'exp' => 161, 'growth' => 'mediumSlow',
         'looks' => '怪水中的龟，鸟首，虺尾。',
         'sound' => '如劈木。',
@@ -64,8 +64,8 @@ return [
     'lu' => [
         'name' => '鯥', 'kind' => 'strange', 'range' => 1, 'mountain' => '柢山',
         'elements' => ['earth'], 'why' => '居于山陵。',
-        'tier' => 2, 'stats' => ['hp' => 80, 'atk' => 75, 'def' => 65, 'spa' => 35, 'spd' => 70, 'spe' => 35],
-        'catch' => 120, 'exp' => 121, 'growth' => 'mediumFast',
+        'tier' => 2, 'stats' => ['hp' => 90, 'atk' => 80, 'def' => 70, 'spa' => 35, 'spd' => 75, 'spe' => 35],
+        'catch' => 120, 'exp' => 129, 'growth' => 'mediumFast',
         'looks' => '形如牛，居于山陵，蛇尾，胁下生翼。',
         'sound' => '如留牛。',
         'lore' => '冬死而夏生。食之无肿疾。',
@@ -116,8 +116,8 @@ return [
     'chiru' => [
         'name' => '赤鱬', 'kind' => 'strange', 'range' => 1, 'mountain' => '青丘之山',
         'elements' => ['water'], 'why' => '生于英水中。',
-        'tier' => 2, 'stats' => ['hp' => 60, 'atk' => 40, 'def' => 50, 'spa' => 75, 'spd' => 70, 'spe' => 65],
-        'catch' => 120, 'exp' => 121, 'growth' => 'mediumFast',
+        'tier' => 2, 'stats' => ['hp' => 65, 'atk' => 40, 'def' => 55, 'spa' => 80, 'spd' => 75, 'spe' => 70],
+        'catch' => 120, 'exp' => 129, 'growth' => 'mediumFast',
         'looks' => '英水中的鱼，鱼身人面。',
         'sound' => '如鸳鸯。',
         'unchecked' => '功效一句在所查版本中残缺，待另一版本核对后补上。',
@@ -127,8 +127,8 @@ return [
     'lili' => [
         'name' => '狸力', 'kind' => 'strange', 'range' => 2, 'mountain' => '柜山',
         'elements' => ['earth'], 'why' => '见则多土功。',
-        'tier' => 3, 'stats' => ['hp' => 80, 'atk' => 95, 'def' => 75, 'spa' => 40, 'spd' => 70, 'spe' => 60],
-        'catch' => 75, 'exp' => 147, 'growth' => 'mediumFast',
+        'tier' => 3, 'stats' => ['hp' => 90, 'atk' => 100, 'def' => 80, 'spa' => 40, 'spd' => 75, 'spe' => 65],
+        'catch' => 75, 'exp' => 158, 'growth' => 'mediumFast',
         'looks' => '形如豚，足上有距。',
         'sound' => '如狗吠。',
         'omen' => '见则其县多土功。',
@@ -154,8 +154,8 @@ return [
     'huahuai' => [
         'name' => '猾褢', 'kind' => 'strange', 'range' => 2, 'mountain' => '尧光之山',
         'elements' => ['earth'], 'why' => '见则有大繇；穴居。',
-        'tier' => 3, 'stats' => ['hp' => 95, 'atk' => 95, 'def' => 75, 'spa' => 35, 'spd' => 80, 'spe' => 50],
-        'catch' => 75, 'exp' => 150, 'growth' => 'mediumFast',
+        'tier' => 3, 'stats' => ['hp' => 100, 'atk' => 100, 'def' => 80, 'spa' => 35, 'spd' => 85, 'spe' => 55],
+        'catch' => 75, 'exp' => 159, 'growth' => 'mediumFast',
         'looks' => '形如人而有猪鬣，穴居，冬天蛰伏。',
         'sound' => '如斫木。',
         'omen' => '见则县有大繇。',

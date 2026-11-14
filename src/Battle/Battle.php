@@ -228,15 +228,13 @@ final class Battle
     }
 
     /**
-     * What the side's move would do to the other's beast now, with no critical hit and before the random spread, times
-     * its chance to hit: what a side that only weighs damage goes by. 0 for a move that does none.
+     * What a move of $u's would do to $t now, with no critical hit and before the random spread, times its chance to
+     * hit: what a side that only weighs damage goes by. 0 for a move that does none. $u and $t need not be out.
      */
-    public function estimate(int $side, int $which): float
+    public function estimate(Fighter $u, Fighter $t, int $which): float
     {
-        $u = $this->fighter($side);
-        $t = $this->fighter(1 - $side);
         $m = $this->moves[$u->moves[$which]['id']];
-        if ($m['power'] === 0) {
+        if ($m['power'] === 0 || $u->moves[$which]['pp'] === 0) {
             return 0.0;
         }
         return $this->damage($u, $t, $m, false)[0] * Formulas::accuracy($m['accuracy'], $u->stages['acc'], $t->stages['eva']) / 255;

@@ -63,7 +63,8 @@ data/beasts.php    the beasts, as the classic has them (kind, range, mountain, l
                    (elements with why, tier, stats, catch rate, base experience, growth)
 docs/bestiary.md   the catalogue: what is in, what is still to be checked, what is still to be read
 data/maps/*.php    a map each: rows of tiles, warps, signs, NPCs and triggers with their scripts
-tools/             simulate.php (every beast against every other: win rates by beast, tier, element), matchups.php (element against element)
+tools/             simulate.php (every beast against every other: win rates by beast, tier, element), matchups.php (element against
+                   element), parties.php (random parties against one another, with switching)
 docs/balance.md    what the simulator shows, what was changed for it, what is still open
 tests/             php tests/run.php [name]: world, script, data, formulas (each rule against a value worked out by hand),
                    battle (turns with scripted rolls); check()/same(), no PHPUnit
