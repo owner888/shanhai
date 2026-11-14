@@ -210,5 +210,35 @@ foreach (array_keys($elements) as $e) {
     check(count($powers) >= 7 && $powers[0] === 40 && end($powers) >= 110, "$e has seven moves or more that do damage, from 40 to 110 or more: " . implode(' ', $powers));
 }
 
+// What each beast learns (data/learnsets.php).
+$learnsets = Data::learnsets();
+same(array_keys($beasts), array_keys($learnsets), 'every beast has its moves to learn, in the beasts\' order');
+$learnedBy = [];
+foreach ($learnsets as $id => $set) {
+    $at = 0; $seen = []; $first = []; $own = false;
+    $main = $beasts[$id]['elements'][0];
+    foreach ($set as [$level, $move]) {
+        check(isset($moves[$move]), "$id learns a move there is: $move");
+        check($level >= $at && $level >= 1 && $level <= 60, "$id learns $move in its turn, from level 1 to 60");
+        check(!isset($seen[$move]), "$id learns $move once");
+        [$at, $seen[$move]] = [$level, true];
+        $learnedBy[$move][] = $id;
+        $m = $moves[$move] ?? ['power' => 0, 'element' => null];
+        if ($level === 1) {
+            $first[] = $m['power'];
+        }
+        $own = $own || $m['power'] > 0 && $m['element'] === $main;
+        check(!isset($m['only']) || $m['only'] === $id, "$id learns no move that is only another's: $move");
+    }
+    check(count($set) >= 5, "$id learns five moves or more");
+    check(count($first) >= 2 && max($first) > 0, "$id starts with two moves or more, one that does damage");
+    check($own, "$id learns a move of its main element that does damage");
+}
+foreach ($moves as $id => $m) {
+    if (isset($m['only'])) {
+        same([$m['only']], $learnedBy[$id] ?? [], "the move $id is learned by the beast it is only for");
+    }
+}
+
 same(['你好，', '世界'], Text::wrap('你好，世界', 6), 'a CJK character takes two columns');
 same(['abc', 'def'], Text::wrap("abc\ndef", 10), 'a newline breaks');

@@ -24,7 +24,7 @@ Entry point for coding agents and contributors. `docs/rules.md` is the rule of t
 10. **A rule that can be a test is a test** (`tests/data_test.php` checks every map, script and beast as written):
     add the check with the rule, not a note to remember it.
 11. Delete dead code when you touch it; never comment it out.
-12. **The rules never draw, the drawing never rules**: `src/World`, `src/Script`, `src/Data.php`, `src/Elements.php`, `src/Text.php` and
+12. **The rules never draw, the drawing never rules**: `src/World`, `src/Script`, `src/Battle`, `src/Data.php`, `src/Elements.php`, `src/Text.php` and
     `data/` are PHP alone, with no MyPHP class, so the tests need no window; `src/Render` and `src/Play.php` read the
     World and decide nothing.
 13. Reuse MyPHP's own (`Plugins\Scene`, `Plugins\Game`) before writing anything beside it; what it lacks is fixed
@@ -46,6 +46,8 @@ src/load.php       the autoloader of Shanhai\ (src/)
 src/World/         the game outside battle, with no drawing: Dir, Tile (the characters maps are written in), Map,
                    Actor, Controls, World (step(): walking, turning, what blocks, warps, triggers, talking)
 src/Script/Vm.php  the event script interpreter: say, flags, jumps, face, move, warp, give; check() as written
+src/Battle/        the battle, with no drawing: Rng (bytes, from a seed or a test's script), Formulas (docs/numbers.md as code,
+                   a function a rule), Fighter, Battle (turn(): order, what stops a beast, a move, statuses, weather, switching)
 src/Text.php       the dialog box's measures and line breaking
 src/Data.php       reads data/
 src/Elements.php   what a move of one element does against a beast of others (double, even, half, in tenths)
@@ -55,11 +57,13 @@ data/game.php      where a new game starts
 data/elements.php  the five elements: what each overcomes and feeds, physical or special, its region
 data/tiers.php     the five tiers a beast's numbers are built in: bands measured from the reference's distribution
 data/moves.php     the moves: element (or none), power, accuracy, uses, effect, and what in the classic each comes from
+data/learnsets.php the moves each beast learns, by level
 data/beasts.php    the beasts, as the classic has them (kind, range, mountain, looks, sound, omen, lore), and the game's own
                    (elements with why, tier, stats, catch rate, base experience, growth)
 docs/bestiary.md   the catalogue: what is in, what is still to be checked, what is still to be read
 data/maps/*.php    a map each: rows of tiles, warps, signs, NPCs and triggers with their scripts
-tests/             php tests/run.php [name]: world, script, data (check()/same(), no PHPUnit)
+tests/             php tests/run.php [name]: world, script, data, formulas (each rule against a value worked out by hand),
+                   battle (turns with scripted rolls); check()/same(), no PHPUnit
 docs/rules.md      the rule of the game
 docs/roadmap.md    the order of the work, and when each step is done
 docs/numbers.md    the numbers' baseline: each formula and constant, and where it was read

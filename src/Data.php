@@ -39,6 +39,12 @@ final class Data
         return require self::DIR . '/moves.php';
     }
 
+    /** @return array<string, list<array{0: int, 1: string}>> beast id => its moves by level */
+    public static function learnsets(): array
+    {
+        return require self::DIR . '/learnsets.php';
+    }
+
     /** @return array<string, array> beast id => its entry */
     public static function beasts(): array
     {

@@ -1,0 +1,356 @@
+<?php
+declare(strict_types=1);
+
+namespace Shanhai\Battle;
+
+use InvalidArgumentException;
+use LogicException;
+use Shanhai\Elements;
+
+/**
+ * A battle between two parties, one beast of each out at a time, a turn at a time, with no drawing: turn() takes
+ * what each side does and writes what happened to $log. Its numbers are Formulas'; its order of events is
+ * docs/numbers.md 11. Random bytes are asked for in a fixed order, so a seed, or a test's script, replays a battle.
+ */
+final class Battle
+{
+    /** 11.2, 11.1: a random byte under these — is fully paralyzed; hits itself in confusion; goes first on a speed tie. */
+    public const PARALYZED = 63, HITS_ITSELF = 128, TIE_FIRST = 128;
+    /** The power of the blow a confused beast deals itself (docs/numbers.md 12: not read yet). */
+    public const CONFUSION_POWER = 40;
+    public const WEATHER_TURNS = 5;
+    /** 11.3: what the weather multiplies a move of an element by, in tenths. */
+    public const WEATHER = ['rain' => ['water' => 15, 'fire' => 5], 'sun' => ['fire' => 15, 'water' => 5], 'sandstorm' => []];
+    /** 11.3: the elements a sandstorm does not hurt. */
+    public const SANDSTORM_SPARES = ['earth', 'metal'];
+
+    /** @var array{0: int, 1: int} which of each party is out */
+    public array $active = [0, 0];
+    public ?string $weather = null;
+    public int $weatherLeft = 0;
+    public int $turns = 0;
+    /** 0 or 1, the side that won; -1 when the last of both fell in one turn; null while it goes on. */
+    public ?int $winner = null;
+    /** @var list<array> what happened, in order: [what, side, ...] */
+    public array $log = [];
+
+    private Elements $chart;
+
+    /**
+     * @param array{0: list<Fighter>, 1: list<Fighter>} $parties
+     * @param array<string, array> $elements data/elements.php
+     * @param array<string, array> $moves data/moves.php
+     */
+    public function __construct(public readonly array $parties, private readonly array $elements, private readonly array $moves, private readonly Rng $rng)
+    {
+        $this->chart = new Elements($elements);
+    }
+
+    public function fighter(int $side): Fighter
+    {
+        return $this->parties[$side][$this->active[$side]];
+    }
+
+    /** The moves the side's beast can still use, by their place among its four. @return list<int> */
+    public function usable(int $side): array
+    {
+        $out = [];
+        foreach ($this->fighter($side)->moves as $i => $m) {
+            if ($m['pp'] > 0) {
+                $out[] = $i;
+            }
+        }
+        return $out;
+    }
+
+    /**
+     * One turn. Each side's action is ['move', which of its four] or ['switch', which of its party].
+     * A beast with no move left to use passes, whatever it was told.
+     * @param array{0: string, 1: int} $a side 0's
+     * @param array{0: string, 1: int} $b side 1's
+     */
+    public function turn(array $a, array $b): void
+    {
+        if ($this->winner !== null) {
+            throw new LogicException('the battle is over');
+        }
+        $this->turns++;
+        $actions = [$a, $b];
+        // 11.1: switching comes before any move.
+        foreach ($actions as $side => [$what, $which]) {
+            if ($what === 'switch') {
+                $this->switchTo($side, $which);
+            } elseif ($what !== 'move') {
+                throw new InvalidArgumentException("no action '$what'");
+            }
+        }
+        $movers = array_keys(array_filter($actions, fn(array $x) => $x[0] === 'move'));
+        if (count($movers) === 2) {
+            [$s0, $s1] = [$this->fighter(0)->stat('spe'), $this->fighter(1)->stat('spe')];
+            $first = $s0 === $s1 ? ($this->rng->byte() < self::TIE_FIRST ? 0 : 1) : ($s0 > $s1 ? 0 : 1);
+            $movers = [$first, 1 - $first];
+        }
+        foreach ($movers as $i => $side) {
+            if ($this->fighter($side)->fainted() || $this->fighter(1 - $side)->fainted()) {
+                continue;
+            }
+            $this->act($side, $actions[$side][1], $i === 0 && count($movers) === 2);
+            $this->residual($side);
+        }
+        foreach ([0, 1] as $side) {
+            $this->fighter($side)->flinched = false;
+        }
+        $this->endWeather();
+        $this->replaceFallen();
+    }
+
+    private function switchTo(int $side, int $which): void
+    {
+        $next = $this->parties[$side][$which] ?? throw new InvalidArgumentException("side $side has no beast $which");
+        if ($which === $this->active[$side] || $next->fainted()) {
+            throw new InvalidArgumentException("side $side cannot switch to beast $which");
+        }
+        $this->fighter($side)->leave();
+        $this->active[$side] = $which;
+        $this->log[] = ['switch', $side, $which];
+    }
+
+    /** The side's beast takes its turn: what may stop it, then its move. $foeYetToAct: the other has not moved this turn, so it can flinch. */
+    private function act(int $side, int $which, bool $foeYetToAct): void
+    {
+        $u = $this->fighter($side);
+        $t = $this->fighter(1 - $side);
+        // 11.2, in this order: sleep, flinch, confusion, paralysis.
+        if ($u->status === 'sleep') {
+            if (--$u->sleep > 0) {
+                $this->log[] = ['cant', $side, 'sleep'];
+                return;
+            }
+            $u->status = null;
+            $this->log[] = ['woke', $side];
+        }
+        if ($u->flinched) {
+            $this->log[] = ['cant', $side, 'flinch'];
+            return;
+        }
+        if ($u->confused > 0) {
+            if (--$u->confused === 0) {
+                $this->log[] = ['clear', $side];
+            } elseif ($this->rng->byte() < self::HITS_ITSELF) {
+                $n = $this->hurt($u, Formulas::damage($u->level, self::CONFUSION_POWER, $u->stat('atk'), $u->stat('def'), false));
+                $this->log[] = ['hurt', $side, $n, 'confusion'];
+                return;
+            }
+        }
+        if ($u->status === 'paralyze' && $this->rng->byte() < self::PARALYZED) {
+            $this->log[] = ['cant', $side, 'paralyze'];
+            return;
+        }
+        if ($this->usable($side) === []) {
+            $this->log[] = ['cant', $side, 'no moves'];
+            return;
+        }
+        $slot = $u->moves[$which] ?? throw new InvalidArgumentException("side $side's beast has no move $which");
+        if ($slot['pp'] === 0) {
+            throw new InvalidArgumentException("side $side's move $which has no uses left");
+        }
+        $u->moves[$which]['pp']--;
+        $m = $this->moves[$slot['id']];
+        $this->log[] = ['use', $side, $slot['id']];
+        [$effect, $chance] = $m['effect'] ?? [null, 0];
+
+        // 3 and 4: the damage, worked out before the move is known to hit.
+        $damage = 0;
+        $critical = false;
+        $tenths = [];
+        if ($m['power'] > 0) {
+            $physical = $m['element'] === null || $this->elements[$m['element']]['category'] === 'physical';
+            [$atk, $def] = $physical ? ['atk', 'def'] : ['spa', 'spd'];
+            $critical = $this->rng->byte() < Formulas::CRITICAL[$effect === 'crit' ? 2 : 0];
+            // 3.1: a critical hit takes both stats as they are without stages, when the defender's stage is not below the attacker's.
+            $raw = $critical && $t->stages[$def] >= $u->stages[$atk];
+            $damage = Formulas::damage($u->level, $m['power'], $raw ? $u->stats[$atk] : $u->stat($atk), $raw ? $t->stats[$def] : $t->stat($def), $critical);
+            if ($m['element'] !== null) {
+                $weather = self::WEATHER[$this->weather ?? ''][$m['element']] ?? null;
+                if ($weather !== null) {
+                    $damage = Formulas::times($damage, $weather);
+                }
+                if (in_array($m['element'], $u->species['elements'], true)) {
+                    $damage = Formulas::sameElement($damage);
+                }
+                $tenths = $this->chart->factors($m['element'], $t->species['elements']);
+                foreach ($tenths as $f) {
+                    $damage = Formulas::times($damage, $f);
+                }
+            }
+            if ($damage >= 2) {
+                $damage = Formulas::vary($damage, Formulas::varyRoll($this->rng));
+            }
+        }
+
+        // 6: whether it hits. What a beast does to itself, or to the weather, does not miss.
+        $onFoe = $m['power'] > 0 || !in_array($effect, ['rain', 'sun', 'sandstorm', 'heal'], true) && !str_starts_with((string)$effect, 'up:');
+        if ($onFoe) {
+            $accuracy = Formulas::accuracy($m['accuracy'], $u->stages['acc'], $t->stages['eva']);
+            if ($accuracy < 255 && $this->rng->byte() >= $accuracy) {
+                $this->log[] = ['miss', $side];
+                return;
+            }
+        }
+        if ($m['power'] > 0) {
+            $dealt = $this->hurt($t, $damage);
+            $this->log[] = ['hit', 1 - $side, $dealt, $critical, $tenths];
+            if ($effect === 'drain') {
+                $this->heal($u, max(1, intdiv($dealt, 2)), $side);
+            }
+            if ($t->fainted()) {
+                $this->log[] = ['faint', 1 - $side];
+            }
+        }
+        if ($effect === null || $effect === 'crit' || $effect === 'drain') {
+            return;
+        }
+        if ($chance < 100 && $this->rng->byte() >= Formulas::chance($chance)) {
+            return;
+        }
+        $this->effect($side, $effect, $foeYetToAct, $m['power'] === 0);
+    }
+
+    /** What a move does besides damage. $told: the effect is the whole move, so its failing is said. */
+    private function effect(int $side, string $effect, bool $foeYetToAct, bool $told): void
+    {
+        $u = $this->fighter($side);
+        $t = $this->fighter(1 - $side);
+        $done = false;
+        switch (true) {
+            case in_array($effect, ['burn', 'poison', 'paralyze', 'sleep'], true):
+                if (!$t->fainted() && $t->status === null) {
+                    $t->status = $effect;
+                    if ($effect === 'sleep') {
+                        do { // 11.2: 2 to 7
+                            $n = $this->rng->byte() & 7;
+                        } while ($n === 0 || $n === 7);
+                        $t->sleep = $n + 1;
+                    }
+                    $this->log[] = ['status', 1 - $side, $effect];
+                    $done = true;
+                }
+                break;
+            case $effect === 'confuse':
+                if (!$t->fainted() && $t->confused === 0) {
+                    $t->confused = ($this->rng->byte() & 3) + 2; // 11.2: 2 to 5
+                    $this->log[] = ['status', 1 - $side, 'confuse'];
+                    $done = true;
+                }
+                break;
+            case $effect === 'flinch':
+                $t->flinched = $foeYetToAct && !$t->fainted();
+                $done = true;
+                break;
+            case isset(self::WEATHER[$effect]):
+                if ($this->weather !== $effect) {
+                    [$this->weather, $this->weatherLeft] = [$effect, self::WEATHER_TURNS];
+                    $this->log[] = ['weather', $side, $effect];
+                    $done = true;
+                }
+                break;
+            case $effect === 'heal':
+                if ($u->hp < $u->maxHp) {
+                    $this->heal($u, intdiv($u->maxHp, 2), $side);
+                    $done = true;
+                }
+                break;
+            default:
+                [$way, $stat, $by] = explode(':', $effect);
+                $who = $way === 'up' ? $u : $t;
+                $to = max(-6, min(6, $who->stages[$stat] + ($way === 'up' ? (int)$by : -(int)$by)));
+                if (!$who->fainted() && $to !== $who->stages[$stat]) {
+                    $who->stages[$stat] = $to;
+                    $this->log[] = ['stage', $way === 'up' ? $side : 1 - $side, $stat, $to];
+                    $done = true;
+                }
+        }
+        if (!$done && $told) {
+            $this->log[] = ['fail', $side];
+        }
+    }
+
+    /** 11.2: what poison and burn take at the end of a beast's turn. */
+    private function residual(int $side): void
+    {
+        $u = $this->fighter($side);
+        if (!$u->fainted() && ($u->status === 'poison' || $u->status === 'burn')) {
+            $this->log[] = ['hurt', $side, $this->hurt($u, max(1, intdiv($u->maxHp, 8))), $u->status];
+            if ($u->fainted()) {
+                $this->log[] = ['faint', $side];
+            }
+        }
+    }
+
+    /** 11.3: the weather's turn passes; a sandstorm hurts those it does not spare. */
+    private function endWeather(): void
+    {
+        if ($this->weather === null) {
+            return;
+        }
+        if (--$this->weatherLeft === 0) {
+            $this->log[] = ['weather', null, null];
+            $this->weather = null;
+            return;
+        }
+        if ($this->weather !== 'sandstorm') {
+            return;
+        }
+        foreach ([0, 1] as $side) {
+            $f = $this->fighter($side);
+            if (!$f->fainted() && array_intersect($f->species['elements'], self::SANDSTORM_SPARES) === []) {
+                $this->log[] = ['hurt', $side, $this->hurt($f, max(1, intdiv($f->maxHp, 8))), 'sandstorm'];
+                if ($f->fainted()) {
+                    $this->log[] = ['faint', $side];
+                }
+            }
+        }
+    }
+
+    /** A side whose beast fell sends its next that can fight; one with none left has lost. */
+    private function replaceFallen(): void
+    {
+        $out = [];
+        foreach ([0, 1] as $side) {
+            if (!$this->fighter($side)->fainted()) {
+                continue;
+            }
+            $next = null;
+            foreach ($this->parties[$side] as $i => $f) {
+                if (!$f->fainted()) {
+                    $next = $i;
+                    break;
+                }
+            }
+            if ($next === null) {
+                $out[] = $side;
+            } else {
+                $this->fighter($side)->leave();
+                $this->active[$side] = $next;
+                $this->log[] = ['switch', $side, $next];
+            }
+        }
+        if ($out !== []) {
+            $this->winner = count($out) === 2 ? -1 : 1 - $out[0];
+        }
+    }
+
+    private function hurt(Fighter $f, int $n): int
+    {
+        $dealt = min($f->hp, $n);
+        $f->hp -= $dealt;
+        return $dealt;
+    }
+
+    private function heal(Fighter $f, int $n, int $side): void
+    {
+        $gain = min($f->maxHp - $f->hp, $n);
+        $f->hp += $gain;
+        $this->log[] = ['heal', $side, $gain];
+    }
+}
