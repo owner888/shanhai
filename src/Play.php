@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Shanhai;
 
 use MyPHP\Device;
-use MyPHP\Plugins\Game\{Game, Input, ScreenTransition, VirtualPad};
+use MyPHP\Plugins\Game\{Game, GameAudio, Input, ScreenTransition, VirtualPad};
 use MyPHP\Plugins\Game\Gamepad\{Button, Gamepad, State};
 use MyPHP\UI\{Canvas, Key, Node, Painter};
 use Shanhai\Battle\{Formulas, Screen};
@@ -17,7 +17,8 @@ use Shanhai\World\{Controls, Dir, World};
  * its Arena, the two beasts' boxes, the line or the list. The rules are the World's: nothing here decides them.
  * A change of map, and a battle's beginning and end, are shown by MyPHP's ScreenTransition: the World has changed
  * already, and waits, not stepped, while the screen closes on what was and opens on what is. On a device with no
- * keys, MyPHP's VirtualPad gives the keys this reads.
+ * keys, MyPHP's VirtualPad gives the keys this reads. A battle's line that tells of something to show (Screen::$cue)
+ * is passed to the Arena once, and sounded with a tone of MyPHP's GameAudio; a critical hit stops the game a moment.
  */
 final class Play extends Game
 {
@@ -33,6 +34,21 @@ final class Play extends Game
     private const STICK = 0.5;
     /** Seconds a change of map takes to close and open, and a battle's beginning. */
     private const FADE_SECONDS = 0.4, ENCOUNTER_SECONDS = 0.55;
+    /** Updates the game stops for when a critical hit lands. */
+    private const CRITICAL_STOP = 3;
+    /** The tones, made by GameAudio: [from Hz, to Hz, seconds, square wave]. */
+    private const TONES = [
+        'cursor' => [880.0, 880.0, 0.04, true],
+        'use' => [300.0, 520.0, 0.12, false],
+        'hit' => [220.0, 80.0, 0.14, true],
+        'critical' => [440.0, 60.0, 0.22, true],
+        'faint' => [300.0, 60.0, 0.35, false],
+        'heal' => [520.0, 780.0, 0.18, false],
+        'seal' => [500.0, 700.0, 0.10, false],
+        'broke' => [400.0, 200.0, 0.16, true],
+        'caught' => [660.0, 1320.0, 0.35, false],
+        'level' => [523.0, 1046.0, 0.30, false],
+    ];
     /** The 3D view's size in pixels, shown at the window's size. */
     private const VIEW_WIDTH = 960, VIEW_HEIGHT = 720;
 
@@ -44,6 +60,11 @@ final class Play extends Game
     private int $seenMap;
     private ScreenTransition $transition;
     private VirtualPad $pad;
+    private GameAudio $audio;
+    /** The count of the battle's lines whose cue has been acted on. */
+    private int $cued = 0;
+    /** Which list shows and where its cursor is, to sound its moving. */
+    private ?string $cursorAt = null;
     /** The key walked by, which goes on while held, whatever else is pressed after it is not. */
     private ?int $walkKey = null;
     private State $lastPad;
@@ -57,6 +78,10 @@ final class Play extends Game
         $this->lastPad = new State();
         $this->transition = new ScreenTransition();
         $this->pad = new VirtualPad(enabled: !Device::isDesktop());
+        $this->audio = new GameAudio();
+        foreach (self::TONES as $name => [$from, $to, $seconds, $square]) {
+            $this->audio->registerTone($name, $from, $to, $seconds, $square);
+        }
     }
 
     public function update(Input $in): void
@@ -66,7 +91,39 @@ final class Play extends Game
         if (!$this->transition->active) {
             $this->play($in);
         }
-        ($this->arena ?? $this->stage)->scene->step(1.0 / $this->rate());
+        $dt = 1.0 / $this->rate();
+        $this->audio->step($dt);
+        if ($this->arena !== null) {
+            $this->arena->step($dt);
+        } else {
+            $this->stage->scene->step($dt);
+        }
+    }
+
+    /** A beast is struck in the Arena: the tone of it, and for a critical hit the game stops a moment. */
+    private function struck(bool $critical): void
+    {
+        $this->audio->playSfx($critical ? 'critical' : 'hit');
+        if ($critical) {
+            $this->hitStop(self::CRITICAL_STOP);
+        }
+    }
+
+    /** Sounds the cursor of the list showing when it has moved. */
+    private function cursor(): void
+    {
+        $w = $this->world;
+        $at = match (true) {
+            $w->battle !== null => $w->battle->phase === 'text' ? null : $w->battle->phase . $w->battle->cursor->at,
+            $w->choices !== null => 'ask' . $w->choiceCursor->at,
+            $w->menu !== null => $w->menu->phase . $w->menu->at(),
+            default => null,
+        };
+        // the same list, its cursor elsewhere: a list just opened makes no sound
+        if ($at !== null && $this->cursorAt !== null && $at !== $this->cursorAt && rtrim($at, '0123456789') === rtrim($this->cursorAt, '0123456789')) {
+            $this->audio->playSfx('cursor');
+        }
+        $this->cursorAt = $at;
     }
 
     /** Steps the World with what the player asks, and begins a transition when what is to be shown has changed. */
@@ -116,7 +173,8 @@ final class Play extends Game
         if ($battle !== null && $this->arena === null) {
             // a battle has begun: the flashes and blinds of an encounter, the Arena behind them when they are shut
             $this->transition->start(ScreenTransition::BATTLE_BLINDS, self::ENCOUNTER_SECONDS, onMidpoint: function () use ($battle): void {
-                $this->arena = new Arena($battle);
+                $this->arena = new Arena($battle, $this->struck(...));
+                $this->cued = $battle->lines; // the lines it opens with tell of nothing to show
             });
         } elseif (($battle === null && $this->arena !== null) || $this->world->mapChanges !== $this->seenMap) {
             // a battle has ended, or the map is another: a fade, the new Stage behind it when it is dark
@@ -128,8 +186,18 @@ final class Play extends Game
                 }
             });
         } elseif ($battle !== null) {
+            if ($battle->lines !== $this->cued) {
+                $this->cued = $battle->lines;
+                if ($battle->cue !== null) {
+                    $this->arena->cue($battle->cue);
+                    if (isset(self::TONES[$battle->cue['what']])) {
+                        $this->audio->playSfx($battle->cue['what']);
+                    }
+                }
+            }
             $this->arena->sync($battle);
         }
+        $this->cursor();
     }
 
     public function draw(Painter $p, array $r, float $alpha): void

@@ -64,9 +64,11 @@ src/Data.php       reads data/
 src/Elements.php   what a move of one element does against a beast of others (double, even, half, in tenths)
 src/Render/Stage.php  a map's 3D scene: the ground and the walls as meshes of the faces that can be seen (faces()),
                    instanced trees, grass, rocks, signs, the actors' figures, the fixed camera
-src/Render/Arena.php  a battle's 3D scene: the ground, the two beasts' figures, a camera that does not move
+src/Render/Arena.php  a battle's 3D scene: the ground, the two beasts' figures on MyPHP's Animator3D, its camera shake
+                   and particles for what the Screen's cue tells of; a camera that does not otherwise move
 src/Play.php       MyPHP's Game: keys and gamepad into Controls, World::step, draws the Stage and the dialog box,
-                   or a battle's Arena, boxes, line and lists; MyPHP's ScreenTransition between them, its VirtualPad
+                   or a battle's Arena, boxes, line and lists; MyPHP's ScreenTransition between them, its VirtualPad,
+                   its GameAudio's tones
 data/game.php      where a new game starts, where the player wakes after a battle is lost, what is asked when a game is saved
 data/gods.php      the gods that keep the ranges: what a beast's entry has to fight with, and the classic's line
 data/items.php     the things a bag holds: the seal that binds a wild beast
@@ -112,6 +114,8 @@ docs/elements.md   the elements' table and how a beast's elements are settled
   across the view while walking. Blocks on the grid are built as faces; things that stand apart are instanced.
 - **Tall grass holds wild beasts**, and scree on the mountains the classic gives no grass (`World::grass`, docs/numbers.md 13): a step onto it, after the first four on a map
   or after a battle, rolls against the map's rate, then for one of its seven; each lives on the map's own mountain.
+- **A battle's line has a cue** (`Screen::$cue`: use, hit, hurt, faint, caught, ...): the rules say what happened, and
+  Play passes it once to the Arena and the tones. The drawing never reads the lines' words.
 - **A trial** (`World::trial`, the script's `trial`) is a battle against the beasts of the one who sets it, a god
   among them fighting as a beast does: not fled, none bound, experience at each fall and half as much again.
 - **A range is a gym** (docs/numbers.md 14): its wild beasts' levels and its god's trial are those of the reference's

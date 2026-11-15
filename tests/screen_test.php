@@ -501,3 +501,35 @@ for ($i = 0; $w->battle !== null && $i < 4000; $i++) {
 }
 same(['lost', 'hut', 'awake'], [$w->lastBattle, $w->map->id, $w->dialog], 'lost: the player wakes where the game rests them, and the script is dropped');
 check(throws(fn() => \Shanhai\Script\Vm::check([['trial', '山神', []]])) && throws(fn() => \Shanhai\Script\Vm::check([['trial', '山神', [['xingxing']]]])), 'a trial with no beasts, or a beast with no level, is refused');
+
+// Cues: what a line tells of, for what draws and sounds the battle. A hit comes with the line of the move that made it.
+$s = $screen([['lushu', 30]], ['xingxing', 30], Rng::seeded(21));
+$s->battle->fighter(0)->moves = $s->battle->fighter(1)->moves = [['id' => 'ram', 'pp' => 5]];
+same([null, 1], [$s->cue, $s->lines], 'a line that tells of nothing to show has no cue; the lines are counted');
+foreach ([$confirm, $confirm, $confirm, $confirm] as $c) { // the two lines; the menu's first entry; the first move
+    $s->step($c);
+}
+$uses = [];
+$read = 0;
+while ($s->phase === 'text') {
+    $read++;
+    if (($s->cue['what'] ?? null) === 'use') {
+        $uses[] = $s->cue + ['line' => $s->line];
+    }
+    $s->step($confirm);
+}
+same([0, 1], [min(array_column($uses, 'side')), max(array_column($uses, 'side'))], 'each side\'s move has its cue, saying whose it is');
+foreach ($uses as $u) {
+    check(str_contains($u['line'], '使出了') && in_array($u['hit'], [1 - $u['side'], null], true) && is_bool($u['critical']), 'it comes with the line of the move, and says whom it struck, if any, and whether critically: ' . $u['line']);
+}
+check(array_filter(array_column($uses, 'hit'), 'is_int') !== [], 'a move that hits says so');
+same([null, 2 + $read], [$s->cue, $s->lines], 'with the menu back there is no cue, and every line was counted');
+$rng = Rng::scripted([0]);
+$bag = ['seal' => 1];
+$s = $screen([['lushu', 5]], ['xingxing', 4], $rng, $bag);
+foreach ([$confirm, $confirm, $down, $none, $down, $confirm, $confirm] as $c) {
+    $s->step($c);
+}
+same(['使用了契印！', ['what' => 'seal']], [$s->line, $s->cue], 'a seal thrown has its cue');
+$s->step($confirm);
+same(['what' => 'caught'], $s->cue, 'and so has the beast bound');

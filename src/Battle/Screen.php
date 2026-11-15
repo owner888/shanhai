@@ -32,13 +32,21 @@ final class Screen
     public ?string $line = null;
     /** @var array{0: array{which: int, hp: int, status: ?string, level: int, exp: int}, 1: array} what is shown of each side: which beast, and its hp, status, level and experience */
     public array $shown;
+    /**
+     * What the line showing tells of, for what draws the battle and sounds it; null for a line that tells of nothing
+     * to show. 'what' is: use (a beast, 'side', makes its move; with 'hit' the side struck, or null, and 'critical'),
+     * hurt, heal, faint, switch ('side' in each), seal, broke, caught, level.
+     */
+    public ?array $cue = null;
+    /** How many lines have shown: it rises with each, so that a cue is acted on once. */
+    public int $lines = 0;
     /** won, lost, fled or caught, once it is known; $done when its last line has been read. */
     public ?string $outcome = null;
     /** The wild beast, once a seal has bound it. */
     public ?Fighter $caught = null;
     public bool $done = false;
 
-    /** @var list<array{0: string, 1: array}> the lines still to read, each with what is shown once it is */
+    /** @var list<array{0: string, 1: array, 2: ?array}> the lines still to read, each with what is shown once it is, and its cue */
     private array $queue = [];
     private int $fleeTries = 0;
     /** @var array<int, true> the player's beasts that have been out against the wild one, by their place in the party */
@@ -122,7 +130,7 @@ final class Screen
 
     private function open(string $phase): void
     {
-        [$this->phase, $this->cursor, $this->line] = [$phase, new Cursor(), null];
+        [$this->phase, $this->cursor, $this->line, $this->cue] = [$phase, new Cursor(), null, null];
     }
 
     private function chosen(string $what): void
@@ -207,7 +215,7 @@ final class Screen
                 if ($out) {
                     [$shown[0]['hp'], $shown[0]['level']] = [$hp[0][$i], $f->level];
                 }
-                $this->say($f->species['name'] . '升到了' . $to . '级！', $shown);
+                $this->say($f->species['name'] . '升到了' . $to . '级！', $shown, ['what' => 'level']);
                 foreach ($f->learnable($from, $to) as $move) {
                     $this->toLearn[] = [$i, $move];
                 }
@@ -272,12 +280,12 @@ final class Screen
         }
         $foe = $this->battle->fighter(1);
         $name = $foe->species['name'];
-        $this->say('使用了' . $thing['name'] . '！');
+        $this->say('使用了' . $thing['name'] . '！', null, ['what' => 'seal']);
         // docs/numbers.md 8: a byte not over what the catch needs binds it.
         $needs = Formulas::catchValue($foe->species['catch'], $foe->maxHp, $foe->hp, $foe->status);
         if ($this->rng->byte() <= $needs) {
             [$this->outcome, $this->caught] = ['caught', $foe];
-            $this->say('结契成功！' . $name . '成了你的同伴！');
+            $this->say('结契成功！' . $name . '成了你的同伴！', null, ['what' => 'caught']);
             $this->next();
             return;
         }
@@ -287,7 +295,7 @@ final class Screen
         while ($held < 3 && $this->rng->byte() < $limit) {
             $held++;
         }
-        $this->say(sprintf(self::BROKE[$held], $name));
+        $this->say(sprintf(self::BROKE[$held], $name), null, ['what' => 'broke']);
         $this->turn(['pass', 0]);
     }
 
@@ -357,7 +365,7 @@ final class Screen
         $name = fn(int $side) => ($side === 1 && $this->trial === null ? '野生的' : '') . $b->parties[$side][$shown[$side]['which']]->species['name'];
         foreach ($events as $e) {
             $side = $e[1];
-            $line = null;
+            $line = $cue = null;
             switch ($e[0]) {
                 case 'switch':
                     $next = $b->parties[$side][$e[2]];
@@ -367,6 +375,7 @@ final class Screen
                         $this->fought[$e[2]] = true;
                     }
                     $line = ($side === 0 ? '去吧，' : ($this->trial ?? '对手') . '派出了') . $b->parties[$side][$e[2]]->species['name'] . '！';
+                    $cue = ['what' => 'switch', 'side' => $side];
                     break;
                 case 'cant':
                     $line = $name($side) . match ($e[2]) {
@@ -382,13 +391,14 @@ final class Screen
                     break;
                 case 'use':
                     $line = $name($side) . '使出了' . $this->moves[$e[2]]['name'] . '！';
+                    $cue = ['what' => 'use', 'side' => $side, 'hit' => null, 'critical' => false];
                     break;
                 case 'miss':
                     $line = '没有打中！';
                     break;
                 case 'hit':
                     $shown[$side]['hp'] = $hp[$side][$shown[$side]['which']] -= $e[2];
-                    $this->amend($shown);
+                    $this->amend($shown, $side, $e[3]);
                     if ($e[3]) {
                         $this->say('击中了要害！', $shown);
                     }
@@ -401,13 +411,15 @@ final class Screen
                         'confusion' => $name($side) . '在混乱中伤到了自己！', 'poison' => $name($side) . '受到毒的侵蚀！',
                         'burn' => $name($side) . '被灼伤折磨着！', 'sandstorm' => '风沙打在' . $name($side) . '身上！',
                     };
+                    $cue = ['what' => 'hurt', 'side' => $side];
                     break;
                 case 'heal':
                     $shown[$side]['hp'] = $hp[$side][$shown[$side]['which']] += $e[2];
                     $line = $name($side) . '恢复了体力！';
+                    $cue = ['what' => 'heal', 'side' => $side];
                     break;
                 case 'faint':
-                    $this->say($name($side) . '倒下了！', $shown);
+                    $this->say($name($side) . '倒下了！', $shown, ['what' => 'faint', 'side' => $side]);
                     if ($side === 1) {
                         $this->reward($b->parties[1][$shown[1]['which']], $hp, $shown);
                     }
@@ -435,7 +447,7 @@ final class Screen
                     throw new LogicException("the battle wrote '{$e[0]}', which has no line");
             }
             if ($line !== null) {
-                $this->say($line, $shown);
+                $this->say($line, $shown, $cue);
             }
         }
     }
@@ -453,15 +465,19 @@ final class Screen
         return $this->queue === [] ? $this->shown : end($this->queue)[1];
     }
 
-    private function say(string $line, ?array $shown = null): void
+    private function say(string $line, ?array $shown = null, ?array $cue = null): void
     {
-        $this->queue[] = [$line, $shown ?? $this->shownLast()];
+        $this->queue[] = [$line, $shown ?? $this->shownLast(), $cue];
     }
 
-    /** What an event with no line of its own shows comes with the line before it. */
-    private function amend(array $shown): void
+    /** What an event with no line of its own shows comes with the line before it: a hit, with the line of the move that made it. */
+    private function amend(array $shown, int $struck, bool $critical): void
     {
-        $this->queue[array_key_last($this->queue)][1] = $shown;
+        $last = array_key_last($this->queue);
+        $this->queue[$last][1] = $shown;
+        if (($this->queue[$last][2]['what'] ?? null) === 'use') {
+            [$this->queue[$last][2]['hit'], $this->queue[$last][2]['critical']] = [$struck, $critical];
+        }
     }
 
     /**
@@ -471,8 +487,9 @@ final class Screen
     private function next(): void
     {
         if ($this->queue !== []) {
-            [$this->line, $this->shown] = array_shift($this->queue);
+            [$this->line, $this->shown, $this->cue] = array_shift($this->queue);
             $this->phase = 'text';
+            $this->lines++;
         } elseif ($this->toLearn !== []) {
             [$i, $move] = $this->toLearn[0];
             $f = $this->battle->parties[0][$i];
