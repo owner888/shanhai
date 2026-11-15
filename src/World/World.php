@@ -338,13 +338,13 @@ final class World
     }
 
     /**
-     * A step taken in tall grass may meet a wild beast (docs/numbers.md 13): not on the first steps after entering the
+     * A step taken where wild beasts are (tall grass; scree, on the mountains with no grass) may meet one (docs/numbers.md 13): not on the first steps after entering the
      * map or a battle; then a byte under the map's rate; then which of its seven. With no beast that can fight, none is met.
      */
     private function grass(): void
     {
         $wild = $this->map->wild;
-        if ($wild === null || Tile::name($this->map->tile($this->player->x, $this->player->y)) !== 'tallGrass'
+        if ($wild === null || !Tile::wild($this->map->tile($this->player->x, $this->player->y))
             || array_filter($this->party, fn(Fighter $f) => !$f->fainted()) === []) {
             return;
         }

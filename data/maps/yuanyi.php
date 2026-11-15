@@ -23,16 +23,11 @@ return [
         '~~~~~~~~~~~~~~~~~~~~',
         '~~~~~~~~~~~~~~~~~~~~',
     ],
-    // West to 堂庭之山. East is 杻阳之山, whose map is yet to be made: the traveler stands in the road.
-    'exits' => ['left' => ['tangting', 0]],
+    // West to 堂庭之山, east to 杻阳之山.
+    'exits' => ['left' => ['tangting', 0], 'right' => ['niuyang', 0]],
     'signs' => [
         [9, 6, [
             ['say', '猨翼之山 —— 多怪兽、怪蛇、怪木，不可以上'],
-        ]],
-    ],
-    'npcs' => [
-        ['traveler', 19, 7, 'left', 'guard', [
-            ['say', '再往东是杻阳之山，前面的路被山石堵住了，改日再来吧。'],
         ]],
     ],
     // The tall grass: 蝮虫, the one beast of this mountain the classic names.

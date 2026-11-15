@@ -1,0 +1,33 @@
+<?php
+// 柢山, three hundred li east of 杻阳之山. The classic: much water, no grass or trees; 鯥 lives there, on the mounds.
+// So the map has neither: bare ground, water, and the scree where 鯥 is met.
+declare(strict_types=1);
+
+return [
+    'id' => 'dishan',
+    'name' => '柢山',
+    'rows' => [
+        '^^^^^^^^^^^^^^^^^^^^',
+        '^~~~--::::--~~~~--^^',
+        '^~~--::::::--~~~--^^',
+        '^---:::::::---~~---^',
+        '^----::::----------^',
+        '^------------~~~---^',
+        '^-----------~~~~~--^',
+        '====================',
+        '^--~~~-------------^',
+        '^-~~~~~---::::-----^',
+        '^--~~~---::::::--~~^',
+        '^-------:::::::-~~~^',
+        '^^------::::::-~~~~^',
+        '^^^^^^^^^^^^^^^^^^^^',
+    ],
+    'exits' => ['left' => ['niuyang', 0], 'right' => ['danyuan', 0]],
+    'signs' => [
+        [9, 6, [
+            ['say', '柢山 —— 多水，无草木'],
+        ]],
+    ],
+    // The scree: 鯥, the one beast the classic gives this mountain.
+    'wild' => ['rate' => 10, 'slots' => [[10, 'lu'], [11, 'lu'], [12, 'lu'], [11, 'lu'], [13, 'lu'], [12, 'lu'], [13, 'lu']]],
+];

@@ -12,7 +12,7 @@ $book = ['beasts' => Data::beasts(), 'learnsets' => Data::learnsets(), 'moves' =
     'rest' => ['map' => 'hut', 'x' => 1, 'y' => 0, 'dir' => 'up', 'script' => [['say', 'awake']]]];
 $fighter = fn(string $id, int $level) => new Fighter($id, $book['beasts'][$id], $level, $book['learnsets'][$id], $book['moves']);
 $screen = function (array $mine, array $wild, Rng $rng, array &$bag = []) use ($book, $fighter): Screen {
-    $party = array_map(fn(array $x) => $fighter(...$x), $mine);
+    $party = array_map(fn(array|Fighter $x) => $x instanceof Fighter ? $x : $fighter(...$x), $mine);
     return new Screen(new Battle([$party, [$fighter(...$wild)]], $book['elements'], $book['moves'], $rng, [true, false]), $book['moves'], $rng, $book['items'], $bag);
 };
 $confirm = new Controls(confirm: true);
@@ -109,8 +109,9 @@ $slow = $fighter('lu', 5)->stats['spe'];
 $fast = $fighter('xingxing', 20)->stats['spe'];
 $limit = intdiv($slow * 32, intdiv($fast, 4));
 check($limit < 225, "the limit of the first try leaves room to fail: $limit");
-$rng = Rng::scripted([$limit + 1, 0]); // the flee fails; the wild beast uses its first move, 善走, which asks for no roll
+$rng = Rng::scripted([$limit + 1, 0]); // the flee fails; the wild beast uses its first move
 $s = $screen([['lu', 5]], ['xingxing', 20], $rng);
+$s->battle->fighter(1)->moves = [['id' => 'swift', 'pp' => 5]]; // 善走 alone, which asks for no roll
 foreach ([$confirm, $confirm, $down, $none, $down, $none, $down, $confirm] as $c) {
     $s->step($c);
 }
@@ -141,9 +142,9 @@ $outcomes = [];
 for ($seed = 1; $seed <= 150; $seed++) {
     $pick = Rng::seeded($seed * 7919);
     $any = fn(int $n) => $pick->byte() % $n;
-    $mine = [[$ids[$any(count($ids))], 30], [$ids[$any(count($ids))], 30]];
+    $mine = [[$ids[$any(count($ids))], 40], [$ids[$any(count($ids))], 40]];
     $bag = ['seal' => 2];
-    $s = $screen($mine, [$ids[$any(count($ids))], 30], Rng::seeded($seed), $bag);
+    $s = $screen($mine, [$ids[$any(count($ids))], 40], Rng::seeded($seed), $bag);
     for ($steps = 0; !$s->done && $steps < 4000; $steps++) {
         if ($s->phase === 'text') {
             $lines[$s->line] = true;
@@ -356,7 +357,9 @@ $win = function (Screen $s) use ($confirm, $none): array {
     }
     return $lines;
 };
-$s = $screen([['lushu', 5]], ['xingxing', 4], Rng::seeded(11));
+// The levels moves are learned at are the test's own here, so that data/learnsets.php can change without it.
+$grows = fn(int $level) => new Fighter('lushu', $book['beasts']['lushu'], $level, [[1, 'ram'], [1, 'spark'], [6, 'chant'], [11, 'redtail'], [16, 'stripes'], [21, 'flame'], [24, 'dust'], [27, 'drywind'], [30, 'swift'], [34, 'blaze'], [42, 'wildfire'], [46, 'sleepless'], [50, 'scorch']], $book['moves']);
+$s = $screen([$grows(5)], ['xingxing', 4], Rng::seeded(11));
 $f = $s->battle->parties[0][0];
 same([135, 23, 2], [$f->exp, $f->maxHp, count($f->moves)], '鹿蜀 at level 5: 135 experience, 23 hp, two moves');
 $lines = $win($s);
@@ -372,7 +375,7 @@ check($s->done, 'and the battle is done');
 // A beast that knows four moves is asked which to forget.
 $name = fn(string $id) => $book['moves'][$id]['name'];
 foreach ([[1, 'forgets its second'], [null, 'does not learn it']] as [$slot, $what]) {
-    $s = $screen([['lushu', 20]], ['xingxing', 3], Rng::seeded(11));
+    $s = $screen([$grows(20)], ['xingxing', 3], Rng::seeded(11));
     $f = $s->battle->parties[0][0];
     same(['spark', 'chant', 'redtail', 'stripes'], array_column($f->moves, 'id'), 'at level 20 it knows the last four it came to');
     $f->exp = \Shanhai\Battle\Formulas::expAtLevel('mediumSlow', 21) - 1;
@@ -415,7 +418,7 @@ foreach ([false, true] as $fell) {
 }
 
 // Many levels at once: the level is the one the experience makes, and every move on the way is come to, in order.
-$f = $fighter('lushu', 5);
+$f = $grows(5);
 [$from, $to] = $f->gain(100000, ['hp' => 0, 'atk' => 0, 'def' => 0, 'spa' => 0, 'spe' => 0]);
 same([5, \Shanhai\Battle\Formulas::levelAt('mediumSlow', 100135)], [$from, $to], 'from level 5 to the level 100135 experience makes');
 same(47, $to, 'which is level 47');

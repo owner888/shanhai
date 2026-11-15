@@ -104,7 +104,7 @@ docs/elements.md   the elements' table and how a beast's elements are settled
 - **No face lies hidden against another block** (`Stage::faces`): the ground was once a cube a tile, and the sides
   between tiles, exactly as near as the tops' shared edge, came through the depth test now and then as a dark line
   across the view while walking. Blocks on the grid are built as faces; things that stand apart are instanced.
-- **Tall grass holds wild beasts** (`World::grass`, docs/numbers.md 13): a step onto it, after the first four on a map
+- **Tall grass holds wild beasts**, and scree on the mountains the classic gives no grass (`World::grass`, docs/numbers.md 13): a step onto it, after the first four on a map
   or after a battle, rolls against the map's rate, then for one of its seven; each lives on the map's own mountain.
 - **A saved game** is `World::state()`: the map and place, flags, bag, and each beast's `Fighter::state()`. What does not
   fit the data it is read with throws; a new field means a new `Save::VERSION`.

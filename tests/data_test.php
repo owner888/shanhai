@@ -68,12 +68,53 @@ foreach ($maps as $map) {
     }
 }
 
+// Every map can be walked to from where a new game starts: over walkable tiles, through warps and exits.
+$game = require Data::DIR . '/game.php';
+$seen = [];
+$queue = [[$game['start']['map'], $game['start']['x'], $game['start']['y']]];
+while ($queue !== []) {
+    [$id, $x, $y] = array_pop($queue);
+    if (isset($seen[$id][$y][$x]) || !$maps[$id]->walkable($x, $y)) {
+        continue;
+    }
+    $seen[$id][$y][$x] = true;
+    $map = $maps[$id];
+    if (($warp = $map->warpAt($x, $y)) !== null) {
+        $queue[] = [$warp[2], $warp[3], $warp[4]];
+    }
+    foreach (Dir::cases() as $dir) {
+        [$nx, $ny] = [$x + $dir->dx(), $y + $dir->dy()];
+        if ($map->inside($nx, $ny)) {
+            if ($map->signAt($nx, $ny) === null) {
+                $queue[] = [$id, $nx, $ny];
+            }
+        } elseif (isset($map->exits[$dir->value])) {
+            [$to, $offset] = $map->exits[$dir->value];
+            $queue[] = $dir->dx() !== 0 ? [$to, $dir === Dir::Right ? 0 : $maps[$to]->width - 1, $y + $offset] : [$to, $x + $offset, $dir === Dir::Down ? 0 : $maps[$to]->height - 1];
+        }
+    }
+}
+foreach ($maps as $map) {
+    check(isset($seen[$map->id]), "{$map->id} can be walked to from where the game starts");
+    $onWild = array_filter(str_split(implode('', $map->rows)), Tile::wild(...)) !== [];
+    check(!$onWild || $map->wild !== null, "{$map->id}: where there is ground for wild beasts, the map says which");
+    if ($map->wild !== null) {
+        $met = false;
+        foreach ($seen[$map->id] ?? [] as $y => $row) {
+            foreach ($row as $x => $_) {
+                $met = $met || Tile::wild($map->tile($x, $y));
+            }
+        }
+        check($met, "{$map->id}: its wild beasts' ground can be walked to");
+    }
+}
+
 // What a map's tall grass holds (docs/numbers.md 13): a rate, seven beasts with their levels, each one of the map's own mountain.
 foreach ($maps as $map) {
     if ($map->wild === null) {
         continue;
     }
-    check(str_contains(implode('', $map->rows), ','), "{$map->id}: a map with wild beasts has tall grass");
+    check(array_filter(str_split(implode('', $map->rows)), Tile::wild(...)) !== [], "{$map->id}: a map with wild beasts has tall grass or scree for them");
     check(is_int($map->wild['rate']) && $map->wild['rate'] >= 1 && $map->wild['rate'] <= 100, "{$map->id}: its rate is 1 to 100 percent");
     same(count(\Shanhai\Battle\Formulas::WILD_SLOTS), count($map->wild['slots']), "{$map->id}: its grass holds seven");
     foreach ($map->wild['slots'] as [$level, $id]) {
@@ -295,6 +336,24 @@ foreach ($moves as $id => $m) {
         same([$m['only']], $learnedBy[$id] ?? [], "the move $id is learned by the beast it is only for");
     }
 }
+// Each beast comes to its moves at levels of its own, as the reference's species do (docs/numbers.md 10.5).
+$schedules = [];
+$levelsOf = [];
+foreach ($learnsets as $id => $set) {
+    $schedules[$id] = implode(' ', array_column(array_filter($set, fn(array $e) => $e[0] > 1), 0));
+    foreach ($set as [$level, $move]) {
+        if ($level > 1) { // what a beast begins with, it begins with: those are level 1 for all
+            $levelsOf[$move][] = $level;
+        }
+    }
+}
+same(count($learnsets), count(array_unique($schedules)), 'no two beasts learn at the same levels');
+foreach ($levelsOf as $move => $levels) {
+    if (count($levels) >= 5) {
+        check(count(array_unique($levels)) >= 3, "the move $move, which " . count($levels) . ' beasts come to as they grow, is learned at three levels or more: ' . implode(' ', $levels));
+    }
+}
+
 // Moves are shared, and what does no damage is a good part of what is learned, as measured from the reference (docs/numbers.md 10.5).
 $entries = $without = 0;
 $late = 0;

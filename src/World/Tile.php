@@ -10,6 +10,8 @@ final class Tile
     public const KINDS = [
         '.' => ['grass', true, false],
         ',' => ['tallGrass', true, true],
+        ':' => ['scree', true, true],
+        '-' => ['sand', true, false],
         '=' => ['path', true, false],
         '_' => ['floor', true, false],
         'D' => ['door', true, false],
