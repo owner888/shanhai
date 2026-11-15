@@ -433,3 +433,71 @@ $longest = fn(array $rows) => array_reduce(array_column($rows, 'name'), fn(strin
 foreach ([$beastName . '想学' . $moveName . '，可是已经会四个招式了。要忘掉哪一个？', $beastName . '忘掉了' . $moveName . '，学会了' . $moveName . '！', '野生的' . $beastName . '的特防大幅提高了！'] as $line) {
     check(count(Text::wrap($line, Text::columns())) <= Text::LINES, "the line fits the box: $line");
 }
+
+// A trial: against the beasts of the one who sets it, in their order. It cannot be fled, nor its beasts bound; each
+// that falls gives its experience then, half as much again; the other side uses the move that would do most.
+$w = new World($maps, 'field', 0, 0, Dir::Down, $book + ['gods' => Data::gods()], Rng::seeded(4));
+$w->join('lushu', 60);
+$w->join('xuangui', 5);
+$w->run([['give', 'seal', 1], ['trial', '山神', [['xingxing', 3], ['queshan', 4]]], ['say', 'passed']]);
+$s = $w->battle;
+same(['山神', '山神要考校你！'], [$s->trial, $s->line], 'it opens telling who sets it');
+$w->step($confirm);
+same('山神派出了狌狌！', $s->line, 'and their first beast');
+foreach ([$confirm, $confirm, $down, $none, $down, $none, $down, $confirm] as $c) { // the player's beast; the menu's last entry
+    $w->step($c);
+}
+same(['试炼不能逃！', 0], [$s->line, $s->battle->turns], 'a trial cannot be fled, and trying takes no turn');
+foreach ([$confirm, $none, $down, $none, $down, $confirm, $confirm] as $c) { // the menu's third entry; the bag's seal
+    $w->step($c);
+}
+same(['试炼中的异兽不能结契。', ['seal' => 1], 0], [$s->line, $w->items, $s->battle->turns], 'nor its beasts bound: the seal is kept');
+$before = $w->party[0]->exp;
+$lines = [];
+foreach ([$confirm, $confirm, $confirm] as $c) { // the menu's first entry; the first move
+    $w->step($c);
+}
+while ($s->phase === 'text' && !$s->done) {
+    $lines[] = $s->line;
+    $w->step($confirm);
+}
+// 狌狌's base experience is 81: 81 × 3 ÷ 7 = 34, and half as much again, 51
+check(in_array('狌狌倒下了！', $lines, true) && !in_array('野生的狌狌倒下了！', $lines, true), 'their beast is not called wild: ' . implode(' ', $lines));
+same(['鹿蜀获得了51点经验！', '山神派出了鹊山之神！'], array_slice($lines, array_search('狌狌倒下了！', $lines, true) + 1, 2), 'when it falls its experience is given, half as much again, and their next comes out');
+same([51, null, 1], [$w->party[0]->exp - $before, $s->outcome, $s->battle->active[1]], 'the battle goes on against the next');
+same('queshan', $s->battle->fighter(1)->id, 'which is a god, fighting as a beast does');
+same(['bite', 'flame', 'cassia', 'sleepless'], array_column($s->battle->fighter(1)->moves, 'id'), 'with the moves its entry gives it');
+// Their move: the one that would do most to the beast that is out.
+$theirs = $s->battle->fighter(1);
+$would = array_map(fn(int $i) => $s->battle->estimate($theirs, $w->party[0], $i), [0, 1, 2, 3]);
+$best = array_search(max($would), $would, true);
+check(max($would) > 0 && count(array_keys($would, max($would), true)) === 1, 'one of the god\'s moves would do most to 鹿蜀: ' . implode(' ', array_map('intval', $would)));
+$uses = array_column($theirs->moves, 'pp');
+$w->step(new Controls());
+foreach ([$down, $confirm, $none, $down, $confirm] as $c) { // the menu's second entry; the party's second beast: a turn the god moves in
+    $w->step($c);
+}
+$used = array_keys(array_filter(array_column($theirs->moves, 'pp'), fn(int $pp, int $i) => $pp < $uses[$i], ARRAY_FILTER_USE_BOTH));
+same([1, [$best]], [$s->battle->active[0], $used], 'and it is the one the god uses');
+for ($i = 0; $w->battle !== null && $i < 4000; $i++) {
+    if ($s->phase === 'party') {
+        $w->step($i % 2 === 0 ? $confirm : $none); // 鹿蜀 again, when 旋龟 falls
+    } else {
+        $w->step($i % 2 === 0 ? $confirm : $none);
+    }
+    if ($w->battle !== null && $s->phase === 'text') {
+        $lines[] = $s->line;
+    }
+}
+check(in_array('通过了山神的试炼！', $lines, true), 'when their last falls the trial is passed');
+same([null, 'won', 'passed'], [$w->battle, $w->lastBattle, $w->dialog], 'and the script that set it goes on');
+
+// A trial lost is a battle lost.
+$w = new World($maps, 'field', 0, 0, Dir::Down, $book + ['gods' => Data::gods()], Rng::seeded(4));
+$w->join('xingxing', 2);
+$w->run([['trial', '山神', [['queshan', 50]]], ['say', 'passed']]);
+for ($i = 0; $w->battle !== null && $i < 4000; $i++) {
+    $w->step($i % 2 === 0 ? $confirm : $none);
+}
+same(['lost', 'hut', 'awake'], [$w->lastBattle, $w->map->id, $w->dialog], 'lost: the player wakes where the game rests them, and the script is dropped');
+check(throws(fn() => \Shanhai\Script\Vm::check([['trial', '山神', []]])) && throws(fn() => \Shanhai\Script\Vm::check([['trial', '山神', [['xingxing']]]])), 'a trial with no beasts, or a beast with no level, is refused');

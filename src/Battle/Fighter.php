@@ -132,7 +132,7 @@ final class Fighter
             $was = $this->maxHp;
             $this->level = $to;
             $this->measure();
-            $this->hp += $this->maxHp - $was;
+            $this->hp += $this->hp > 0 ? $this->maxHp - $was : 0; // one that has fallen stays fallen
         }
         return [$from, $to];
     }

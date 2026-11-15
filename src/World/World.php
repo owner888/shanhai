@@ -59,7 +59,7 @@ final class World
 
     /**
      * @param array<string, Map> $maps by id
-     * @param array{beasts: array, learnsets: array, moves: array, elements: array, items: array, rest: array}|null $book data/'s tables, which
+     * @param array{beasts: array, learnsets: array, moves: array, elements: array, items: array, gods: array, rest: array}|null $book data/'s tables, which
      *        beasts and battles need, and where the player wakes after losing (data/game.php's rest)
      * @param ?Rng $rng the battles' dice
      * @param ?string $saveFile the file the game is saved to and loaded from; null for a game that cannot be saved
@@ -233,10 +233,13 @@ final class World
         $this->wildWait = Formulas::WILD_WAIT;
     }
 
-    /** A beast of $level as data/ makes it. */
+    /** A beast of $level as data/ makes it, or a god. */
     private function beast(string $id, int $level): Fighter
     {
         $b = $this->book ?? throw new LogicException('this world was made without the tables beasts and battles need');
+        if (isset($b['gods'][$id])) { // a god fights as a beast does, knowing its moves from the first
+            return new Fighter($id, $b['gods'][$id], $level, array_map(fn(string $move) => [1, $move], $b['gods'][$id]['moves']), $b['moves']);
+        }
         return new Fighter($id, $b['beasts'][$id] ?? throw new InvalidArgumentException("no beast '$id'"), $level, $b['learnsets'][$id], $b['moves']);
     }
 
@@ -257,8 +260,24 @@ final class World
         }
     }
 
+    /**
+     * Begins a trial: a battle against the beasts of the one who sets it, in their order, which cannot be fled nor
+     * the beasts bound.
+     * @param list<array{0: string, 1: int}> $theirs [beast or god, level]
+     */
+    public function trial(string $who, array $theirs): void
+    {
+        $this->begin(array_map(fn(array $t) => $this->beast($t[0], $t[1]), $theirs), $who);
+    }
+
     /** Begins a battle with a wild $beast of $level: the party's beasts come to it as they are, and it leaves them as it ends. */
     public function fight(string $beast, int $level): void
+    {
+        $this->begin([$this->beast($beast, $level)], null);
+    }
+
+    /** @param list<Fighter> $theirs */
+    private function begin(array $theirs, ?string $trial): void
     {
         if ($this->rng === null) {
             throw new LogicException('this world was made without the dice a battle needs');
@@ -266,9 +285,8 @@ final class World
         if (array_filter($this->party, fn(Fighter $f) => !$f->fainted()) === []) {
             throw new LogicException('a battle with no beast in the party that can fight');
         }
-        $wild = $this->beast($beast, $level);
         $b = $this->book;
-        $this->battle = new Screen(new Battle([$this->party, [$wild]], $b['elements'], $b['moves'], $this->rng, [true, false]), $b['moves'], $this->rng, $b['items'], $this->items);
+        $this->battle = new Screen(new Battle([$this->party, $theirs], $b['elements'], $b['moves'], $this->rng, [true, false]), $b['moves'], $this->rng, $b['items'], $this->items, $trial);
     }
 
     /** The battle was lost: the script that began it is dropped, and the player wakes where data/game.php rests them, the party whole. */

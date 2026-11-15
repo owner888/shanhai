@@ -38,6 +38,7 @@ final class Stage
         'elder' => [0.55, 0.55, 0.60, 1.0],
         'guard' => [0.30, 0.40, 0.70, 1.0],
         'shaman' => [0.55, 0.30, 0.65, 1.0],
+        'god' => [0.95, 0.80, 0.30, 1.0],
     ];
     /** How high the ground's top is, the water's, a wall's; and how far down the ground and the water go, which shows at a map's edge. */
     public const GROUND_TOP = 0.0, WATER_TOP = -0.12, WALL_TOP = 1.3, GROUND_BOTTOM = -0.2, WATER_BOTTOM = -0.32;

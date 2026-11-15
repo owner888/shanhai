@@ -8,11 +8,12 @@ use Shanhai\Cursor;
 use Shanhai\World\{Controls, Menu, PartyMenu, World};
 
 /**
- * A battle with a wild beast as the player goes through it, with no drawing: step() takes an update's Controls.
+ * A battle as the player goes through it, with no drawing: with a wild beast, or, with $trial, a trial, against the
+ * beasts of the one who sets it, which cannot be fled nor bound. step() takes an update's Controls.
  * Lines are read one at a time, confirm going on; between turns the menu asks what to do. What is shown of each
  * side (which beast, its hp, its status) changes with the line that tells it, not when the turn is worked out.
- * The player is side 0, and chooses the next beast when one falls. The wild beast uses any move it has left.
- * When it falls, the player's beasts that fought it and still stand gain experience (docs/numbers.md 7.3), and one
+ * The player is side 0, and chooses the next beast when one falls. A wild beast uses any move it has left; in a
+ * trial the other side uses the move that would do most. When one of theirs falls, the player's beasts that fought it and still stand gain experience (docs/numbers.md 7.3), and one
  * that comes to a move knowing four already is asked which to forget. A seal from the bag tries to bind the wild
  * beast (docs/numbers.md 8): bound, it is $caught and the battle ends; else the turn is the wild beast's.
  */
@@ -54,14 +55,21 @@ final class Screen
      * @param array<string, array> $moves data/moves.php
      * @param array<string, array> $things data/items.php
      * @param array<string, int> $bag the player's bag: item id => how many
+     * @param ?string $trial the name of the one who sets the trial; null for a battle with a wild beast
      */
-    public function __construct(public readonly Battle $battle, private readonly array $moves, private readonly Rng $rng, private readonly array $things, array &$bag)
+    public function __construct(public readonly Battle $battle, private readonly array $moves, private readonly Rng $rng, private readonly array $things, array &$bag, public readonly ?string $trial = null)
     {
         $this->bag = &$bag;
         $this->cursor = new Cursor();
         $this->shown = [$this->truth(0), $this->truth(1)];
         $this->fought = [$battle->active[0] => true];
-        $this->say('野生的' . $battle->fighter(1)->species['name'] . '出现了！');
+        $first = $battle->fighter(1)->species['name'];
+        if ($trial === null) {
+            $this->say('野生的' . $first . '出现了！');
+        } else {
+            $this->say($trial . '要考校你！');
+            $this->say($trial . '派出了' . $first . '！');
+        }
         $this->say('去吧，' . $battle->fighter(0)->species['name'] . '！');
         $this->next();
     }
@@ -168,21 +176,28 @@ final class Screen
     }
 
     /**
-     * The wild beast has fallen: each of the player's that fought it and still stands gains experience, the fallen's
-     * base experience and base stats divided among them first (docs/numbers.md 7.1, 7.3).
+     * One of the other side's has fallen: each of the player's that fought it and still stands gains experience, the
+     * fallen's base experience and base stats divided among them first, half as much again in a trial
+     * (docs/numbers.md 7.1, 7.3). Then those that fight the next are counted anew.
+     * @param array $hp every beast's hp at this point of the turn, which a level gained raises
+     * @param array $shown what is shown at this point of the turn
      */
-    private function reward(): void
+    private function reward(Fighter $foe, array &$hp, array &$shown): void
     {
-        $foe = $this->battle->fighter(1);
         $party = $this->battle->parties[0];
         $who = array_filter(array_keys($this->fought), fn(int $i) => !$party[$i]->fainted());
         sort($who);
+        $this->fought = [$shown[0]['which'] => true];
+        if ($who === []) {
+            return;
+        }
         $share = array_map(fn(int $base) => intdiv($base, count($who)), $foe->species['stats']);
-        $exp = Formulas::expGain($foe->species['exp'], $foe->level, count($who), false);
+        $exp = Formulas::expGain($foe->species['exp'], $foe->level, count($who), $this->trial !== null);
         foreach ($who as $i) {
             $f = $party[$i];
+            $most = $f->maxHp;
             [$from, $to] = $f->gain($exp, $share);
-            $shown = $this->shownLast();
+            $hp[0][$i] += $f->maxHp - $most;
             $out = $shown[0]['which'] === $i;
             if ($out) {
                 $shown[0]['exp'] = $f->exp;
@@ -190,7 +205,7 @@ final class Screen
             $this->say($f->species['name'] . '获得了' . $exp . '点经验！', $shown);
             if ($to > $from) {
                 if ($out) {
-                    [$shown[0]['hp'], $shown[0]['level']] = [$f->hp, $f->level];
+                    [$shown[0]['hp'], $shown[0]['level']] = [$hp[0][$i], $f->level];
                 }
                 $this->say($f->species['name'] . '升到了' . $to . '级！', $shown);
                 foreach ($f->learnable($from, $to) as $move) {
@@ -242,6 +257,11 @@ final class Screen
             $this->next();
             return;
         }
+        if ($this->trial !== null) {
+            $this->say('试炼中的异兽不能结契。');
+            $this->next();
+            return;
+        }
         if (count($this->battle->parties[0]) >= World::PARTY) {
             $this->say('队伍已经满了，没法再结契。');
             $this->next();
@@ -274,6 +294,11 @@ final class Screen
     /** docs/numbers.md 11.4. A try that fails is the player's turn: the wild beast still takes its own. */
     private function flee(): void
     {
+        if ($this->trial !== null) {
+            $this->say('试炼不能逃！');
+            $this->next();
+            return;
+        }
         $limit = Formulas::fleeValue($this->battle->fighter(0)->stat('spe'), $this->battle->fighter(1)->stat('spe'), ++$this->fleeTries);
         if ($limit === null || $this->rng->byte() <= $limit) {
             $this->outcome = 'fled';
@@ -285,11 +310,20 @@ final class Screen
         $this->turn(['pass', 0]);
     }
 
-    /** A turn: the player's action, and any move the wild beast has left, each as likely. */
+    /** A turn: the player's action, and the other side's: any move a wild beast has left, each as likely; in a trial, the one that would do most. */
     private function turn(array $action): void
     {
         $foe = ['move', 0];
-        if (($usable = $this->battle->usable(1)) !== []) {
+        $usable = $this->battle->usable(1);
+        if ($usable !== [] && $this->trial !== null) {
+            [$theirs, $mine] = [$this->battle->fighter(1), $this->battle->fighter(0)];
+            $foe[1] = $usable[0];
+            foreach ($usable as $i) {
+                if ($this->battle->estimate($theirs, $mine, $i) > $this->battle->estimate($theirs, $mine, $foe[1])) {
+                    $foe[1] = $i;
+                }
+            }
+        } elseif ($usable !== []) {
             do {
                 $foe[1] = $this->rng->byte() & 3;
             } while (!in_array($foe[1], $usable, true));
@@ -300,10 +334,10 @@ final class Screen
         $this->tell(array_slice($this->battle->log, $from), $hp, $status, $stages);
         if ($this->battle->winner !== null) {
             $this->outcome = $this->battle->winner === 0 ? 'won' : 'lost';
-            if ($this->outcome === 'won') {
-                $this->reward();
-            } else {
+            if ($this->outcome === 'lost') {
                 $this->say('你的异兽全都倒下了……');
+            } elseif ($this->trial !== null) {
+                $this->say('通过了' . $this->trial . '的试炼！');
             }
         }
         if ($this->shownLast() !== [$this->truth(0), $this->truth(1)]) {
@@ -320,7 +354,7 @@ final class Screen
     {
         $b = $this->battle;
         $shown = $this->shownLast();
-        $name = fn(int $side) => ($side === 1 ? '野生的' : '') . $b->parties[$side][$shown[$side]['which']]->species['name'];
+        $name = fn(int $side) => ($side === 1 && $this->trial === null ? '野生的' : '') . $b->parties[$side][$shown[$side]['which']]->species['name'];
         foreach ($events as $e) {
             $side = $e[1];
             $line = null;
@@ -332,7 +366,7 @@ final class Screen
                     if ($side === 0) {
                         $this->fought[$e[2]] = true;
                     }
-                    $line = ($side === 0 ? '去吧，' : '对手换上了') . $b->parties[$side][$e[2]]->species['name'] . '！';
+                    $line = ($side === 0 ? '去吧，' : ($this->trial ?? '对手') . '派出了') . $b->parties[$side][$e[2]]->species['name'] . '！';
                     break;
                 case 'cant':
                     $line = $name($side) . match ($e[2]) {
@@ -373,7 +407,10 @@ final class Screen
                     $line = $name($side) . '恢复了体力！';
                     break;
                 case 'faint':
-                    $line = $name($side) . '倒下了！';
+                    $this->say($name($side) . '倒下了！', $shown);
+                    if ($side === 1) {
+                        $this->reward($b->parties[1][$shown[1]['which']], $hp, $shown);
+                    }
                     break;
                 case 'status':
                     if ($e[2] !== 'confuse') {

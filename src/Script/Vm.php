@@ -22,6 +22,7 @@ use Shanhai\World\{Dir, World};
  *     ['giveBeast', beast, level]
  *     ['ask', line, [[choice, label], ...]]   shows the line with the choices; goes to the label of the one taken
  *     ['battle', beast, level]   a wild one; the script goes on when it is over, unless it was lost
+ *     ['trial', who, [[beast or god, level], ...]]   a trial against their beasts; the script goes on when it is passed
  *     ['rest']                   the party's beasts are whole again
  *     ['float']                  the player goes onto the water faced, carried by a beast of the party
  *     ['load']                   the saved game takes the world's place
@@ -32,7 +33,7 @@ final class Vm
     /** command => how many arguments */
     public const ARGS = [
         'say' => 1, 'setFlag' => 1, 'clearFlag' => 1, 'ifFlag' => 2, 'ifNotFlag' => 2, 'goto' => 1, 'label' => 1,
-        'face' => 2, 'move' => 3, 'warp' => 4, 'give' => 2, 'giveBeast' => 2, 'ask' => 2, 'battle' => 2, 'rest' => 0, 'float' => 0, 'load' => 0, 'end' => 0,
+        'face' => 2, 'move' => 3, 'warp' => 4, 'give' => 2, 'giveBeast' => 2, 'ask' => 2, 'battle' => 2, 'trial' => 2, 'rest' => 0, 'float' => 0, 'load' => 0, 'end' => 0,
     ];
 
     public bool $done = false;
@@ -82,6 +83,16 @@ final class Vm
                         throw new InvalidArgumentException("script line $i: a choice is [what it says, the label it goes to]");
                     }
                     $targets[] = $choice[1];
+                }
+            }
+            if ($cmd[0] === 'trial') {
+                if (!is_string($cmd[1]) || $cmd[1] === '' || !is_array($cmd[2]) || $cmd[2] === []) {
+                    throw new InvalidArgumentException("script line $i: 'trial' takes who sets it and their beasts");
+                }
+                foreach ($cmd[2] as $theirs) {
+                    if (!is_array($theirs) || count($theirs) !== 2 || !is_string($theirs[0]) || !is_int($theirs[1])) {
+                        throw new InvalidArgumentException("script line $i: a trial's beast is [beast or god, level]");
+                    }
                 }
             }
             foreach ($targets as $target) {
@@ -145,6 +156,7 @@ final class Vm
                 case 'load': $w->load(); break;
                 case 'ask': $w->ask($cmd[1], array_column($cmd[2], 0)); $this->asked = array_column($cmd[2], 1); break;
                 case 'battle': $w->fight($cmd[1], $cmd[2]); break;
+                case 'trial': $w->trial($cmd[1], $cmd[2]); break;
                 case 'end': $this->done = true; break;
             }
         }

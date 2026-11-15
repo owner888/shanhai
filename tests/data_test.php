@@ -15,6 +15,7 @@ $beasts = Data::beasts();
 $elements = Data::elements();
 $tiers = Data::tiers();
 $items = Data::items();
+$gods = Data::gods();
 foreach ($items as $id => $item) {
     check(($item['name'] ?? '') !== '' && ($item['from'] ?? '') !== '', "the thing $id has a name and where it comes from");
     check(array_diff(array_keys($item), ['name', 'use', 'from']) === [] && in_array($item['use'] ?? null, [null, 'catch'], true), "the thing $id has only the fields there are, and a use there is");
@@ -157,6 +158,12 @@ foreach ($scripts as $where => $script) {
         }
         if ($cmd[0] === 'give') {
             check(isset($items[$cmd[1]]) && is_int($cmd[2]) && $cmd[2] >= 1, "$where: it gives a thing there is, one or more: {$cmd[1]}");
+        }
+        if ($cmd[0] === 'trial') {
+            check(count($cmd[2]) <= 6, "$where: a trial is against six beasts at most");
+            foreach ($cmd[2] as [$id, $level]) {
+                check((isset($beasts[$id]) || isset($gods[$id])) && $level >= 1 && $level <= 100, "$where: its trial's $id is a beast or a god there is, at a level of 1 to 100");
+            }
         }
         if ($cmd[0] === 'giveBeast' || $cmd[0] === 'battle') {
             check(isset($beasts[$cmd[1]]), "$where: its beast is one there is: {$cmd[1]}");
@@ -352,6 +359,20 @@ foreach ($moves as $id => $m) {
         same([$m['only']], $learnedBy[$id] ?? [], "the move $id is learned by the beast it is only for");
     }
 }
+// The gods (data/gods.php): what a beast's entry has to fight with, moves there are, and the classic's line.
+foreach ($gods as $id => $g) {
+    check(!isset($beasts[$id]), "the god $id is not also a beast");
+    foreach (['name', 'looks', 'why', 'from'] as $field) {
+        check(($g[$field] ?? '') !== '', "the god $id has its $field");
+    }
+    check($g['elements'] !== [] && array_diff($g['elements'], array_keys($elements)) === [], "the god $id's elements are elements there are");
+    same(['hp', 'atk', 'def', 'spa', 'spd', 'spe'], array_keys($g['stats']), "the god $id has the six stats");
+    $total = array_sum($g['stats']);
+    check($total >= $tiers[4]['total'][0] && $total <= $tiers[5]['total'][1], "the god $id's stats are of the two highest tiers: $total");
+    check(is_int($g['exp']) && $g['exp'] > 0 && in_array($g['growth'], [...$tiers[4]['growth'], ...$tiers[5]['growth']], true), "the god $id has a base experience, and a growth rate of those tiers");
+    check(count($g['moves']) >= 1 && count($g['moves']) <= 4 && array_diff($g['moves'], array_keys($moves)) === [], "the god $id knows one to four moves there are");
+}
+
 // Each beast comes to its moves at levels of its own, as the reference's species do (docs/numbers.md 10.5).
 $schedules = [];
 $levelsOf = [];

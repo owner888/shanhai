@@ -47,7 +47,7 @@ src/World/         the game outside battle, with no drawing: Dir, Tile (the char
                    Actor, Controls, World (step(): walking, turning, what blocks, warps, triggers, talking; the party,
                    its battles, rest), Menu (what the menu button opens: the party's screen, the bag), PartyMenu (the beasts in
                    order, two change places)
-src/Script/Vm.php  the event script interpreter: say, ask (a line with choices), flags, jumps, face, move, warp, give, battle, rest, load; check()
+src/Script/Vm.php  the event script interpreter: say, ask (a line with choices), flags, jumps, face, move, warp, give, battle, trial, rest, load; check()
 src/Battle/        the battle, with no drawing: Rng (bytes, from a seed or a test's script), Formulas (docs/numbers.md as code,
                    a function a rule), Fighter, Battle (turn(): order, what stops a beast, a move, statuses, weather, switching),
                    Screen (a wild battle as the player goes through it: lines, the menu, its lists, the bag's seal, fleeing),
@@ -63,6 +63,7 @@ src/Render/Arena.php  a battle's 3D scene: the ground, the two beasts' figures, 
 src/Play.php       MyPHP's Game: keys and gamepad into Controls, World::step, draws the Stage and the dialog box,
                    or a battle's Arena, boxes, line and lists
 data/game.php      where a new game starts, where the player wakes after a battle is lost, what is asked when a game is saved
+data/gods.php      the gods that keep the ranges: what a beast's entry has to fight with, and the classic's line
 data/items.php     the things a bag holds: the seal that binds a wild beast
 data/elements.php  the five elements: what each overcomes and feeds, physical or special, its region
 data/tiers.php     the five tiers a beast's numbers are built in: bands measured from the reference's distribution
@@ -106,6 +107,8 @@ docs/elements.md   the elements' table and how a beast's elements are settled
   across the view while walking. Blocks on the grid are built as faces; things that stand apart are instanced.
 - **Tall grass holds wild beasts**, and scree on the mountains the classic gives no grass (`World::grass`, docs/numbers.md 13): a step onto it, after the first four on a map
   or after a battle, rolls against the map's rate, then for one of its seven; each lives on the map's own mountain.
+- **A trial** (`World::trial`, the script's `trial`) is a battle against the beasts of the one who sets it, a god
+  among them fighting as a beast does: not fled, none bound, experience at each fall and half as much again.
 - **Water carries** the player who has a beast of the water element that can fight (`World::float`): afloat, water is
   walked on, the map's `water` holds three wild beasts, and stepping onto land ends it. A game is not saved afloat.
 - **A saved game** is `World::state()`: the map and place, flags, bag, and each beast's `Fighter::state()`. What does not
