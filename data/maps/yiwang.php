@@ -38,7 +38,7 @@ return [
             ['label', 'go'],
             ['trial', '西次三经之神', [['luomu', 30], ['jishe', 30], ['xicisan', 35]]],
             ['setFlag', 'passedXicisan'],
-            ['say', '「好。西山经还有最后一列。想去时再来找我。」'],
+            ['say', '「好。西山经还有最后一个山系。想去时再来找我。」'],
             ['end'],
             ['label', 'wait'],
             ['say', '「准备好了再来。」'],

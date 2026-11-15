@@ -38,7 +38,7 @@ return [
             ['label', 'go'],
             ['trial', '北次二经之神', [['boma', 44], ['duyu', 40], ['banmao', 40], ['xiaoque', 40], ['beici', 46]]],
             ['setFlag', 'passedBeici'],
-            ['say', '「好。北山经还有最后一列，是最长的一列。」'],
+            ['say', '「好。北山经还有最后一个山系，也是最长的。」'],
             ['end'],
             ['label', 'wait'],
             ['say', '「准备好了再来。」'],

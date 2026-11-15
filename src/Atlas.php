@@ -22,7 +22,7 @@ final class Atlas
             return $b['name'] . '（' . implode('', array_map(fn(string $e) => $elements[$e]['name'], $b['elements'])) . '）';
         };
         $out = "# 山海地图总表\n\n这份表由 `php tools/atlas.php` 从 `data/` 生成，不要手改；数据变了而没有重新生成，测试会报错。\n\n"
-            . "等级按 `docs/numbers.md` 第 14 节：一列山系对参考作的一座道馆。水里的等级是表里写的再加 0 到 4 级；「路上的对手」一栏每人一组，分号隔开，写的是各只的等级；渡水要先通过第四列山系的试炼。\n";
+            . "等级按 `docs/numbers.md` 第 14 节：一个山系对参考作的一座道馆。水里的等级是表里写的再加 0 到 4 级；「路上的对手」一栏每人一组，分号隔开，写的是各只的等级；渡水要先通过第四个山系的试炼。\n";
         $placed = [];
         foreach ($ranges as $n => $range) {
             $out .= "\n## {$range['book']} · {$range['name']}\n\n";
@@ -49,7 +49,7 @@ final class Atlas
             }
             $missing = array_filter($beasts, fn(array $b, string $id) => $b['range'] === $n && !isset($placed[$id]), ARRAY_FILTER_USE_BOTH);
             if ($missing !== []) {
-                $out .= "\n这一列里还没有放进任何地图的异兽：" . implode('；', array_map(fn(array $b, string $id) => $name($id) . ' 在' . $b['mountain'], $missing, array_keys($missing))) . "。\n";
+                $out .= "\n这一山系里还没有放进任何地图的异兽：" . implode('；', array_map(fn(array $b, string $id) => $name($id) . ' 在' . $b['mountain'], $missing, array_keys($missing))) . "。\n";
             }
         }
         return $out . "\n## 其余各经\n\n西山经、北山经、东山经、中山经和海经各篇还没有地图；各篇的山数和异兽名录在 `docs/bestiary.md`。\n";
