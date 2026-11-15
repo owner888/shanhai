@@ -39,6 +39,7 @@ final class Arena
         $this->scene->clearColor = [0.62, 0.78, 0.90, 1.0];
         $this->scene->shadowsEnabled = true;
         $this->scene->shadowBounds = 8.0;
+        $this->scene->addSkyDome();
         $this->scene->camera->position = new Vec3(-3.2, 3.0, 6.0);
         $this->scene->camera->target = new Vec3(0.2, 0.5, 0.0);
         $ground = new Entity(Mesh::cylinder(5.0, 5.0, 0.2, 40), new Material(self::GROUND, shininess: 4.0), position: new Vec3(0.0, -0.1, 0.0));

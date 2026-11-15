@@ -62,6 +62,9 @@ final class Stage
         $this->scene->clearColor = [0.05, 0.07, 0.10, 1.0];
         $this->scene->shadowsEnabled = true;
         $this->scene->shadowBounds = 12.0;
+        if (!$w->map->indoor) {
+            $this->scene->addSkyDome(); // MyPHP's: beyond the map's edge is sky and far ground, not the dark of a room
+        }
 
         $trunks = $crowns = $tufts = $rocks = [];
         $map = $w->map;

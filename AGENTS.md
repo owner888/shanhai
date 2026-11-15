@@ -28,7 +28,12 @@ Entry point for coding agents and contributors. `docs/rules.md` is the rule of t
     `data/` are PHP alone, with no MyPHP class, so the tests need no window; `src/Render` and `src/Play.php` read the
     World and decide nothing.
 13. Reuse MyPHP's own (`Plugins\Scene`, `Plugins\Game`) before writing anything beside it; what it lacks is fixed
-    there, after asking. Read its `AGENTS.md` and `docs/ui/scene3d.md` before touching the drawing.
+    there, after asking. Read its `AGENTS.md`, `docs/ui/scene3d.md` and `docs/plugins/game.md` before touching the
+    drawing — use its built-in `Animator3D` (`IDLE`/`WALK`/`LUNGE`/`HURT` + `addLimb`), `ParticleEmitter3D`, `Tween3D`,
+    `Camera3D::shake`, `Scene::addSkyDome`, `Mesh::terrain`/`cylinder`/`cone`/`torus`/`capsule`/`sceneFromGlbFile`,
+    `Material::pbr`/`unlit` (`$emissive`), `Game::hitStop`, `ScreenTransition` (`FADE`/`SHUTTER`/`BATTLE_BLINDS`),
+    `VirtualPad` (mobile D-Pad + A/B/MENU key injection), `SpriteSheet`/`SpriteAnimation`, and `GameAudio` (SFX pool,
+    `registerTone` retro synth, BGM cross-fade) rather than rolling your own.
 14. File modes are left as they are: after editing, `git diff --summary` shows no mode change.
 15. **Numbers come first** (the developer's rule): the formulas and their constants — damage, stats from base
     values, experience, what strong and weak multiply by, critical hits, catching — are the reference games'
@@ -61,7 +66,7 @@ src/Render/Stage.php  a map's 3D scene: the ground and the walls as meshes of th
                    instanced trees, grass, rocks, signs, the actors' figures, the fixed camera
 src/Render/Arena.php  a battle's 3D scene: the ground, the two beasts' figures, a camera that does not move
 src/Play.php       MyPHP's Game: keys and gamepad into Controls, World::step, draws the Stage and the dialog box,
-                   or a battle's Arena, boxes, line and lists
+                   or a battle's Arena, boxes, line and lists; MyPHP's ScreenTransition between them, its VirtualPad
 data/game.php      where a new game starts, where the player wakes after a battle is lost, what is asked when a game is saved
 data/gods.php      the gods that keep the ranges: what a beast's entry has to fight with, and the classic's line
 data/items.php     the things a bag holds: the seal that binds a wild beast

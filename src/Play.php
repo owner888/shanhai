@@ -3,7 +3,8 @@ declare(strict_types=1);
 
 namespace Shanhai;
 
-use MyPHP\Plugins\Game\{Game, Input};
+use MyPHP\Device;
+use MyPHP\Plugins\Game\{Game, Input, ScreenTransition, VirtualPad};
 use MyPHP\Plugins\Game\Gamepad\{Button, Gamepad, State};
 use MyPHP\UI\{Canvas, Key, Node, Painter};
 use Shanhai\Battle\{Formulas, Screen};
@@ -14,6 +15,9 @@ use Shanhai\World\{Controls, Dir, World};
  * The game as MyPHP runs it (Plugins\Game): each update reads the keys and the gamepad into Controls and steps
  * the World; each frame draws the map's Stage and, over it, the dialog box or the party's screen, or, in a battle,
  * its Arena, the two beasts' boxes, the line or the list. The rules are the World's: nothing here decides them.
+ * A change of map, and a battle's beginning and end, are shown by MyPHP's ScreenTransition: the World has changed
+ * already, and waits, not stepped, while the screen closes on what was and opens on what is. On a device with no
+ * keys, MyPHP's VirtualPad gives the keys this reads.
  */
 final class Play extends Game
 {
@@ -27,8 +31,8 @@ final class Play extends Game
     private const MENU = [Key::TAB, Key::M];
     /** How far a gamepad's stick is pushed to walk. */
     private const STICK = 0.5;
-    /** Updates a new map takes to fade in. */
-    private const FADE_STEPS = 12;
+    /** Seconds a change of map takes to close and open, and a battle's beginning. */
+    private const FADE_SECONDS = 0.4, ENCOUNTER_SECONDS = 0.55;
     /** The 3D view's size in pixels, shown at the window's size. */
     private const VIEW_WIDTH = 960, VIEW_HEIGHT = 720;
 
@@ -36,8 +40,10 @@ final class Play extends Game
     private Stage $stage;
     /** The scene of the battle going on; null outside one. */
     private ?Arena $arena = null;
+    /** The count of maps entered that the Stage was built at: behind the World's while the screen closes on the old map. */
     private int $seenMap;
-    private int $fade = 0;
+    private ScreenTransition $transition;
+    private VirtualPad $pad;
     /** The key walked by, which goes on while held, whatever else is pressed after it is not. */
     private ?int $walkKey = null;
     private State $lastPad;
@@ -49,9 +55,22 @@ final class Play extends Game
         $this->stage = new Stage($world);
         $this->seenMap = $world->mapChanges;
         $this->lastPad = new State();
+        $this->transition = new ScreenTransition();
+        $this->pad = new VirtualPad(enabled: !Device::isDesktop());
     }
 
     public function update(Input $in): void
+    {
+        $this->pad->step($in);
+        $this->transition->step(1.0 / $this->rate());
+        if (!$this->transition->active) {
+            $this->play($in);
+        }
+        ($this->arena ?? $this->stage)->scene->step(1.0 / $this->rate());
+    }
+
+    /** Steps the World with what the player asks, and begins a transition when what is to be shown has changed. */
+    private function play(Input $in): void
     {
         // The key pressed last walks; when it is let go, another still held.
         foreach (self::WALK as $key => $_) {
@@ -94,47 +113,58 @@ final class Play extends Game
         $this->world->step(new Controls($dir, $confirm, $cancel, $menu));
 
         $battle = $this->world->battle;
-        if ($battle === null) {
-            if ($this->arena !== null) {
+        if ($battle !== null && $this->arena === null) {
+            // a battle has begun: the flashes and blinds of an encounter, the Arena behind them when they are shut
+            $this->transition->start(ScreenTransition::BATTLE_BLINDS, self::ENCOUNTER_SECONDS, onMidpoint: function () use ($battle): void {
+                $this->arena = new Arena($battle);
+            });
+        } elseif (($battle === null && $this->arena !== null) || $this->world->mapChanges !== $this->seenMap) {
+            // a battle has ended, or the map is another: a fade, the new Stage behind it when it is dark
+            $this->transition->start(ScreenTransition::FADE, self::FADE_SECONDS, onMidpoint: function (): void {
                 $this->arena = null;
-                $this->fade = self::FADE_STEPS;
-            }
-        } elseif ($this->arena === null) {
-            $this->arena = new Arena($battle);
-            $this->fade = self::FADE_STEPS;
-        } else {
+                if ($this->world->mapChanges !== $this->seenMap) {
+                    $this->seenMap = $this->world->mapChanges;
+                    $this->stage = new Stage($this->world);
+                }
+            });
+        } elseif ($battle !== null) {
             $this->arena->sync($battle);
         }
-
-        if ($this->world->mapChanges !== $this->seenMap) {
-            $this->seenMap = $this->world->mapChanges;
-            $this->stage = new Stage($this->world);
-            $this->fade = self::FADE_STEPS;
-        } elseif ($this->fade > 0) {
-            $this->fade--;
-        }
-        ($this->arena ?? $this->stage)->scene->step(1.0 / $this->rate());
     }
 
     public function draw(Painter $p, array $r, float $alpha): void
     {
+        $this->frame($p, $r, $alpha);
+        $this->transition->draw($p, $r);
+        $this->pad->draw($p, $r);
+    }
+
+    /** The view and what is over it, before the transition and the pad. */
+    private function frame(Painter $p, array $r, float $alpha): void
+    {
         $battle = $this->world->battle;
-        if ($battle !== null && $this->arena !== null) {
+        // The Stage is the World's map unless the screen is closing on the one before: then it is drawn as it was left.
+        $current = $this->world->mapChanges === $this->seenMap;
+        if ($this->arena !== null) {
             $scene = $this->arena->scene;
         } else {
-            $this->stage->sync($this->world, $alpha);
+            if ($current) {
+                $this->stage->sync($this->world, $alpha);
+            }
             $scene = $this->stage->scene;
         }
         $scene->camera->aspect = $r[2] / max(1.0, $r[3]);
         $this->viewport->renderScene($scene);
         $p->image($this->viewport->bitmap(), $r, Node::FILL_BOX);
 
-        if ($this->fade > 0) {
-            $p->fill($r, 0x000000, 0, $this->fade / self::FADE_STEPS);
-        }
-        if ($battle !== null && $this->arena !== null) {
-            $this->battle($p, $r, $battle);
+        if ($this->arena !== null) {
+            if ($battle !== null) {
+                $this->battle($p, $r, $battle);
+            }
             return;
+        }
+        if (!$current || $battle !== null) {
+            return; // the screen is closing on this map, for another or for a battle
         }
 
         $name = $this->world->map->name;

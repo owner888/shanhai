@@ -22,6 +22,7 @@ final class Map
      * @param list<array{0: int, 1: int, 2: list<array>}> $signs
      * @param list<array{0: string, 1: int, 2: int, 3: string, 4: string, 5: list<array>}> $npcs
      * @param list<array{0: int, 1: int, 2: string, 3: list<array>}> $triggers
+     * @param bool $indoor whether it is under a roof: no sky is drawn over it
      * @param ?int $range which of the classic's ranges of mountains it is of, counted from the first of the 南山经;
      *        null for a map of none (the game's maps each say theirs)
      * @param ?array{rate: int, slots: list<array{0: int, 1: string}>} $water what its water holds, for one carried over it:
@@ -45,6 +46,7 @@ final class Map
         public readonly array $exits = [],
         public readonly ?array $water = null,
         public readonly ?int $range = null,
+        public readonly bool $indoor = false,
     ) {}
 
     public static function fromArray(array $a): self
@@ -62,7 +64,7 @@ final class Map
             }
         }
         return new self($a['id'], $a['name'], $rows, $width, count($rows),
-            $a['warps'] ?? [], $a['signs'] ?? [], $a['npcs'] ?? [], $a['triggers'] ?? [], $a['wild'] ?? null, $a['exits'] ?? [], $a['water'] ?? null, $a['range'] ?? null);
+            $a['warps'] ?? [], $a['signs'] ?? [], $a['npcs'] ?? [], $a['triggers'] ?? [], $a['wild'] ?? null, $a['exits'] ?? [], $a['water'] ?? null, $a['range'] ?? null, $a['indoor'] ?? false);
     }
 
     public function inside(int $x, int $y): bool

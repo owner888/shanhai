@@ -6,6 +6,7 @@ return [
     'id' => 'zhaoyao_hut',
     'name' => '巫祝的小屋',
     'range' => 1,
+    'indoor' => true,
     'rows' => [
         'HHHHHHHH',
         'H______H',
