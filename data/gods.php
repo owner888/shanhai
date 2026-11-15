@@ -71,4 +71,14 @@ return [
         'moves' => ['infantcry', 'drought', 'dust', 'tusk'],
         'from' => '凡西次三经之首，崇吾之山至于翼望之山，凡二十三山，六千七百四十四里。其神状皆羊身人面。',
     ],
+    'xicisi' => [
+        'name' => '西次四经之神', 'range' => 7,
+        'looks' => '原文没有写它的形状。',
+        'elements' => ['metal'],
+        'why' => '西山经属金；原文没有写它的形状，不加副属性。',
+        'stats' => ['hp' => 100, 'atk' => 100, 'def' => 90, 'spa' => 65, 'spd' => 75, 'spe' => 80],
+        'exp' => 205, 'growth' => 'slow',
+        'moves' => ['lowing', 'spur', 'fearless', 'tusk'],
+        'from' => '凡西次四经，自阴山以下，至于崦嵫之山，凡十九山，三千六百八十里。其神祠礼，皆用一白鸡祈，糈以稻米，白菅为席。',
+    ],
 ];

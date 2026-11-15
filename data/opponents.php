@@ -253,5 +253,66 @@ return [
             [7, 6, 'down', 2, '采玉人', [['baihan', 25], ['mengbao', 25]]],
             [13, 8, 'up', 1, '采药人', [['she', 23], ['yelu', 23], ['huahuai', 25]]],
         ],
+        'yinshansi' => [
+            [7, 6, 'down', 1, '采药人', [['hu', 18]]],
+            [13, 8, 'up', 3, '猎户', [['si', 16], ['qianyang', 16]]],
+        ],
+        'laoshan' => [
+            [10, 6, 'down', 3, '樵夫', [['fuchong', 14], ['she', 14], ['zhuo', 16]]],
+        ],
+        'bafu' => [
+            [10, 6, 'down', 2, '采药人', [['xingxing', 17], ['fuxi', 17], ['biluo', 19]]],
+        ],
+        'shenshan' => [
+            [10, 6, 'down', 3, '巫祝弟子', [['aoye', 19]]],
+        ],
+        'niaoshan' => [
+            [7, 6, 'down', 2, '行商', [['chibi', 19]]],
+            [13, 8, 'up', 4, '采玉人', [['qiongqi', 19]]],
+        ],
+        'shangshen' => [
+            [10, 6, 'down', 2, '牧人', [['fuchong', 10], ['zhuyan', 10], ['biluo', 15], ['zheng', 15]]],
+        ],
+        'zhuci' => [
+            [10, 6, 'down', 3, '采药人', [['yelu', 20]]],
+        ],
+        'haoshan' => [
+            [10, 8, 'up', 3, '猎户', [['luomu', 20], ['jishe', 20], ['zhongshe', 20]]],
+        ],
+        'yushansi' => [
+            [10, 6, 'down', 3, '牧人', [['biluo', 16], ['fuchong', 16], ['jiyu', 16], ['biluo', 16]]],
+        ],
+        'baiyu' => [
+            [7, 6, 'down', 3, '采药人', [['xibian', 18]]],
+            [13, 8, 'up', 1, '采玉人', [['jiyu', 17], ['biluo', 17], ['fuchong', 17]]],
+        ],
+        'shenshou' => [
+            [10, 6, 'down', 4, '樵夫', [['baiyuan', 18], ['shijiu', 18]]],
+        ],
+        'jinggu' => [
+            [10, 6, 'down', 0, '牧人', [['baiyuan', 18], ['maoniu', 18]]],
+        ],
+        'gangshan' => [
+            [10, 6, 'down', 3, '采药人', [['chi', 19]]],
+        ],
+        'gangwei' => [
+            [10, 6, 'down', 0, '行商', [['baidi', 22], ['xingxing', 22]]],
+        ],
+        'yingdi' => [
+            [7, 6, 'down', 3, '猎户', [['shijiu', 24]]],
+            [13, 8, 'up', 1, '樵夫', [['shengyu', 28]]],
+        ],
+        'zhongqu' => [
+            [10, 6, 'down', 1, '樵夫', [['zhuyan', 28]]],
+        ],
+        'guishansi' => [
+            [10, 8, 'up', 1, '采药人', [['baidi', 24], ['junniao', 25], ['baihan', 24]]],
+        ],
+        'niaoshu' => [
+            [10, 6, 'down', 1, '行商', [['biluo', 26], ['fuchong', 26]]],
+        ],
+        'yanzi' => [
+            [10, 6, 'down', 1, '樵夫', [['she', 24], ['bifang', 25], ['luomu', 24]]],
+        ],
     ],
 ];
