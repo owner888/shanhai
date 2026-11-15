@@ -289,7 +289,7 @@ check($s->done, 'and the battle is done');
 
 // A beast that knows four moves is asked which to forget.
 $name = fn(string $id) => $book['moves'][$id]['name'];
-foreach ([1 => 'forgets its second', null => 'does not learn it'] as $slot => $what) {
+foreach ([[1, 'forgets its second'], [null, 'does not learn it']] as [$slot, $what]) {
     $s = $screen([['lushu', 20]], ['xingxing', 3], Rng::seeded(11));
     $f = $s->battle->parties[0][0];
     same(['spark', 'chant', 'redtail', 'stripes'], array_column($f->moves, 'id'), 'at level 20 it knows the last four it came to');

@@ -5,12 +5,13 @@ namespace Shanhai\Render;
 
 use MyPHP\Plugins\Scene\{Camera3D, Entity, Material, Mesh, Scene};
 use MyPHP\Plugins\Scene\Math\{Mat4, Vec3};
-use Shanhai\World\{Actor, Dir, Tile, World};
+use Shanhai\World\{Actor, Dir, Map, Tile, World};
 
 /**
  * The 3D scene of the map the player is on (MyPHP's Plugins\Scene): a tile is one unit, a map's x the scene's x
- * and its y the scene's z. Built once for a map, each kind of thing one instanced draw; sync() then moves the
- * actors and the camera, which looks down at the player from a fixed angle and never turns.
+ * and its y the scene's z. Built once for a map: the ground and the walls each one mesh of the faces that can be
+ * seen (faces()), each kind of thing standing on it one instanced draw; sync() then moves the actors and the camera,
+ * which looks down at the player from a fixed angle and never turns.
  */
 final class Stage
 {
@@ -37,6 +38,8 @@ final class Stage
         'shaman' => [0.55, 0.30, 0.65, 1.0],
         'beast' => [0.92, 0.92, 0.88, 1.0],
     ];
+    /** How high the ground's top is, the water's, a wall's; and how far down the ground and the water go, which shows at a map's edge. */
+    public const GROUND_TOP = 0.0, WATER_TOP = -0.12, WALL_TOP = 1.3, GROUND_BOTTOM = -0.2, WATER_BOTTOM = -0.32;
     private const SKIN = [0.96, 0.82, 0.68, 1.0];
     private const TRUNK = [0.45, 0.30, 0.18, 1.0], CROWN = [0.16, 0.42, 0.20, 1.0], BLADE = [0.30, 0.62, 0.26, 1.0];
     private const STONE = [0.55, 0.55, 0.58, 1.0], WALL = [0.80, 0.72, 0.58, 1.0], BOARD = [0.60, 0.44, 0.26, 1.0];
@@ -58,18 +61,13 @@ final class Stage
         $this->scene->shadowsEnabled = true;
         $this->scene->shadowBounds = 12.0;
 
-        $ground = $water = $trunks = $crowns = $tufts = $rocks = $walls = [];
-        $groundColors = [];
+        $trunks = $crowns = $tufts = $rocks = [];
         $map = $w->map;
+        $this->faced(self::faces($map, self::ground(...)), shadow: false);
+        $this->faced(self::faces($map, self::wall(...)), shadow: true);
         for ($y = 0; $y < $map->height; $y++) {
             for ($x = 0; $x < $map->width; $x++) {
                 $kind = Tile::name($map->tile($x, $y));
-                if ($kind === 'water') {
-                    $water[] = Mat4::translation($x, -0.22, $y)->multiply(Mat4::scaling(1.0, 0.2, 1.0));
-                    continue;
-                }
-                $ground[] = Mat4::translation($x, -0.1, $y)->multiply(Mat4::scaling(1.0, 0.2, 1.0));
-                $groundColors[] = self::GROUND[$kind];
                 switch ($kind) {
                     case 'tree':
                         $trunks[] = Mat4::translation($x, 0.3, $y);
@@ -83,19 +81,13 @@ final class Stage
                     case 'rock':
                         $rocks[] = Mat4::translation($x, 0.25, $y)->multiply(Mat4::scaling(1.0, 0.8, 1.0));
                         break;
-                    case 'wall':
-                        $walls[] = Mat4::translation($x, 0.65, $y)->multiply(Mat4::scaling(1.0, 1.3, 1.0));
-                        break;
                 }
             }
         }
-        $this->instanced(Mesh::cube(1.0), $ground, $groundColors, shadow: false);
-        $this->instanced(Mesh::cube(1.0), $water, self::GROUND['water'], shadow: false);
         $this->instanced(Mesh::cylinder(0.10, 0.14, 0.6, 8), $trunks, self::TRUNK);
         $this->instanced(Mesh::cone(0.46, 1.2, 10), $crowns, self::CROWN);
         $this->instanced(Mesh::cone(0.12, 0.45, 6), $tufts, self::BLADE, shadow: false);
         $this->instanced(Mesh::sphere(0.42, 10, 8), $rocks, self::STONE);
-        $this->instanced(Mesh::cube(1.0), $walls, self::WALL);
 
         $posts = $boards = [];
         foreach ($map->signs as [$x, $y]) {
@@ -124,6 +116,78 @@ final class Stage
         [$px, $pz] = $w->player->place($alpha);
         $this->scene->camera->target = new Vec3($px, 0.0, $pz);
         $this->scene->camera->position = new Vec3($px, self::CAMERA_HEIGHT, $pz + self::CAMERA_BACK);
+    }
+
+    /** A tile's block of ground: its top, its bottom, its color. Water lies lower. */
+    public static function ground(string $kind): array
+    {
+        return $kind === 'water' ? [self::WATER_TOP, self::WATER_BOTTOM, self::GROUND['water']] : [self::GROUND_TOP, self::GROUND_BOTTOM, self::GROUND[$kind]];
+    }
+
+    /** A wall tile's block, standing on the ground; none for another tile. */
+    public static function wall(string $kind): ?array
+    {
+        return $kind === 'wall' ? [self::WALL_TOP, self::GROUND_TOP, self::WALL] : null;
+    }
+
+    /**
+     * The faces of a map's blocks that can be seen, a block a tile: $block gives a kind of tile's [top, bottom, color],
+     * or null for none. A block's top is a face; a side is one only above the top of the block beside it, down to its
+     * own bottom where there is none (another kind's, or the map's edge). So no face lies hidden against another
+     * block: at the line where two tops meet, such a face is as near as they are, and the depth test lets it through
+     * now and then, a dark line across the ground as the camera moves. Corners are shared exactly, so the tops leave no gap.
+     * @param \Closure(string): ?array{0: float, 1: float, 2: array} $block
+     * @return list<array{0: list<array{0: float, 1: float, 2: float}>, 1: array{0: float, 1: float, 2: float}, 2: array}> each [its four corners, counterclockwise seen from outside; its normal; its color]
+     */
+    public static function faces(Map $map, \Closure $block): array
+    {
+        $at = fn(int $x, int $y): ?array => $x < 0 || $y < 0 || $x >= $map->width || $y >= $map->height ? null : $block(Tile::name($map->tile($x, $y)));
+        $out = [];
+        for ($y = 0; $y < $map->height; $y++) {
+            for ($x = 0; $x < $map->width; $x++) {
+                if (($b = $at($x, $y)) === null) {
+                    continue;
+                }
+                [$top, $bottom, $color] = $b;
+                [$x0, $x1, $z0, $z1] = [$x - 0.5, $x + 0.5, $y - 0.5, $y + 0.5];
+                $out[] = [[[$x0, $top, $z1], [$x1, $top, $z1], [$x1, $top, $z0], [$x0, $top, $z0]], [0.0, 1.0, 0.0], $color];
+                // each side, by the block beside it: south, north, east, west
+                foreach ([[0, 1], [0, -1], [1, 0], [-1, 0]] as [$dx, $dy]) {
+                    $from = max($bottom, $at($x + $dx, $y + $dy)[0] ?? $bottom);
+                    if ($from >= $top) {
+                        continue;
+                    }
+                    $corners = match (true) {
+                        $dy === 1 => [[$x0, $from, $z1], [$x1, $from, $z1], [$x1, $top, $z1], [$x0, $top, $z1]],
+                        $dy === -1 => [[$x1, $from, $z0], [$x0, $from, $z0], [$x0, $top, $z0], [$x1, $top, $z0]],
+                        $dx === 1 => [[$x1, $from, $z1], [$x1, $from, $z0], [$x1, $top, $z0], [$x1, $top, $z1]],
+                        default => [[$x0, $from, $z0], [$x0, $from, $z1], [$x0, $top, $z1], [$x0, $top, $z0]],
+                    };
+                    $out[] = [$corners, [(float)$dx, 0.0, (float)$dy], $color];
+                }
+            }
+        }
+        return $out;
+    }
+
+    /** Adds one entity that draws faces() as a mesh; nothing when there are none. */
+    private function faced(array $faces, bool $shadow): void
+    {
+        if ($faces === []) {
+            return;
+        }
+        $vertices = $indices = [];
+        foreach ($faces as $i => [$corners, $normal, $color]) {
+            foreach ($corners as $k => $corner) {
+                // MyPHP's vertex: position, normal, uv, color
+                array_push($vertices, ...$corner, ...$normal, ...[[0.0, 1.0], [1.0, 1.0], [1.0, 0.0], [0.0, 0.0]][$k], ...$color);
+            }
+            array_push($indices, 4 * $i, 4 * $i + 1, 4 * $i + 2, 4 * $i, 4 * $i + 2, 4 * $i + 3);
+        }
+        $e = new Entity(new Mesh(pack('f*', ...$vertices), pack('V*', ...$indices), 4 * count($faces), 6 * count($faces)), new Material(shininess: 8.0));
+        $e->castShadow = $shadow;
+        $e->pickable = false;
+        $this->scene->add($e);
     }
 
     /**
