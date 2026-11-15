@@ -30,5 +30,5 @@ return [
         ]],
     ],
     // The 泽更之水: 蛊雕.
-    'water' => ['rate' => 6, 'slots' => [[6, 'gudiao'], [7, 'gudiao'], [5, 'gudiao']]],
+    'water' => ['rate' => 2, 'slots' => [[20, 'gudiao'], [15, 'gudiao'], [20, 'gudiao']]],
 ];

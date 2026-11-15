@@ -372,9 +372,16 @@ foreach ($moves as $id => $m) {
 // A trial is as strong as the reference's gym leaders are against what comes before them (docs/numbers.md 14): the
 // one who sets it sends two to four; the last is the strongest, at 1.9 to 2.55 times the mean level of the wild
 // beasts of its range; the others are at its level or up to five under.
+$ranges = Data::ranges();
+same(range(1, count($ranges)), array_keys($ranges), 'the ranges are numbered from 1, in the classic\'s order');
 foreach ($maps as $map) {
-    check(is_int($map->range) && $map->range >= 1, "{$map->id} says which range it is of");
+    check(isset($ranges[$map->range]), "{$map->id} says which range it is of, one there is");
 }
+foreach ($gods as $id => $g) {
+    check(isset($ranges[$g['range']]), "the god $id keeps a range there is");
+}
+// docs/atlas.md is what tools/atlas.php writes from the data as it is now.
+same(\Shanhai\Atlas::render(), file_get_contents(Data::DIR . '/../docs/atlas.md'), 'docs/atlas.md is up to date: php tools/atlas.php writes it');
 $trials = 0;
 foreach ($scripts as $where => $script) {
     foreach ($script as $cmd) {
@@ -399,6 +406,19 @@ foreach ($scripts as $where => $script) {
     }
 }
 same(count($gods), $trials, 'each god sets one trial');
+// Water may be crossed after the fourth range's trial, as after the reference's fourth gym: the flag that lets it is the one that trial sets.
+$sets = [];
+foreach ($scripts as $script) {
+    $range = null;
+    foreach ($script as $cmd) {
+        $range = $cmd[0] === 'trial' ? $gods[end($cmd[2])[0]]['range'] : $range;
+        if ($cmd[0] === 'setFlag' && $range !== null) {
+            $sets[$cmd[1]] = $range;
+        }
+    }
+}
+check(!in_array(4, $sets, true) || ($sets[$game['float']] ?? null) === 4, 'the flag that lets water be crossed is set by the fourth range\'s trial, once there is one');
+check(!isset($sets[$game['float']]) || $sets[$game['float']] === 4, 'and by no other');
 
 // The gods (data/gods.php): what a beast's entry has to fight with, moves there are, and the classic's line.
 foreach ($gods as $id => $g) {

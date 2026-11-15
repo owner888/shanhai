@@ -59,7 +59,7 @@ final class World
 
     /**
      * @param array<string, Map> $maps by id
-     * @param array{beasts: array, learnsets: array, moves: array, elements: array, items: array, gods: array, rest: array}|null $book data/'s tables, which
+     * @param array{beasts: array, learnsets: array, moves: array, elements: array, items: array, gods: array, float: string, rest: array}|null $book data/'s tables, which
      *        beasts and battles need, and where the player wakes after losing (data/game.php's rest)
      * @param ?Rng $rng the battles' dice
      * @param ?string $saveFile the file the game is saved to and loaded from; null for a game that cannot be saved
@@ -300,6 +300,12 @@ final class World
         $this->run($r['script']);
     }
 
+    /** Whether water may be crossed yet: the flag data/game.php names is set. */
+    public function mayFloat(): bool
+    {
+        return isset($this->flags[$this->book['float'] ?? throw new LogicException('this world was made without what lets water be crossed')]);
+    }
+
     /** The first beast of the party that can carry the player over water: one of the water element that can fight. */
     public function swimmer(): ?Fighter
     {
@@ -315,8 +321,8 @@ final class World
     public function float(): void
     {
         $p = $this->player;
-        if ($this->swimmer() === null || !$this->water($this->map, $p->x + $p->dir->dx(), $p->y + $p->dir->dy())) {
-            throw new LogicException('no water faced, or no beast to carry the player over it');
+        if (!$this->mayFloat() || $this->swimmer() === null || !$this->water($this->map, $p->x + $p->dir->dx(), $p->y + $p->dir->dy())) {
+            throw new LogicException('no water faced, no beast to carry the player over it, or it is not yet allowed');
         }
         $this->afloat = true;
         $this->walk($p, $p->dir);
@@ -416,7 +422,7 @@ final class World
         $this->fight($beast, $level + ($this->afloat ? Formulas::waterLevelBonus($rng->byte()) : 0));
     }
 
-    /** Confirm, standing still: talks to who, or reads what, the player faces; facing water with a beast of water, asks whether to go onto it. */
+    /** Confirm, standing still: talks to who, or reads what, the player faces; facing water with a beast of water, asks whether to go onto it, once that is allowed. */
     private function interact(): void
     {
         $p = $this->player;
@@ -435,6 +441,10 @@ final class World
         if (($s = $this->map->signAt($x, $y)) !== null) {
             $this->run($s[2]);
         } elseif (!$this->afloat && $this->water($this->map, $x, $y) && ($f = $this->swimmer()) !== null) {
+            if (!$this->mayFloat()) {
+                $this->run([['say', '还不能渡水：还有一场试炼没有通过。']]);
+                return;
+            }
             $this->run([
                 ['ask', '水面平静。要乘着' . $f->species['name'] . '渡水吗？', [['渡水', 'go'], ['算了', 'stay']]],
                 ['label', 'go'],

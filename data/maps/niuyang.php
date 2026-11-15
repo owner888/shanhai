@@ -31,6 +31,6 @@ return [
     ],
     // The tall grass: 鹿蜀, the mountain's one beast of the land; seldom met.
     // The 怪水: 旋龟. Seldom met, as 鹿蜀 is.
-    'water' => ['rate' => 4, 'slots' => [[3, 'xuangui'], [4, 'xuangui'], [2, 'xuangui']]],
+    'water' => ['rate' => 2, 'slots' => [[20, 'xuangui'], [15, 'xuangui'], [20, 'xuangui']]],
     'wild' => ['rate' => 4, 'slots' => [[3, 'lushu'], [4, 'lushu'], [5, 'lushu'], [3, 'lushu'], [6, 'lushu'], [5, 'lushu'], [5, 'lushu']]],
 ];

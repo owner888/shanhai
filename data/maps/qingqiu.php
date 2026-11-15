@@ -31,7 +31,7 @@ return [
         ]],
     ],
     // The 英水: 赤鱬.
-    'water' => ['rate' => 6, 'slots' => [[3, 'chiru'], [4, 'chiru'], [2, 'chiru']]],
+    'water' => ['rate' => 2, 'slots' => [[20, 'chiru'], [15, 'chiru'], [20, 'chiru']]],
     // The tall grass: 灌灌, and seldom the nine-tailed fox.
     'wild' => ['rate' => 10, 'slots' => [[4, 'guanguan'], [4, 'guanguan'], [5, 'guanguan'], [5, 'guanguan'], [4, 'guanguan'], [6, 'jiuweihu'], [6, 'jiuweihu']]],
 ];

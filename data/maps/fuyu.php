@@ -30,7 +30,7 @@ return [
         ]],
     ],
     // The 苕水: 鮆鱼.
-    'water' => ['rate' => 6, 'slots' => [[4, 'jiyu'], [5, 'jiyu'], [4, 'jiyu']]],
+    'water' => ['rate' => 2, 'slots' => [[20, 'jiyu'], [15, 'jiyu'], [20, 'jiyu']]],
     // The tall grass: 彘.
     'wild' => ['rate' => 10, 'slots' => [[6, 'zhi'], [6, 'zhi'], [6, 'zhi'], [6, 'zhi'], [7, 'zhi'], [7, 'zhi'], [7, 'zhi']]],
 ];

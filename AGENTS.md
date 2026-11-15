@@ -70,6 +70,7 @@ src/Play.php       MyPHP's Game: keys and gamepad into Controls, World::step, dr
                    or a battle's Arena, boxes, line and lists; MyPHP's ScreenTransition between them, its VirtualPad,
                    its GameAudio's tones
 data/game.php      where a new game starts, where the player wakes after a battle is lost, what is asked when a game is saved
+data/ranges.php    the ranges of mountains by number: the classic's book and name, the reference's gym they are measured from
 data/gods.php      the gods that keep the ranges: what a beast's entry has to fight with, and the classic's line
 data/items.php     the things a bag holds: the seal that binds a wild beast
 data/elements.php  the five elements: what each overcomes and feeds, physical or special, its region
@@ -91,6 +92,7 @@ tests/             php tests/run.php [name]: world, script, data, formulas (each
 docs/rules.md      the rule of the game
 docs/roadmap.md    the order of the work, and when each step is done
 docs/numbers.md    the numbers' baseline: each formula and constant, and where it was read
+docs/atlas.md      every range, mountain, map, beast and level, and each trial: written by `php tools/atlas.php`, never by hand
 docs/todo.md       what is not yet as the reference has it, to come back to; what was written before it was read; what is open
 docs/elements.md   the elements' table and how a beast's elements are settled
 ```
@@ -120,7 +122,8 @@ docs/elements.md   the elements' table and how a beast's elements are settled
   among them fighting as a beast does: not fled, none bound, experience at each fall and half as much again.
 - **A range is a gym** (docs/numbers.md 14): its wild beasts' levels and its god's trial are those of the reference's
   gym of the same number and the areas before it; a map says its `range`, and a test holds the trial to the measure.
-- **Water carries** the player who has a beast of the water element that can fight (`World::float`): afloat, water is
+- **Water carries** the player who has a beast of the water element that can fight, once the fourth range's trial is
+  passed (`World::float`, `data/game.php`'s `float`): afloat, water is
   walked on, the map's `water` holds three wild beasts, and stepping onto land ends it. A game is not saved afloat.
 - **A saved game** is `World::state()`: the map and place, flags, bag, and each beast's `Fighter::state()`. What does not
   fit the data it is read with throws; a new field means a new `Save::VERSION`.
@@ -133,6 +136,8 @@ docs/elements.md   the elements' table and how a beast's elements are settled
 - A new map, NPC or script: add the data, run `php tests/run.php data`; it says what is wrong with it.
 - A new tile kind: `Tile::KINDS`, `Stage::GROUND` (the test asks for both), then how the Stage draws it.
 - A new beast: read its passage first (rule 4), then the entry.
+- After changing a map, a wild table, a god or a trial: `php tools/atlas.php`, which writes `docs/atlas.md` anew (a test
+  fails while it is stale).
 - Leaving something not as the reference has it (rule 2): a line in `docs/todo.md` then, saying what the reference
   does and what we do; when it is done, the line is deleted.
 
