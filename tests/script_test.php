@@ -81,7 +81,7 @@ $w->step(new Controls());
 $w->step(new Controls(Dir::Down));
 same(2, $w->choiceCursor->at, 'the cursor moves a choice a press, and stops at the last');
 $w->step(new Controls(confirm: true));
-same(['which?', 0, 2], [$w->dialog, $w->choiceCursor->at, $w->chosen], 'the third goes back to the label before the question, which is asked anew');
+same(['which?', 0], [$w->dialog, $w->choiceCursor->at], 'the third goes back to the label before the question, which is asked anew');
 $w->step(new Controls());
 $w->step(new Controls(Dir::Down));
 $w->step(new Controls(confirm: true));

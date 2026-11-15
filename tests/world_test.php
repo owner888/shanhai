@@ -59,6 +59,7 @@ same([8, 6], [$w->player->x, $w->player->y], 'the player cannot walk away from a
 $confirm($w);
 check($w->dialog !== null && str_contains($w->dialog, '狌狌'), 'confirm shows the next line');
 $confirm($w);
+$confirm($w);
 check($w->dialog === null && !$w->busy(), 'the last confirm ends the talk');
 check(isset($w->flags['metElder']), 'and the flag is set');
 $confirm($w);
@@ -181,3 +182,41 @@ for ($i = 0; $i < 8; $i++) {
     $step();
 }
 same([8, null], [$w->player->x, $w->battle], 'nor do steps in it with no beast that can fight');
+
+// Maps joined at their edges: walking off one enters the next, at its opposite edge.
+$a = \Shanhai\World\Map::fromArray(['id' => 'a', 'name' => 'A', 'rows' => ['T..', '...', '..T'], 'exits' => ['right' => ['b', 1], 'down' => ['c', -1]]]);
+$b = \Shanhai\World\Map::fromArray(['id' => 'b', 'name' => 'B', 'rows' => ['...', 'T..', '...', '...'], 'exits' => ['left' => ['a', -1]]]);
+$c = \Shanhai\World\Map::fromArray(['id' => 'c', 'name' => 'C', 'rows' => ['..'], 'exits' => ['up' => ['a', 1]]]);
+$w = new World(['a' => $a, 'b' => $b, 'c' => $c], 'a', 2, 1, Dir::Right);
+$walk = function (Dir $dir) use (&$w): void {
+    for ($i = 0; $i < World::WALK_STEPS; $i++) {
+        $w->step(new Controls($dir));
+    }
+};
+$changes = $w->mapChanges;
+$w->step(new Controls(Dir::Right));
+same(['b', 0, 2, Dir::Right, $changes + 1], [$w->map->id, $w->player->x, $w->player->y, $w->player->dir, $w->mapChanges], 'off the east edge at row 1: the next map\'s west edge, a row lower as the exit says');
+$w->step(new Controls(Dir::Left));
+$w->step(new Controls());
+for ($i = 0; $i <= World::TURN_STEPS; $i++) {
+    $w->step(new Controls(Dir::Left));
+}
+same(['a', 2, 1], [$w->map->id, $w->player->x, $w->player->y], 'and back, to where the player left');
+$w->enter('a', 2, 0, Dir::Right);
+$walk(Dir::Right);
+same(['a', 2, 0], [$w->map->id, $w->player->x, $w->player->y], 'where the other map\'s tile cannot be walked on, the edge is an edge');
+$w->enter('a', 1, 0, Dir::Up);
+$walk(Dir::Up);
+same(['a', 1, 0], [$w->map->id, $w->player->x, $w->player->y], 'and so it is where the map has no exit');
+$w->enter('a', 1, 2, Dir::Down);
+$w->step(new Controls(Dir::Down));
+same(['c', 0, 0], [$w->map->id, $w->player->x, $w->player->y], 'off the south edge: the next map\'s north edge, a tile to the west as the exit says');
+
+// The road east from 招摇之山 leads to 堂庭之山, and on to the foot of 猨翼之山.
+$w = Data::newWorld(1);
+$w->enter('zhaoyao', 19, 6, Dir::Right);
+$w->step(new Controls(Dir::Right));
+same(['tangting', 0, 7], [$w->map->id, $w->player->x, $w->player->y], 'east of 招摇之山 is 堂庭之山');
+$w->enter('tangting', 19, 7, Dir::Right);
+$w->step(new Controls(Dir::Right));
+same(['yuanyi', 0, 7], [$w->map->id, $w->player->x, $w->player->y], 'and east of it 猨翼之山');

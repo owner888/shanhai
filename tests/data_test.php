@@ -48,6 +48,26 @@ foreach ($maps as $map) {
         $scripts["{$map->id}: the trigger at $x,$y"] = $script;
     }
 }
+// Exits: walking off an edge leads onto the other map's opposite edge, and walking back leads back.
+foreach ($maps as $map) {
+    foreach ($map->exits as $way => [$to, $offset]) {
+        $dir = Dir::tryFrom($way);
+        check($dir !== null && isset($maps[$to]) && is_int($offset), "{$map->id}: its exit '$way' is a direction, to a map there is, with a whole offset");
+        if ($dir === null || !isset($maps[$to])) {
+            continue;
+        }
+        same([$map->id, -$offset], $maps[$to]->exits[$dir->opposite()->value] ?? null, "{$map->id}: its exit $way to $to is met by one back");
+        $crossings = 0;
+        $along = $dir->dx() !== 0 ? $map->height : $map->width;
+        for ($i = 0; $i < $along; $i++) {
+            [$x, $y] = $dir->dx() !== 0 ? [$dir === Dir::Right ? $map->width - 1 : 0, $i] : [$i, $dir === Dir::Down ? $map->height - 1 : 0];
+            [$tx, $ty] = $dir->dx() !== 0 ? [$dir === Dir::Right ? 0 : $maps[$to]->width - 1, $i + $offset] : [$i + $offset, $dir === Dir::Down ? 0 : $maps[$to]->height - 1];
+            $crossings += $map->walkable($x, $y) && $maps[$to]->walkable($tx, $ty) ? 1 : 0;
+        }
+        check($crossings >= 1, "{$map->id}: its exit $way can be walked through: $crossings tiles of its edge lead onto $to");
+    }
+}
+
 // What a map's tall grass holds (docs/numbers.md 13): a rate, seven beasts with their levels, each one of the map's own mountain.
 foreach ($maps as $map) {
     if ($map->wild === null) {
@@ -63,6 +83,7 @@ foreach ($maps as $map) {
     }
 }
 $scripts['data/game.php: waking after a battle lost'] = (require Data::DIR . '/game.php')['rest']['script'];
+$scripts['data/game.php: asking at the start'] = (require Data::DIR . '/game.php')['resume'];
 foreach ($scripts as $where => $script) {
     check(!throws(fn() => Vm::check($script)), "$where: its script is well formed");
     foreach ($script as $cmd) {

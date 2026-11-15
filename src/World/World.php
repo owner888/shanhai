@@ -6,7 +6,7 @@ namespace Shanhai\World;
 use InvalidArgumentException;
 use LogicException;
 use Shanhai\Battle\{Battle, Fighter, Formulas, Rng, Screen};
-use Shanhai\Cursor;
+use Shanhai\{Cursor, Save};
 use Shanhai\Script\Vm;
 
 /**
@@ -60,8 +60,9 @@ final class World
      * @param array{beasts: array, learnsets: array, moves: array, elements: array, items: array, rest: array}|null $book data/'s tables, which
      *        beasts and battles need, and where the player wakes after losing (data/game.php's rest)
      * @param ?Rng $rng the battles' dice
+     * @param ?string $saveFile the file the game is saved to and loaded from; null for a game that cannot be saved
      */
-    public function __construct(private readonly array $maps, string $map, int $x, int $y, Dir $dir, private readonly ?array $book = null, private readonly ?Rng $rng = null)
+    public function __construct(private readonly array $maps, string $map, int $x, int $y, Dir $dir, private readonly ?array $book = null, private readonly ?Rng $rng = null, private readonly ?string $saveFile = null)
     {
         $this->player = new Actor('player', $x, $y, $dir, 'player');
         $this->enter($map, $x, $y, $dir);
@@ -105,7 +106,12 @@ final class World
         if ($this->menu !== null) {
             $this->menu->step($c, $this->party, $this->items);
             if ($this->menu->done) {
+                $saves = $this->menu->saves;
                 $this->menu = null;
+                if ($saves) {
+                    $this->save();
+                    $this->run([['say', '存档完成。']]);
+                }
             }
             return;
         }
@@ -124,7 +130,7 @@ final class World
             }
         } elseif (!$this->player->moving) {
             if ($c->menu) {
-                $this->menu = new Menu();
+                $this->menu = new Menu($this->saveFile !== null);
             } elseif ($c->confirm) {
                 $this->interact();
             } elseif ($c->dir === null) {
@@ -134,7 +140,7 @@ final class World
                 $this->turnWait = self::TURN_STEPS;
             } elseif ($this->turnWait > 0) {
                 $this->turnWait--;
-            } else {
+            } elseif (!$this->cross($c->dir)) {
                 $this->walk($this->player, $c->dir);
             }
         }
@@ -158,6 +164,33 @@ final class World
             return false;
         }
         [$a->toX, $a->toY, $a->moving, $a->progress] = [$x, $y, true, 0];
+        return true;
+    }
+
+    /**
+     * The player walks off the map's edge: when the map has an exit that way, and the tile it comes to on the other
+     * map can be walked on, the player is there. False when there is nothing to cross to.
+     */
+    private function cross(Dir $dir): bool
+    {
+        $p = $this->player;
+        [$x, $y] = [$p->x + $dir->dx(), $p->y + $dir->dy()];
+        $exit = $this->map->exits[$dir->value] ?? null;
+        if ($exit === null || $this->map->inside($x, $y)) {
+            return false;
+        }
+        [$id, $offset] = $exit;
+        $to = $this->maps[$id] ?? throw new InvalidArgumentException("no map '$id'");
+        [$tx, $ty] = match ($dir) {
+            Dir::Right => [0, $y + $offset],
+            Dir::Left => [$to->width - 1, $y + $offset],
+            Dir::Down => [$x + $offset, 0],
+            Dir::Up => [$x + $offset, $to->height - 1],
+        };
+        if (!$to->walkable($tx, $ty)) {
+            return false;
+        }
+        $this->enter($id, $tx, $ty, $dir);
         return true;
     }
 
@@ -236,6 +269,40 @@ final class World
         $r = $this->book['rest'];
         $this->enter($r['map'], $r['x'], $r['y'], Dir::from($r['dir']));
         $this->run($r['script']);
+    }
+
+    /** What a saved game keeps: where the player is, the flags, the bag, the party. Asked for when nothing holds the controls. */
+    public function state(): array
+    {
+        $p = $this->player;
+        return ['map' => $this->map->id, 'x' => $p->x, 'y' => $p->y, 'dir' => $p->dir->value, 'flags' => array_keys($this->flags),
+            'items' => $this->items, 'party' => array_map(fn(Fighter $f) => $f->state(), $this->party)];
+    }
+
+    /** Puts the world as a saved game kept it (state()). */
+    public function restore(array $s): void
+    {
+        $b = $this->book ?? throw new LogicException('this world was made without the tables a saved game needs');
+        $party = array_map(fn(array $f) => Fighter::fromState($f, $b['beasts'], $b['learnsets'], $b['moves']), $s['party']);
+        $map = $this->maps[$s['map']] ?? throw new InvalidArgumentException("the saved game is on a map there is none of: '{$s['map']}'");
+        if (count($party) > self::PARTY || !$map->walkable($s['x'], $s['y']) || array_diff_key($s['items'], $b['items']) !== []) {
+            throw new InvalidArgumentException('the saved game is not as a game can be');
+        }
+        [$this->flags, $this->items, $this->party] = [array_fill_keys($s['flags'], true), $s['items'], $party];
+        $this->enter($s['map'], $s['x'], $s['y'], Dir::from($s['dir']));
+    }
+
+    /** Saves the game to its file. */
+    public function save(): void
+    {
+        Save::write($this->saveFile ?? throw new LogicException('this world has no file to save to'), $this->state());
+    }
+
+    /** Loads the game its file keeps. */
+    public function load(): void
+    {
+        $file = $this->saveFile ?? throw new LogicException('this world has no file to load from');
+        $this->restore(Save::read($file) ?? throw new LogicException("there is no saved game at $file"));
     }
 
     /** A script asks: $line shows, with $choices to choose among. */

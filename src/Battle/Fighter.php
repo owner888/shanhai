@@ -67,6 +67,37 @@ final class Fighter
         }
     }
 
+    /** What a saved game keeps of it: all that is not its species' or its level's making. */
+    public function state(): array
+    {
+        return ['id' => $this->id, 'level' => $this->level, 'exp' => $this->exp, 'statExp' => $this->statExp, 'dvs' => $this->dvs,
+            'hp' => $this->hp, 'status' => $this->status, 'sleep' => $this->sleep, 'moves' => $this->moves];
+    }
+
+    /**
+     * The beast a saved game kept (state()).
+     * @param array<string, array> $beasts data/beasts.php
+     * @param array<string, list<array{0: int, 1: string}>> $learnsets data/learnsets.php
+     * @param array<string, array> $moves data/moves.php
+     */
+    public static function fromState(array $s, array $beasts, array $learnsets, array $moves): self
+    {
+        $species = $beasts[$s['id']] ?? throw new \InvalidArgumentException("the saved game has a beast there is none of: '{$s['id']}'");
+        $f = new self($s['id'], $species, $s['level'], $learnsets[$s['id']], $moves, $s['dvs']);
+        [$f->exp, $f->statExp] = [$s['exp'], $s['statExp']];
+        $f->measure();
+        if ($s['hp'] < 0 || $s['hp'] > $f->maxHp || $s['moves'] === [] || count($s['moves']) > self::MOVES) {
+            throw new \InvalidArgumentException("the saved game's {$s['id']} is not as a beast can be");
+        }
+        foreach ($s['moves'] as $m) {
+            if (!isset($moves[$m['id']]) || $m['pp'] < 0 || $m['pp'] > $moves[$m['id']]['pp']) {
+                throw new \InvalidArgumentException("the saved game's {$s['id']} has a move that cannot be: '{$m['id']}'");
+            }
+        }
+        [$f->hp, $f->status, $f->sleep, $f->moves] = [$s['hp'], $s['status'], $s['sleep'], $s['moves']];
+        return $f;
+    }
+
     /** Its hp at most and its stats, from its level and what it has grown by (docs/numbers.md 2). Both special stats grow by the one stat experience. */
     private function measure(): void
     {

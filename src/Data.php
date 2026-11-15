@@ -58,12 +58,19 @@ final class Data
         return require self::DIR . '/beasts.php';
     }
 
-    /** A new game's world, the player where data/game.php starts them; its battles' dice from $seed. */
-    public static function newWorld(int $seed): World
+    /**
+     * A new game's world, the player where data/game.php starts them; its battles' dice from $seed. With $saveFile it
+     * can be saved there, and when a game is saved there already it begins by asking whether to go on with it (data/game.php's resume).
+     */
+    public static function newWorld(int $seed, ?string $saveFile = null): World
     {
         $game = require self::DIR . '/game.php';
         $start = $game['start'];
         $book = ['beasts' => self::beasts(), 'learnsets' => self::learnsets(), 'moves' => self::moves(), 'elements' => self::elements(), 'items' => self::items(), 'rest' => $game['rest']];
-        return new World(self::maps(), $start['map'], $start['x'], $start['y'], Dir::from($start['dir']), $book, Rng::seeded($seed));
+        $world = new World(self::maps(), $start['map'], $start['x'], $start['y'], Dir::from($start['dir']), $book, Rng::seeded($seed), $saveFile);
+        if ($saveFile !== null && Save::read($saveFile) !== null) {
+            $world->run($game['resume']);
+        }
+        return $world;
     }
 }
