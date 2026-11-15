@@ -20,6 +20,7 @@ use Shanhai\World\{Dir, World};
  *     ['warp', map, x, y, dir]
  *     ['give', item, count]
  *     ['giveBeast', beast, level]
+ *     ['ask', line, [[choice, label], ...]]   shows the line with the choices; goes to the label of the one taken
  *     ['battle', beast, level]   a wild one; the script goes on when it is over, unless it was lost
  *     ['rest']                   the party's beasts are whole again
  *     ['end']
@@ -29,7 +30,7 @@ final class Vm
     /** command => how many arguments */
     public const ARGS = [
         'say' => 1, 'setFlag' => 1, 'clearFlag' => 1, 'ifFlag' => 2, 'ifNotFlag' => 2, 'goto' => 1, 'label' => 1,
-        'face' => 2, 'move' => 3, 'warp' => 4, 'give' => 2, 'giveBeast' => 2, 'battle' => 2, 'rest' => 0, 'end' => 0,
+        'face' => 2, 'move' => 3, 'warp' => 4, 'give' => 2, 'giveBeast' => 2, 'ask' => 2, 'battle' => 2, 'rest' => 0, 'end' => 0,
     ];
 
     public bool $done = false;
@@ -39,6 +40,8 @@ final class Vm
     private ?string $moving = null;
     private ?Dir $moveDir = null;
     private int $moveLeft = 0;
+    /** @var ?list<string> the labels of the choices asked, while the answer is awaited */
+    private ?array $asked = null;
 
     /** @param list<array> $script */
     public function __construct(private readonly array $script)
@@ -67,9 +70,22 @@ final class Vm
             }
         }
         foreach ($script as $i => $cmd) {
-            $target = match ($cmd[0]) { 'goto' => $cmd[1], 'ifFlag', 'ifNotFlag' => $cmd[2], default => null };
-            if ($target !== null && !isset($labels[$target])) {
-                throw new InvalidArgumentException("script line $i: no label '$target'");
+            $targets = match ($cmd[0]) { 'goto' => [$cmd[1]], 'ifFlag', 'ifNotFlag' => [$cmd[2]], default => [] };
+            if ($cmd[0] === 'ask') {
+                if (!is_array($cmd[2]) || count($cmd[2]) < 2) {
+                    throw new InvalidArgumentException("script line $i: 'ask' takes two choices or more");
+                }
+                foreach ($cmd[2] as $choice) {
+                    if (!is_array($choice) || count($choice) !== 2 || !is_string($choice[0]) || $choice[0] === '') {
+                        throw new InvalidArgumentException("script line $i: a choice is [what it says, the label it goes to]");
+                    }
+                    $targets[] = $choice[1];
+                }
+            }
+            foreach ($targets as $target) {
+                if (!isset($labels[$target])) {
+                    throw new InvalidArgumentException("script line $i: no label '$target'");
+                }
             }
             $dir = match ($cmd[0]) { 'face', 'move' => $cmd[2], 'warp' => $cmd[4], default => null };
             if ($dir !== null && Dir::tryFrom($dir) === null) {
@@ -85,6 +101,10 @@ final class Vm
         while (!$this->done) {
             if ($w->dialog !== null || $w->battle !== null) {
                 return;
+            }
+            if ($this->asked !== null) {
+                $this->pc = $this->labels[$this->asked[$w->chosen]];
+                $this->asked = null;
             }
             if ($this->moving !== null) {
                 $a = $w->actor($this->moving);
@@ -119,6 +139,7 @@ final class Vm
                 case 'give': $w->items[$cmd[1]] = ($w->items[$cmd[1]] ?? 0) + $cmd[2]; break;
                 case 'giveBeast': $w->join($cmd[1], $cmd[2]); break;
                 case 'rest': $w->rest(); break;
+                case 'ask': $w->ask($cmd[1], array_column($cmd[2], 0)); $this->asked = array_column($cmd[2], 1); break;
                 case 'battle': $w->fight($cmd[1], $cmd[2]); break;
                 case 'end': $this->done = true; break;
             }

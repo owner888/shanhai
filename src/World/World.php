@@ -6,6 +6,7 @@ namespace Shanhai\World;
 use InvalidArgumentException;
 use LogicException;
 use Shanhai\Battle\{Battle, Fighter, Formulas, Rng, Screen};
+use Shanhai\Cursor;
 use Shanhai\Script\Vm;
 
 /**
@@ -36,6 +37,12 @@ final class World
     public ?Menu $menu = null;
     /** The line the dialog box shows, which confirm closes; null when there is none. */
     public ?string $dialog = null;
+    /** @var ?list<string> what a script asks the player to choose among, shown with the dialog's line; null when it asks nothing */
+    public ?array $choices = null;
+    /** Where the cursor is among $choices. */
+    public ?Cursor $choiceCursor = null;
+    /** Which of the choices the player last took: the script that asked reads it. */
+    public ?int $chosen = null;
     /** The battle going on, which a script's 'battle' began; null when there is none. */
     public ?Screen $battle = null;
     /** won, lost or fled: how the last battle ended. */
@@ -103,7 +110,12 @@ final class World
             return;
         }
         if ($this->vm !== null) {
-            if ($this->dialog !== null && $c->confirm) {
+            if ($this->choices !== null) {
+                // a question is answered by choosing: the line stays until then, and cancel does not close it
+                if (!$this->choiceCursor->move($c, count($this->choices)) && $c->confirm) {
+                    [$this->chosen, $this->choices, $this->choiceCursor, $this->dialog] = [$this->choiceCursor->at, null, null, null];
+                }
+            } elseif ($this->dialog !== null && $c->confirm) {
                 $this->dialog = null;
             }
             $this->vm->run($this);
@@ -219,11 +231,17 @@ final class World
     private function wake(): void
     {
         $this->vm = null;
-        $this->dialog = null;
+        [$this->dialog, $this->choices, $this->choiceCursor] = [null, null, null];
         $this->rest();
         $r = $this->book['rest'];
         $this->enter($r['map'], $r['x'], $r['y'], Dir::from($r['dir']));
         $this->run($r['script']);
+    }
+
+    /** A script asks: $line shows, with $choices to choose among. */
+    public function ask(string $line, array $choices): void
+    {
+        [$this->dialog, $this->choices, $this->choiceCursor, $this->chosen] = [$line, $choices, new Cursor(), null];
     }
 
     /** Runs a script, which holds the controls until it ends. */

@@ -148,6 +148,10 @@ final class Play extends Game
         if ($this->world->dialog !== null) {
             $this->dialog($p, $r, $this->world->dialog);
         }
+        if ($this->world->choices !== null) {
+            // above the dialog box, whose line is the question
+            $this->choices($p, $r, $this->world->choices, $this->world->choiceCursor->at, 200.0, 2 * Text::BOX_PADDING + Text::LINES * Text::SIZE * 1.5 + 12);
+        }
     }
 
     /** A battle over its Arena: each beast's box (the other's at the top left, the player's at the right above the text), and the line or the list. */
@@ -162,13 +166,13 @@ final class Play extends Game
         $this->choices($p, $r, $s->items(), $s->cursor->at, $s->phase === 'menu' ? 200.0 : 420.0);
     }
 
-    /** A list at the bottom right of the view, $w wide, the cursor's mark by one of its entries. @param list<string> $items */
-    private function choices(Painter $p, array $r, array $items, int $cursor, float $w): void
+    /** A list at the bottom right of the view, $w wide and $lift above the bottom, the cursor's mark by one of its entries. @param list<string> $items */
+    private function choices(Painter $p, array $r, array $items, int $cursor, float $w, float $lift = 0.0): void
     {
         $lineHeight = Text::SIZE * 1.6;
         $h = 2 * Text::BOX_PADDING + count($items) * $lineHeight;
         $x = $r[0] + $r[2] - $w - 24;
-        $y = $r[1] + $r[3] - $h - 24;
+        $y = $r[1] + $r[3] - $h - 24 - $lift;
         $p->fill([$x, $y, $w, $h], 0x10141a, 12.0, 0.92);
         $p->stroke([$x, $y, $w, $h], 0xe8dcc0, 12.0, 2.0, 0.9);
         foreach ($items as $i => $text) {

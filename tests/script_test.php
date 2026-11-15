@@ -58,3 +58,33 @@ check(throws(function () use ($w) {
         $w->step(new Controls());
     }
 }), 'a scripted walk into a tree is an error, not a walk through it');
+
+// ask: a line with choices; the script goes to the label of the one taken.
+check(throws(fn() => Vm::check([['ask', 'which?', [['one', 'a']]], ['label', 'a']])), 'a question with one choice is refused');
+check(throws(fn() => Vm::check([['ask', 'which?', [['one', 'a'], ['two', 'nowhere']]], ['label', 'a']])), 'a choice that goes to no label is refused');
+check(throws(fn() => Vm::check([['ask', 'which?', [['one', 'a'], ['', 'a']]], ['label', 'a']])), 'a choice that says nothing is refused');
+$w = new World(['room' => $map], 'room', 0, 0, Dir::Down);
+$w->run([
+    ['label', 'again'],
+    ['ask', 'which?', [['one', 'a'], ['two', 'b'], ['back', 'again']]],
+    ['label', 'a'],
+    ['say', 'first'],
+    ['end'],
+    ['label', 'b'],
+    ['say', 'second'],
+]);
+same(['which?', ['one', 'two', 'back'], 0], [$w->dialog, $w->choices, $w->choiceCursor->at], 'the line shows with its choices, the cursor on the first');
+$w->step(new Controls(Dir::Down));
+$w->step(new Controls());
+$w->step(new Controls(Dir::Down));
+$w->step(new Controls());
+$w->step(new Controls(Dir::Down));
+same(2, $w->choiceCursor->at, 'the cursor moves a choice a press, and stops at the last');
+$w->step(new Controls(confirm: true));
+same(['which?', 0, 2], [$w->dialog, $w->choiceCursor->at, $w->chosen], 'the third goes back to the label before the question, which is asked anew');
+$w->step(new Controls());
+$w->step(new Controls(Dir::Down));
+$w->step(new Controls(confirm: true));
+same(['second', null, 1], [$w->dialog, $w->choices, $w->chosen], 'the second goes to its label');
+$w->step(new Controls(confirm: true));
+check(!$w->busy(), 'and the script ends');

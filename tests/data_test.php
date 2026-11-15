@@ -66,8 +66,13 @@ $scripts['data/game.php: waking after a battle lost'] = (require Data::DIR . '/g
 foreach ($scripts as $where => $script) {
     check(!throws(fn() => Vm::check($script)), "$where: its script is well formed");
     foreach ($script as $cmd) {
-        if ($cmd[0] === 'say') {
+        if ($cmd[0] === 'say' || $cmd[0] === 'ask') {
             check(count(Text::wrap($cmd[1], Text::columns())) <= Text::LINES, "$where: the line fits the dialog box: {$cmd[1]}");
+        }
+        if ($cmd[0] === 'ask') {
+            foreach ($cmd[2] as [$choice]) {
+                check(mb_strwidth($choice) <= 12, "$where: the choice fits its list: $choice");
+            }
         }
         if ($cmd[0] === 'warp') {
             check(isset($maps[$cmd[1]]) && $maps[$cmd[1]]->walkable($cmd[2], $cmd[3]), "$where: its warp leads to a walkable tile of a map");
