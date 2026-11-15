@@ -63,6 +63,9 @@ final class Battle
         return $copy;
     }
 
+    /** What a beast does when none of its moves has a use left (docs/numbers.md 11.6): the reference's, of no element here. */
+    public const STRUGGLE = ['power' => 50, 'accuracy' => 100, 'element' => null];
+
     public function fighter(int $side): Fighter
     {
         return $this->parties[$side][$this->active[$side]];
@@ -83,7 +86,7 @@ final class Battle
     /**
      * One turn. Each side's action is ['move', which of its four], ['switch', which of its party] or ['pass', 0]:
      * nothing, as when a try to flee fails.
-     * A beast with no move left to use passes, whatever it was told.
+     * A beast with no move left to use struggles, whatever it was told.
      * @param array{0: string, 1: int} $a side 0's
      * @param array{0: string, 1: int} $b side 1's
      */
@@ -185,17 +188,20 @@ final class Battle
             $this->log[] = ['cant', $side, 'paralyze'];
             return;
         }
-        if ($this->usable($side) === []) {
-            $this->log[] = ['cant', $side, 'no moves'];
-            return;
+        // docs/numbers.md 11.6: with no move left to use, the beast struggles, whatever it was told.
+        $struggles = $this->usable($side) === [];
+        if ($struggles) {
+            $m = self::STRUGGLE;
+            $this->log[] = ['struggle', $side];
+        } else {
+            $slot = $u->moves[$which] ?? throw new InvalidArgumentException("side $side's beast has no move $which");
+            if ($slot['pp'] === 0) {
+                throw new InvalidArgumentException("side $side's move $which has no uses left");
+            }
+            $u->moves[$which]['pp']--;
+            $m = $this->moves[$slot['id']];
+            $this->log[] = ['use', $side, $slot['id']];
         }
-        $slot = $u->moves[$which] ?? throw new InvalidArgumentException("side $side's beast has no move $which");
-        if ($slot['pp'] === 0) {
-            throw new InvalidArgumentException("side $side's move $which has no uses left");
-        }
-        $u->moves[$which]['pp']--;
-        $m = $this->moves[$slot['id']];
-        $this->log[] = ['use', $side, $slot['id']];
         [$effect, $chance] = $m['effect'] ?? [null, 0];
 
         // 3 and 4: the damage, worked out before the move is known to hit.
@@ -227,6 +233,12 @@ final class Battle
             }
             if ($t->fainted()) {
                 $this->log[] = ['faint', 1 - $side];
+            }
+            if ($struggles) { // a quarter of what it dealt comes back on it, one at least
+                $this->log[] = ['hurt', $side, $this->hurt($u, max(1, intdiv($dealt, 4))), 'recoil'];
+                if ($u->fainted()) {
+                    $this->log[] = ['faint', $side];
+                }
             }
         }
         if ($effect === null || $effect === 'crit' || $effect === 'drain') {

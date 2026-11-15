@@ -101,4 +101,14 @@ return [
         'moves' => ['ram', 'hillcharge', 'undeaf', 'landslide'],
         'from' => '凡北次二经之首，自管涔之山至于敦题之山，凡十七山，五千六百九十里。其神皆蛇身人面。',
     ],
+    'beicisan' => [
+        'name' => '北次三经之神', 'range' => 10,
+        'looks' => '彘身而八足蛇尾。',
+        'elements' => ['water'],
+        'why' => '北山经属水；彘身、八足、蛇尾，没有别的明确依据，不加副属性。',
+        'stats' => ['hp' => 85, 'atk' => 60, 'def' => 80, 'spa' => 115, 'spd' => 95, 'spe' => 75],
+        'exp' => 205, 'growth' => 'slow',
+        'moves' => ['revive', 'billow', 'seatide', 'fearless'],
+        'from' => '凡北次三经之首，自太行之山以至于毋逢之山，凡四十六山，万二千三百五十里。其神状皆马身而人面者廿神；其十四神状皆彘身而载玉；其十神状皆彘身而八足蛇尾。',
+    ],
 ];

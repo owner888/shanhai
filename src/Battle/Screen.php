@@ -380,8 +380,12 @@ final class Screen
                     break;
                 case 'cant':
                     $line = $name($side) . match ($e[2]) {
-                        'sleep' => '正在沉睡。', 'flinch' => '畏缩了，动弹不得！', 'paralyze' => '身体麻痹，动弹不得！', 'no moves' => '已经没有可用的招式了！',
+                        'sleep' => '正在沉睡。', 'flinch' => '畏缩了，动弹不得！', 'paralyze' => '身体麻痹，动弹不得！',
                     };
+                    break;
+                case 'struggle':
+                    $line = $name($side) . '已经没有可用的招式了，只能挣扎！';
+                    $cue = ['what' => 'use', 'side' => $side, 'hit' => null, 'critical' => false];
                     break;
                 case 'woke':
                     $shown[$side]['status'] = $status[$side][$shown[$side]['which']] = null;
@@ -411,6 +415,7 @@ final class Screen
                     $line = match ($e[3]) {
                         'confusion' => $name($side) . '在混乱中伤到了自己！', 'poison' => $name($side) . '受到毒的侵蚀！',
                         'burn' => $name($side) . '被灼伤折磨着！', 'sandstorm' => '风沙打在' . $name($side) . '身上！',
+                        'recoil' => $name($side) . '也被反震伤到了！',
                     };
                     $cue = ['what' => 'hurt', 'side' => $side];
                     break;

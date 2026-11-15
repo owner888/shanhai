@@ -195,8 +195,8 @@ foreach (Tile::KINDS as [$kind]) {
 check(isset(Stage::LOOKS['player']), 'the stage draws the player');
 same(array_keys($elements), array_keys(Arena::ELEMENTS), 'the arena has a color for a beast of each element');
 
-same(151, count($beasts), 'the beasts: 12, 9 and 9 over the Southern Mountains\' three ranges, 28, 11, 22 and 18 over the Western\'s four, 32 and 10 in the Northern\'s first two');
-foreach ([1 => 12, 2 => 9, 3 => 9, 4 => 28, 5 => 11, 6 => 22, 7 => 18, 8 => 32, 9 => 10] as $range => $count) {
+same(172, count($beasts), 'the beasts: 12, 9 and 9 over the Southern Mountains\' three ranges, 28, 11, 22 and 18 over the Western\'s four, 32, 10 and 21 in the Northern\'s three');
+foreach ([1 => 12, 2 => 9, 3 => 9, 4 => 28, 5 => 11, 6 => 22, 7 => 18, 8 => 32, 9 => 10, 10 => 21] as $range => $count) {
     same($count, count(array_filter($beasts, fn(array $b) => $b['range'] === $range)), "range $range");
 }
 same(['guanguan', 'lushu', 'xuangui'], (function () use ($beasts) {
@@ -370,8 +370,9 @@ foreach ($moves as $id => $m) {
     }
 }
 // A trial is as strong as the reference's gym leaders are against what comes before them (docs/numbers.md 14): the
-// one who sets it sends two to six; the last is the strongest, at 1.65 to 2.55 times the mean level of the wild
-// beasts of its range; the others are at its level or up to six under.
+// one who sets it sends two to six, at the levels of the reference's leader of the gym its range is measured from; the
+// last is the strongest, the others at its level or up to six under; in the reference's first eight gyms the last is
+// 1.65 to 2.55 times the mean level of the wild beasts of its range (in its second half the wild are far lower).
 $ranges = Data::ranges();
 same(range(1, count($ranges)), array_keys($ranges), 'the ranges are numbered from 1, in the classic\'s order');
 foreach ($ranges as $n => $r) {
@@ -385,6 +386,8 @@ foreach ($gods as $id => $g) {
 }
 // docs/atlas.md is what tools/atlas.php writes from the data as it is now.
 same(\Shanhai\Atlas::render(), file_get_contents(Data::DIR . '/../docs/atlas.md'), 'docs/atlas.md is up to date: php tools/atlas.php writes it');
+$leaders = [1 => [7, 9], 2 => [14, 14, 16], 3 => [18, 20], 4 => [21, 21, 23, 25], 5 => [27, 30], 6 => [30, 30, 35], 7 => [27, 29, 31], 8 => [37, 37, 37, 40],
+    9 => [40, 40, 40, 44, 46], 10 => [46, 46, 48], 11 => [41, 42, 46, 46], 12 => [33, 36, 36, 36, 39], 13 => [42, 42, 44, 47], 14 => [41, 41, 42, 42, 44], 15 => [45, 45, 50], 16 => [54, 56, 56, 58, 58, 58]];
 $trials = 0;
 foreach ($scripts as $where => $script) {
     foreach ($script as $cmd) {
@@ -402,7 +405,17 @@ foreach ($scripts as $where => $script) {
         }
         $mean = array_sum($means) / count($means);
         check(count($cmd[2]) >= 2 && count($cmd[2]) <= 6, "$where: a trial is against two to six");
-        check($ace / $mean >= 1.65 && $ace / $mean <= 2.55, sprintf('%s: its last, at level %d, is 1.65 to 2.55 times the range\'s wild beasts\' mean of %.1f: %.2f', $where, $ace, $mean, $ace / $mean));
+        // the levels are the reference's gym leader's own, for the sixteen gyms there are
+        $gym = $ranges[$gods[$aceId]['range'] ?? 0]['gym'] ?? null;
+        $theirs = array_column($cmd[2], 1);
+        sort($theirs);
+        if (isset($leaders[$gym])) {
+            same($leaders[$gym], $theirs, "$where: its levels are those of the reference's gym $gym");
+        }
+        // and in the reference's first half the last is 1.65 to 2.55 times the mean level of the wild beasts before it
+        if ($gym <= 8) {
+            check($ace / $mean >= 1.65 && $ace / $mean <= 2.55, sprintf('%s: its last, at level %d, is 1.65 to 2.55 times the range\'s wild beasts\' mean of %.1f: %.2f', $where, $ace, $mean, $ace / $mean));
+        }
         foreach (array_slice($cmd[2], 0, -1) as [$id, $level]) {
             check($level <= $ace && $level >= $ace - 6, "$where: $id, at level $level, is at the last one's level or up to six under");
         }
@@ -443,7 +456,7 @@ foreach ($foes['at'] as $id => $list) {
     }
 }
 ksort($counts);
-same([1 => [12, 25], 2 => [23, 43], 3 => [22, 44], 4 => [9, 20], 5 => [35, 72], 7 => [23, 46], 8 => [12, 22], 9 => [21, 45]], $counts, 'by range, how many are met and how many beasts they send: the reference\'s before each gym');
+same([1 => [12, 25], 2 => [23, 43], 3 => [22, 44], 4 => [9, 20], 5 => [35, 72], 7 => [23, 46], 8 => [12, 22], 9 => [21, 45], 10 => [9, 20]], $counts, 'by range, how many are met and how many beasts they send: the reference\'s before each gym');
 foreach ($foes['says'] as $says) {
     check(count($says) === 3 && !in_array('', $says, true), 'what an opponent says is three lines: before, beaten, met again');
 }

@@ -178,14 +178,15 @@ $rng->more([200, 255, 200, 255]);
 $b->turn(['move', 0], ['move', 0]);
 same([0, 1], [$f->moves[0]['pp'], count($b->usable(1))], 'its two uses of the move are spent; one move is left');
 check(throws(fn() => $b->turn(['move', 0], ['move', 0])), 'a move with no uses left is refused while another has some');
-$two->hp = 1;
+$two->hp = 6;
 $f->moves[1]['pp'] = 0;
-$rng->more([200, 255]);
+$rng->more([200, 255, 200, 255]);
 $b->turn(['move', 0], ['move', 0]);
-check(in_array(['cant', 1, 'no moves'], $b->log, true), 'a beast with no move left passes');
-$two->hp = 0;
-$b->turn(['move', 0], ['move', 0]);
-same([0, null], [$b->active[0], $b->winner], 'the fallen is replaced by the next that can fight, and the battle goes on');
+// With no move left to use a beast struggles (docs/numbers.md 11.6): a blow of power 50 and no element, a quarter of which comes back on it.
+check(in_array(['struggle', 0], $b->log, true), 'a beast with no move left struggles');
+$dealt = array_values(array_filter($b->log, fn(array $e) => $e[0] === 'hit' && $e[1] === 1));
+same(['hurt', 0, intdiv(end($dealt)[2], 4), 'recoil'], array_values(array_filter($b->log, fn(array $e) => ($e[3] ?? null) === 'recoil'))[0] ?? null, 'and a quarter of what it dealt comes back on it');
+same([0, 0, null], [$two->hp, $b->active[0], $b->winner], 'the one it struck down is replaced by the next that can fight, and the battle goes on');
 
 // A whole battle of the game's own beasts, from a seed: it ends, and the same seed gives the same battle.
 $play = function (int $seed) use ($elements): array {

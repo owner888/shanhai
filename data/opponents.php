@@ -403,5 +403,32 @@ return [
         'dunti' => [
             [10, 6, 'down', 4, '采药人', [['qinyuan', 33], ['jiao', 33], ['shengyu', 33], ['zheng', 33]]],
         ],
+        'guishanbei' => [
+            [10, 6, 'down', 5, '采玉人', [['shanyu', 27], ['huyu', 28], ['meng', 29], ['liu', 30]]],
+        ],
+        'yangshan' => [
+            [10, 6, 'down', 5, '樵夫', [['dashe', 34]]],
+        ],
+        'mengmen' => [
+            [10, 6, 'down', 5, '牧人', [['xingxing', 32], ['xi', 32]]],
+        ],
+        'xiaohou' => [
+            [10, 6, 'down', 3, '巫祝弟子', [['xingxing', 34], ['bifang', 34]]],
+        ],
+        'shenqun' => [
+            [10, 6, 'down', 4, '采玉人', [['ling', 32], ['she', 32], ['yelu', 32]]],
+        ],
+        'xiushan' => [
+            [10, 6, 'down', 3, '渔人', [['luomu', 35], ['huanshu', 35]]],
+        ],
+        'baima' => [
+            [10, 6, 'down', 3, '牧人', [['bailang', 37]]],
+        ],
+        'gaoshi' => [
+            [10, 6, 'down', 2, '巫祝弟子', [['baidi', 34], ['qiongqi', 36]]],
+        ],
+        'qianshanbei' => [
+            [10, 6, 'down', 2, '采玉人', [['heluo', 32], ['chigui', 32], ['baiyou', 35]]],
+        ],
     ],
 ];
