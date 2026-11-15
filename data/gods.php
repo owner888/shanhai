@@ -91,4 +91,14 @@ return [
         'moves' => ['dust', 'billow', 'landslide', 'bite'],
         'from' => '凡北山经之首，自单狐之山至于隄山，凡二十五山，五千四百九十里，其神皆人面蛇身。',
     ],
+    'beici' => [
+        'name' => '北次二经之神', 'range' => 9,
+        'looks' => '蛇身人面。',
+        'elements' => ['earth', 'water'],
+        'why' => '蛇身，蛇虫穴居，属土；北山经属水。',
+        'stats' => ['hp' => 90, 'atk' => 105, 'def' => 85, 'spa' => 80, 'spd' => 75, 'spe' => 75],
+        'exp' => 205, 'growth' => 'slow',
+        'moves' => ['ram', 'hillcharge', 'undeaf', 'landslide'],
+        'from' => '凡北次二经之首，自管涔之山至于敦题之山，凡十七山，五千六百九十里。其神皆蛇身人面。',
+    ],
 ];

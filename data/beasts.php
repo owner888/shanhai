@@ -1,6 +1,6 @@
 <?php
 // The beasts of the Classic of Mountains and Seas: the Southern Mountains (南山经), all three ranges, and the first
-// four ranges of the Western (西山经), which are all it has, and the first of the Northern (北山经之首).
+// four ranges of the Western (西山经), which are all it has, and the first two of the Northern (北山经之首, 北次二经).
 //
 // Every field here restates what the classic says, checked against its text (zh.wikisource.org/wiki/山海經/南山經 and
 // /西山經, which carry Guo Pu's commentary; the names and wording cross-checked with a second edition where one could
@@ -173,7 +173,7 @@ return [
         'lore' => '食人。',
     ],
     'jiyu' => [
-        'name' => '鮆鱼', 'kind' => 'strange', 'range' => 2, 'mountain' => '浮玉之山',
+        'name' => '鮆鱼', 'kind' => 'strange', 'range' => 2, 'mountain' => '浮玉之山、县雍之山',
         'elements' => ['water'], 'why' => '生于苕水中。',
         'tier' => 1, 'stats' => ['hp' => 40, 'atk' => 35, 'def' => 40, 'spa' => 50, 'spd' => 45, 'spe' => 60],
         'catch' => 255, 'exp' => 70, 'growth' => 'fast',
@@ -553,7 +553,7 @@ return [
         'unchecked' => '原文只有名字；「豹一类」是通行的解释，所查版本这一节没有注，待查注本。',
     ],
     'mi' => [
-        'name' => '麋', 'kind' => 'common', 'range' => 5, 'mountain' => '西皇之山',
+        'name' => '麋', 'kind' => 'common', 'range' => 5, 'mountain' => '西皇之山、县雍之山',
         'elements' => ['metal'], 'why' => '原文没有别的依据，取西山经的本地属性。',
         'tier' => 2, 'stats' => ['hp' => 90, 'atk' => 70, 'def' => 75, 'spa' => 40, 'spd' => 60, 'spe' => 55],
         'catch' => 120, 'exp' => 96, 'growth' => 'mediumFast',
@@ -795,7 +795,7 @@ return [
         'looks' => '白色的虎。',
     ],
     'baidi' => [
-        'name' => '白翟', 'kind' => 'common', 'range' => 7, 'mountain' => '盂山',
+        'name' => '白翟', 'kind' => 'common', 'range' => 7, 'mountain' => '盂山、县雍之山',
         'elements' => ['wood'], 'why' => '鸟。',
         'tier' => 1, 'stats' => ['hp' => 45, 'atk' => 40, 'def' => 45, 'spa' => 65, 'spd' => 55, 'spe' => 75],
         'catch' => 190, 'exp' => 68, 'growth' => 'mediumFast',
@@ -1142,7 +1142,7 @@ return [
         'omen' => '见则其国大旱。',
     ],
     'ma' => [
-        'name' => '马', 'kind' => 'common', 'range' => 8, 'mountain' => '罴差之山、北鲜之山、隄山',
+        'name' => '马', 'kind' => 'common', 'range' => 8, 'mountain' => '罴差之山、北鲜之山、隄山、湖灌之山',
         'elements' => ['water'], 'why' => '原文没有别的依据，取北山经的本地属性。',
         'tier' => 2, 'stats' => ['hp' => 75, 'atk' => 65, 'def' => 60, 'spa' => 65, 'spd' => 55, 'spe' => 95],
         'catch' => 120, 'exp' => 110, 'growth' => 'mediumFast',
@@ -1162,5 +1162,84 @@ return [
         'catch' => 45, 'exp' => 170, 'growth' => 'mediumSlow',
         'looks' => '隄水中的龙龟。',
         'unchecked' => '原文只说隄水「其中多龙龟」，是一种还是龙和龟两种，注家说法不一；这里当一种。',
+    ],
+    // 北次二经: 管涔之山 to 敦题之山
+    'lyu' => [
+        'name' => '闾', 'kind' => 'common', 'range' => 9, 'mountain' => '县雍之山',
+        'elements' => ['water'], 'why' => '原文没有别的依据，取北山经的本地属性。',
+        'tier' => 2, 'stats' => ['hp' => 80, 'atk' => 65, 'def' => 65, 'spa' => 65, 'spd' => 60, 'spe' => 75],
+        'catch' => 90, 'exp' => 112, 'growth' => 'mediumFast',
+        'looks' => '兽，原文只有名字。',
+    ],
+    'baiyou' => [
+        'name' => '白䳑', 'kind' => 'common', 'range' => 9, 'mountain' => '县雍之山',
+        'elements' => ['wood'], 'why' => '鸟。',
+        'tier' => 1, 'stats' => ['hp' => 45, 'atk' => 40, 'def' => 45, 'spa' => 65, 'spd' => 55, 'spe' => 70],
+        'catch' => 190, 'exp' => 66, 'growth' => 'mediumFast',
+        'looks' => '鸟，原文只有名字。',
+    ],
+    'boma' => [
+        'name' => '𩣡马', 'kind' => 'strange', 'range' => 9, 'mountain' => '敦头之山',
+        'elements' => ['water', 'metal'], 'why' => '生于旄水中；一角。',
+        'tier' => 3, 'stats' => ['hp' => 80, 'atk' => 85, 'def' => 70, 'spa' => 90, 'spd' => 70, 'spe' => 85],
+        'catch' => 45, 'exp' => 166, 'growth' => 'mediumSlow',
+        'looks' => '旄水中的马，牛尾而白身，一角。',
+        'sound' => '如呼。',
+    ],
+    'paoxiao' => [
+        'name' => '狍鸮', 'kind' => 'strange', 'range' => 9, 'mountain' => '钩吾之山',
+        'elements' => ['metal'], 'why' => '虎齿人爪。',
+        'tier' => 3, 'stats' => ['hp' => 90, 'atk' => 115, 'def' => 80, 'spa' => 50, 'spd' => 75, 'spe' => 85],
+        'catch' => 45, 'exp' => 174, 'growth' => 'mediumSlow',
+        'looks' => '羊身人面，其目在腋下，虎齿人爪。',
+        'sound' => '如婴儿。',
+        'lore' => '食人。',
+    ],
+    'duyu' => [
+        'name' => '独𤞞', 'kind' => 'strange', 'range' => 9, 'mountain' => '北嚻之山',
+        'elements' => ['water'], 'why' => '原文没有别的依据，取北山经的本地属性。',
+        'tier' => 3, 'stats' => ['hp' => 85, 'atk' => 85, 'def' => 70, 'spa' => 90, 'spd' => 70, 'spe' => 75],
+        'catch' => 60, 'exp' => 160, 'growth' => 'mediumSlow',
+        'looks' => '形如虎，白身犬首，马尾彘鬣。',
+        'unchecked' => '查到的片段里只见到「马尾彘鬣」；「如虎、白身犬首」和北嚻之山「无石，其阳多碧，其阴多玉」是通行本的文字，待核对。',
+    ],
+    'banmao' => [
+        'name' => '𪄀𪃑', 'kind' => 'strange', 'range' => 9, 'mountain' => '北嚻之山',
+        'elements' => ['wood'], 'why' => '鸟。',
+        'tier' => 3, 'stats' => ['hp' => 75, 'atk' => 55, 'def' => 65, 'spa' => 100, 'spd' => 85, 'spe' => 90],
+        'catch' => 60, 'exp' => 156, 'growth' => 'mediumSlow',
+        'looks' => '形如乌，人面，宵飞而昼伏。',
+        'lore' => '食之已暍。',
+    ],
+    'juji' => [
+        'name' => '居暨', 'kind' => 'strange', 'range' => 9, 'mountain' => '梁渠之山',
+        'elements' => ['fire'], 'why' => '赤毛。',
+        'tier' => 2, 'stats' => ['hp' => 60, 'atk' => 55, 'def' => 70, 'spa' => 80, 'spd' => 65, 'spe' => 60],
+        'catch' => 120, 'exp' => 100, 'growth' => 'mediumFast',
+        'looks' => '形如彙而赤毛。',
+        'sound' => '如豚。',
+    ],
+    'xiaoque' => [
+        'name' => '嚻（鸟）', 'kind' => 'strange', 'range' => 9, 'mountain' => '梁渠之山',
+        'elements' => ['wood'], 'why' => '鸟。',
+        'tier' => 3, 'stats' => ['hp' => 70, 'atk' => 65, 'def' => 65, 'spa' => 100, 'spd' => 80, 'spe' => 95],
+        'catch' => 60, 'exp' => 160, 'growth' => 'mediumSlow',
+        'looks' => '鸟，形如夸父，四翼、一目、犬尾。和羭次之山的兽同名，这里加「鸟」字来分开。',
+        'sound' => '如鹊。',
+        'lore' => '食之已腹痛，可以止衕。',
+    ],
+    'shanyu' => [
+        'name' => '䱇', 'kind' => 'common', 'range' => 9, 'mountain' => '湖灌之山',
+        'elements' => ['water'], 'why' => '生于湖灌之水中。',
+        'tier' => 1, 'stats' => ['hp' => 50, 'atk' => 45, 'def' => 40, 'spa' => 60, 'spd' => 50, 'spe' => 70],
+        'catch' => 255, 'exp' => 60, 'growth' => 'mediumFast',
+        'looks' => '湖灌之水中的鱼。',
+    ],
+    'guaishe' => [
+        'name' => '怪蛇', 'kind' => 'common', 'range' => 9, 'mountain' => '洹山',
+        'elements' => ['earth'], 'why' => '蛇虫，穴居。',
+        'tier' => 2, 'stats' => ['hp' => 65, 'atk' => 85, 'def' => 65, 'spa' => 40, 'spd' => 55, 'spe' => 80],
+        'catch' => 120, 'exp' => 100, 'growth' => 'mediumFast',
+        'looks' => '山下的怪蛇，原文没有写它的形状。',
     ],
 ];

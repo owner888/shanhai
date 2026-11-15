@@ -350,5 +350,58 @@ return [
         'picha' => [
             [10, 6, 'down', 1, '猎户', [['zhu', 37]]],
         ],
+        'guancen' => [
+            [7, 6, 'down', 3, '渔人', [['zhuhuai', 30], ['zhongshe', 30], ['yao', 34]]],
+            [13, 8, 'up', 4, '采药人', [['tongqu', 34]]],
+        ],
+        'shaoyang' => [
+            [10, 6, 'down', 4, '行商', [['shuhu', 33], ['minniu', 31], ['baiyou', 31]]],
+        ],
+        'xianyong' => [
+            [10, 6, 'down', 2, '猎户', [['changshe', 35]]],
+        ],
+        'huqi' => [
+            [7, 6, 'down', 3, '渔人', [['aoye', 31], ['yayu', 33], ['qiongqi', 31]]],
+            [13, 8, 'up', 3, '行商', [['she', 32], ['xiaoniao', 32], ['feiyishe', 32]]],
+        ],
+        'baisha' => [
+            [10, 6, 'down', 2, '猎户', [['tuotuo', 33], ['paoxiao', 35]]],
+        ],
+        'ershi' => [
+            [10, 6, 'down', 3, '渔人', [['renmianxiao', 32], ['jiao', 32], ['zheng', 32]]],
+        ],
+        'kuangshan' => [
+            [7, 6, 'down', 3, '采药人', [['luomu', 36], ['aoye', 32]]],
+            [13, 8, 'up', 4, '行商', [['bo', 36]]],
+        ],
+        'zhuyu' => [
+            [10, 6, 'down', 2, '行商', [['qiongqi', 36]]],
+        ],
+        'duntou' => [
+            [10, 6, 'down', 3, '樵夫', [['minniu', 30], ['hu', 30], ['jufu', 34]]],
+        ],
+        'gouwu' => [
+            [7, 6, 'down', 0, '渔人', [['yelu', 35]]],
+            [13, 8, 'up', 0, '采药人', [['luomu', 35]]],
+        ],
+        'beixiao' => [
+            [10, 6, 'down', 3, '采药人', [['tongqu', 35]]],
+        ],
+        'liangqu' => [
+            [10, 6, 'down', 3, '行商', [['tiangou', 33], ['zheng', 33]]],
+        ],
+        'guguan' => [
+            [7, 6, 'down', 1, '樵夫', [['fan', 30], ['jiaoniao', 30], ['bo', 30]]],
+            [13, 8, 'up', 3, '牧人', [['ranyi', 34]]],
+        ],
+        'huguan' => [
+            [10, 6, 'down', 4, '采药人', [['shanyu', 37], ['huayub', 33]]],
+        ],
+        'huanshan' => [
+            [10, 6, 'down', 3, '采玉人', [['baihan', 27], ['ling', 33], ['she', 32], ['yelu', 32]]],
+        ],
+        'dunti' => [
+            [10, 6, 'down', 4, '采药人', [['qinyuan', 33], ['jiao', 33], ['shengyu', 33], ['zheng', 33]]],
+        ],
     ],
 ];
