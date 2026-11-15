@@ -11,4 +11,5 @@ return [
     2 => ['book' => '南山经', 'name' => '南次二经', 'gym' => 2, 'toward' => 'right'],
     3 => ['book' => '南山经', 'name' => '南次三经', 'gym' => 3, 'toward' => 'right'],
     4 => ['book' => '西山经', 'name' => '西山经之首（华山）', 'gym' => 4, 'toward' => 'left'],
+    5 => ['book' => '西山经', 'name' => '西次二经', 'gym' => 5, 'toward' => 'left'],
 ];

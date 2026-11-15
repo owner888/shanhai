@@ -1,5 +1,6 @@
 <?php
-// Where a new game starts; where the player wakes after a battle is lost, with what is said then; and what is asked
+// Where a new game starts; where the player wakes after a battle is lost before the party has rested anywhere (after,
+// it is where it last rested), with what is said then; and what is asked
 // at the start when a game is saved already; and what lets water be crossed.
 declare(strict_types=1);
 
@@ -15,6 +16,6 @@ return [
         ['label', 'new'],
     ],
     'rest' => ['map' => 'zhaoyao_hut', 'x' => 3, 'y' => 3, 'dir' => 'up', 'script' => [
-        ['say', '你在巫祝的小屋里醒来。异兽们已经恢复了精神。'],
+        ['say', '你在上次歇脚的地方醒来。异兽们已经恢复了精神。'],
     ]],
 ];

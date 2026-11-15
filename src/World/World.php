@@ -45,6 +45,8 @@ final class World
     public ?int $chosen = null;
     /** Whether the player is on water, carried by a beast of the party (float()). */
     public bool $afloat = false;
+    /** @var ?array{0: string, 1: int, 2: int, 3: string} where a script last made the party whole: map, place, facing; null before any */
+    public ?array $restAt = null;
     /** The battle going on, which a script's 'battle' began; null when there is none. */
     public ?Screen $battle = null;
     /** won, lost or fled: how the last battle ended. */
@@ -255,6 +257,14 @@ final class World
     /** The party rests: every beast whole again. */
     public function rest(): void
     {
+        $this->mend();
+        $p = $this->player;
+        $this->restAt = [$this->map->id, $p->x, $p->y, $p->dir->value];
+    }
+
+    /** Every beast of the party is whole again. */
+    private function mend(): void
+    {
         foreach ($this->party as $f) {
             $f->restore($this->book['moves']);
         }
@@ -289,14 +299,18 @@ final class World
         $this->battle = new Screen(new Battle([$this->party, $theirs], $b['elements'], $b['moves'], $this->rng, [true, false]), $b['moves'], $this->rng, $b['items'], $this->items, $trial);
     }
 
-    /** The battle was lost: the script that began it is dropped, and the player wakes where data/game.php rests them, the party whole. */
+    /**
+     * The battle was lost: the script that began it is dropped, and the player wakes where the party was last made
+     * whole (before any such place, where data/game.php rests them), the party whole.
+     */
     private function wake(): void
     {
         $this->vm = null;
         [$this->dialog, $this->choices, $this->choiceCursor] = [null, null, null];
-        $this->rest();
+        $this->mend();
         $r = $this->book['rest'];
-        $this->enter($r['map'], $r['x'], $r['y'], Dir::from($r['dir']));
+        [$map, $x, $y, $dir] = $this->restAt ?? [$r['map'], $r['x'], $r['y'], $r['dir']];
+        $this->enter($map, $x, $y, Dir::from($dir));
         $this->run($r['script']);
     }
 
@@ -328,7 +342,7 @@ final class World
         $this->walk($p, $p->dir);
     }
 
-    /** What a saved game keeps: where the player is, the flags, the bag, the party. Asked for when nothing holds the controls. */
+    /** What a saved game keeps: where the player is, the flags, the bag, the party, where it last rested. Asked for when nothing holds the controls. */
     public function state(): array
     {
         if ($this->afloat) {
@@ -336,7 +350,7 @@ final class World
         }
         $p = $this->player;
         return ['map' => $this->map->id, 'x' => $p->x, 'y' => $p->y, 'dir' => $p->dir->value, 'flags' => array_keys($this->flags),
-            'items' => $this->items, 'party' => array_map(fn(Fighter $f) => $f->state(), $this->party)];
+            'items' => $this->items, 'party' => array_map(fn(Fighter $f) => $f->state(), $this->party), 'rest' => $this->restAt];
     }
 
     /** Puts the world as a saved game kept it (state()). */
@@ -348,7 +362,11 @@ final class World
         if (count($party) > self::PARTY || !$map->walkable($s['x'], $s['y']) || array_diff_key($s['items'], $b['items']) !== []) {
             throw new InvalidArgumentException('the saved game is not as a game can be');
         }
-        [$this->flags, $this->items, $this->party] = [array_fill_keys($s['flags'], true), $s['items'], $party];
+        $rest = $s['rest'];
+        if ($rest !== null && !(isset($this->maps[$rest[0]]) && $this->maps[$rest[0]]->walkable($rest[1], $rest[2]) && Dir::tryFrom($rest[3]) !== null)) {
+            throw new InvalidArgumentException('the saved game\'s place of rest is not one there is');
+        }
+        [$this->flags, $this->items, $this->party, $this->restAt] = [array_fill_keys($s['flags'], true), $s['items'], $party, $rest];
         $this->enter($s['map'], $s['x'], $s['y'], Dir::from($s['dir']));
     }
 

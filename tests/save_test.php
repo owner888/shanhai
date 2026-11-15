@@ -68,6 +68,21 @@ $other->load();
 same($state, $other->state(), 'another world, loading it, is the same');
 same($changes + 1, $other->mapChanges, 'and what draws it is told of the map');
 check(throws(fn() => $other->restore(array_replace($state, ['map' => 'nowhere']))), 'a map there is none of is refused');
+// Where the party last rested is kept, and is where a battle lost wakes the player; a place there is none of is refused.
+same(null, $state['rest'], 'a game that has rested nowhere keeps no such place');
+$other->run([['rest']]);
+$p = $other->player;
+same([$other->map->id, $p->x, $p->y, $p->dir->value], $other->state()['rest'], 'rest is kept as where it was done');
+$again = new World($maps, 'hut', 0, 0, Dir::Down, $book, Rng::seeded(2));
+$again->restore($other->state());
+same($other->state()['rest'], $again->restAt, 'and comes back');
+check(throws(fn() => $other->restore(array_replace($state, ['rest' => ['nowhere', 0, 0, 'up']]))), 'a place of rest on a map there is none of is refused');
+// A file of the first format, which had no place of rest, is read as one that rested nowhere.
+file_put_contents($file, json_encode(['version' => 1, 'state' => array_diff_key($state, ['rest' => 0])]));
+same($state, Save::read($file), 'a file of format 1 is read as having rested nowhere');
+file_put_contents($file, json_encode(['version' => 99, 'state' => $state]));
+check(throws(fn() => Save::read($file)), 'a file of a format not known is refused');
+Save::write($file, $state);
 check(throws(fn() => $other->restore(array_replace($state, ['items' => ['nothing' => 1]]))), 'a thing there is none of is refused');
 check(throws(fn() => (new World($maps, 'hut', 0, 0, Dir::Down, $book))->save()), 'a world with no file cannot save');
 $w = new World($maps, 'hut', 0, 0, Dir::Down, $book);

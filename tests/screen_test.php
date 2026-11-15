@@ -224,7 +224,7 @@ same('去吧，狌狌！', (function () use ($w, $confirm) { $w->step($confirm);
 for ($steps = 0; $w->battle !== null && $steps < 4000; $steps++) {
     $w->step($steps % 2 === 0 ? $confirm : ($steps % 4 === 1 ? $down : $none));
 }
-same(['lost', 'hut', [1, 0], Dir::Up, 'awake'], [$w->lastBattle, $w->map->id, [$w->player->x, $w->player->y], $w->player->dir, $w->dialog], 'lost: the player wakes where data says, to what it says');
+same(['lost', 'field', [0, 0], Dir::Down, 'awake'], [$w->lastBattle, $w->map->id, [$w->player->x, $w->player->y], $w->player->dir, $w->dialog], 'lost: the player wakes where the party last rested, to what data says');
 same([true, true], array_map(fn($f) => $f->hp === $f->maxHp, $w->party), 'the party whole');
 $w->step($confirm);
 check(!$w->busy() && $w->dialog === null, 'the script that began the battle does not go on');

@@ -9,7 +9,7 @@ use Shanhai\World\{Controls, Dir, Map, Tile, World};
 /**
  * A player with no hands: plays a game from its start through every trial there is, by the same World::step and the
  * same Controls a person's keys make, so that what it meets is what a person would. It walks the roads, takes the
- * first of what it is offered, fights every wild beast that comes with the move that would do most, and goes to a
+ * first of what it is offered (but what a question must be answered to be taken somewhere or to rest), fights every wild beast that comes with the move that would do most, and goes to a
  * trial when its first beast is at the level it wants: 0 at first, so it tries at once, and two more than it had each
  * time it fails. Before a trial it has its beasts made whole at the nearest place that does so.
  *
@@ -168,8 +168,8 @@ final class Journey
         $places = [];
         foreach ($this->maps as $map) {
             foreach ([...array_map(fn(array $n) => [$n[1], $n[2], $n[5]], $map->npcs), ...array_map(fn(array $s) => [$s[0], $s[1], $s[2]], $map->signs)] as [$x, $y, $script]) {
-                if ($this->reaches($script, 'rest') !== null && ($route = $this->route($map->id)) !== null) {
-                    $places[] = [count($route), $map->id, $x, $y];
+                if (($rest = $this->reaches($script, 'rest')) !== null && ($route = $this->route($map->id)) !== null) {
+                    $places[] = [count($route), $map->id, $x, $y, $rest[1]];
                 }
             }
         }
@@ -177,18 +177,19 @@ final class Journey
             throw new RuntimeException('nowhere that can be come to makes the party whole');
         }
         sort($places);
-        [, $map, $x, $y] = $places[0];
+        [, $map, $x, $y, $answers] = $places[0];
         $this->travel($map);
-        $this->talk($x, $y, []);
+        $this->talk($x, $y, $answers);
     }
 
     // ---- the maps between ----
 
     /**
-     * What a script comes to when its questions are answered with the first choice, as the flags stand: the first
-     * command of $kind, or null when it ends, or begins a battle, before one.
+     * How a script comes to a command of $kind as the flags stand: the choices to make at its questions, the first
+     * that lead there; null when none do before it ends or begins a battle.
+     * @return ?array{0: array, 1: list<int>} the command, and the answers
      */
-    private function reaches(array $script, string $kind): ?array
+    private function reaches(array $script, string $kind, int $pc = 0, array $answers = [], int $depth = 0): ?array
     {
         $labels = [];
         foreach ($script as $i => $cmd) {
@@ -196,24 +197,31 @@ final class Journey
                 $labels[$cmd[1]] = $i;
             }
         }
-        for ($pc = 0, $n = 0; $pc < count($script) && $n < 200; $pc++, $n++) {
+        for ($n = 0; $pc < count($script) && $n < 200; $pc++, $n++) {
             $cmd = $script[$pc];
             if ($cmd[0] === $kind) {
-                return $cmd;
+                return [$cmd, $answers];
+            }
+            if ($cmd[0] === 'ask') {
+                foreach ($depth < 6 ? $cmd[2] : [] as $i => [, $label]) {
+                    if (($found = $this->reaches($script, $kind, $labels[$label], [...$answers, $i], $depth + 1)) !== null) {
+                        return $found;
+                    }
+                }
+                return null;
             }
             $set = isset($this->w->flags[$cmd[1] ?? '']);
             $pc = match (true) {
                 $cmd[0] === 'ifFlag' && $set, $cmd[0] === 'ifNotFlag' && !$set => $labels[$cmd[2]],
                 $cmd[0] === 'goto' => $labels[$cmd[1]],
-                $cmd[0] === 'ask' => $labels[$cmd[2][0][1]],
-                in_array($cmd[0], ['end', 'trial', 'battle'], true) => count($script),
+                in_array($cmd[0], ['end', 'trial', 'battle', 'warp'], true) => count($script),
                 default => $pc,
             };
         }
         return null;
     }
 
-    /** The ways out of a map as the flags stand. @return list<array{0: string, 1: string, 2: mixed, 3?: mixed}> [to, how, ...] */
+    /** The ways out of a map as the flags stand. @return list<array> [to, how, ...]: an exit's direction; a warp's or a person's place, and for a person the answers to give */
     private function ways(Map $map): array
     {
         $out = [];
@@ -225,7 +233,7 @@ final class Journey
         }
         foreach ($map->npcs as $npc) {
             if (($warp = $this->reaches($npc[5], 'warp')) !== null) {
-                $out[] = [$warp[1], 'npc', $npc[1], $npc[2]];
+                $out[] = [$warp[0][1], 'npc', $npc[1], $npc[2], $warp[1]];
             }
         }
         return $out;
@@ -267,7 +275,7 @@ final class Journey
             [$next, $how] = $route[0];
             $map = $this->w->map;
             if ($how === 'npc') {
-                $this->talk($route[0][2], $route[0][3], []);
+                $this->talk($route[0][2], $route[0][3], $route[0][4]);
             } elseif ($how === 'warp') {
                 $this->goTile($route[0][2], $route[0][3], true);
             } else {

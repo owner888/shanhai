@@ -110,7 +110,8 @@ docs/elements.md   the elements' table and how a beast's elements are settled
 - **A battle holds the controls** like a script: `World::$battle` is its Screen, which `World::step` steps until it is
   done; the script that began it then goes on. The Screen shows a turn line by line: hp changes with the line that tells it.
 - **The party is its Fighters**: a battle is fought by the party's own beasts, so their hp, status and moves' uses are
-  what it left them; stages and confusion end with it. Lost, the player wakes at `data/game.php`'s rest, the party whole.
+  what it left them; stages and confusion end with it. Lost, the player wakes where a script last made the party whole
+  (`World::$restAt`; before any, `data/game.php`'s rest), the party whole. Each range has such a place at its head.
 - **A beast grows in its Fighter**: experience, each stat's experience, the level they make, the moves it comes to
   (`gain()`, `learnable()`, `learn()`); the Screen gives them when the wild beast falls and asks which move to forget.
 - **No face lies hidden against another block** (`Stage::faces`): the ground was once a cube a tile, and the sides
@@ -127,7 +128,7 @@ docs/elements.md   the elements' table and how a beast's elements are settled
 - **Water carries** the player who has a beast of the water element that can fight, once the fourth range's trial is
   passed (`World::float`, `data/game.php`'s `float`): afloat, water is
   walked on, the map's `water` holds three wild beasts, and stepping onto land ends it. A game is not saved afloat.
-- **A saved game** is `World::state()`: the map and place, flags, bag, and each beast's `Fighter::state()`. What does not
+- **A saved game** is `World::state()`: the map and place, flags, bag, where it last rested, and each beast's `Fighter::state()`. What does not
   fit the data it is read with throws; a new field means a new `Save::VERSION`.
 - **A map change** is counted in `World::$mapChanges`; Play builds a new Stage when it sees one.
 - **Drawing interpolates**: `Actor::place($alpha)` is between two updates' places, so motion is smoother than its steps.
@@ -154,4 +155,4 @@ docs/elements.md   the elements' table and how a beast's elements are settled
 - **Phase 1, battle** (M2): the engine in PHP alone with tests → a simulator that checks the tables → its scene and menus.
 - **Phase 2, the loop** (M3): wild beasts, catching, the party, the bag, growth, saving, `choose` in scripts.
 - **Phase 3, v0.1** (M4): the Southern Mountains' maps, a cave, the first trial.
-- **Phase 4**: the other ranges (the Western Mountains' first is in), phones, models, sound.
+- **Phase 4**: the other ranges (the Western Mountains' first two are in), phones, models, sound.

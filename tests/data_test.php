@@ -195,8 +195,8 @@ foreach (Tile::KINDS as [$kind]) {
 check(isset(Stage::LOOKS['player']), 'the stage draws the player');
 same(array_keys($elements), array_keys(Arena::ELEMENTS), 'the arena has a color for a beast of each element');
 
-same(58, count($beasts), 'the beasts: 12, 9 and 9 over the Southern Mountains\' three ranges, 28 in the Western\'s first');
-foreach ([1 => 12, 2 => 9, 3 => 9, 4 => 28] as $range => $count) {
+same(69, count($beasts), 'the beasts: 12, 9 and 9 over the Southern Mountains\' three ranges, 28 and 11 over the Western\'s first two');
+foreach ([1 => 12, 2 => 9, 3 => 9, 4 => 28, 5 => 11] as $range => $count) {
     same($count, count(array_filter($beasts, fn(array $b) => $b['range'] === $range)), "range $range");
 }
 same(['guanguan', 'lushu', 'xuangui'], (function () use ($beasts) {
@@ -409,6 +409,18 @@ foreach ($scripts as $where => $script) {
     }
 }
 same(count($gods), $trials, 'each god sets one trial');
+// Each range has somewhere the party is made whole, as the reference has a place to heal in each town.
+$rests = [];
+foreach ($maps as $map) {
+    foreach ([...$map->npcs, ...$map->signs] as $who) {
+        foreach (end($who) as $cmd) {
+            $rests[$map->range] = ($rests[$map->range] ?? false) || $cmd[0] === 'rest';
+        }
+    }
+}
+foreach (array_keys($ranges) as $n) {
+    check($rests[$n] ?? false, "range $n has someone or something that makes the party whole");
+}
 // A range after the first is come to from the one before it, and gone back from: someone on a map of each sends the
 // player to a map of the other.
 $sent = [];

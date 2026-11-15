@@ -1,6 +1,6 @@
 <?php
 // The beasts of the Classic of Mountains and Seas: the Southern Mountains (南山经), all three ranges, and the first
-// range of the Western (西山经之首).
+// two ranges of the Western (西山经之首, 西次二经).
 //
 // Every field here restates what the classic says, checked against its text (zh.wikisource.org/wiki/山海經/南山經 and
 // /西山經, which carry Guo Pu's commentary; the names and wording cross-checked with a second edition where one could
@@ -205,14 +205,14 @@ return [
 
     // 南次三经: 天虞之山 to 南禺之山
     'xi' => [
-        'name' => '犀', 'kind' => 'common', 'range' => 3, 'mountain' => '祷过之山、嶓冢之山',
+        'name' => '犀', 'kind' => 'common', 'range' => 3, 'mountain' => '祷过之山、嶓冢之山、女床之山、厎阳之山、众兽之山',
         'elements' => ['metal'], 'why' => '有角。',
         'tier' => 2, 'stats' => ['hp' => 90, 'atk' => 85, 'def' => 80, 'spa' => 30, 'spd' => 45, 'spe' => 40],
         'catch' => 90, 'exp' => 124, 'growth' => 'mediumFast',
         'looks' => '似水牛，猪头，黑身，三角。', 'note' => '形貌据郭璞注。',
     ],
     'si' => [
-        'name' => '兕', 'kind' => 'common', 'range' => 3, 'mountain' => '祷过之山、嶓冢之山',
+        'name' => '兕', 'kind' => 'common', 'range' => 3, 'mountain' => '祷过之山、嶓冢之山、女床之山、厎阳之山、众兽之山',
         'elements' => ['metal'], 'why' => '有角。',
         'tier' => 2, 'stats' => ['hp' => 90, 'atk' => 90, 'def' => 75, 'spa' => 30, 'spd' => 45, 'spe' => 45],
         'catch' => 90, 'exp' => 126, 'growth' => 'mediumFast',
@@ -278,7 +278,7 @@ return [
     ],
     // 西山经之首: 钱来之山 to 騩山
     'qianyang' => [
-        'name' => '羬羊', 'kind' => 'strange', 'range' => 4, 'mountain' => '钱来之山、英山',
+        'name' => '羬羊', 'kind' => 'strange', 'range' => 4, 'mountain' => '钱来之山、英山、鹿台之山',
         'elements' => ['metal'], 'why' => '原文没有别的依据，取西山经的本地属性。',
         'tier' => 2, 'stats' => ['hp' => 70, 'atk' => 70, 'def' => 65, 'spa' => 40, 'spd' => 55, 'spe' => 60],
         'catch' => 120, 'exp' => 90, 'growth' => 'mediumFast',
@@ -302,7 +302,7 @@ return [
         'omen' => '见则天下大旱。',
     ],
     'zuoniu' => [
-        'name' => '㸲牛', 'kind' => 'common', 'range' => 4, 'mountain' => '小华之山、英山',
+        'name' => '㸲牛', 'kind' => 'common', 'range' => 4, 'mountain' => '小华之山、英山、鹿台之山、大次之山、厎阳之山、西皇之山',
         'elements' => ['metal'], 'why' => '原文没有别的依据，取西山经的本地属性。',
         'tier' => 2, 'stats' => ['hp' => 95, 'atk' => 85, 'def' => 75, 'spa' => 30, 'spd' => 50, 'spe' => 45],
         'catch' => 120, 'exp' => 95, 'growth' => 'mediumFast',
@@ -452,7 +452,7 @@ return [
         'looks' => '形如牛，苍黑而大目。',
     ],
     'yingwu' => [
-        'name' => '鹦䳇', 'kind' => 'strange', 'range' => 4, 'mountain' => '黄山',
+        'name' => '鹦䳇', 'kind' => 'strange', 'range' => 4, 'mountain' => '黄山、数历之山',
         'elements' => ['wood'], 'why' => '鸟。',
         'tier' => 2, 'stats' => ['hp' => 50, 'atk' => 40, 'def' => 50, 'spa' => 85, 'spd' => 70, 'spe' => 85],
         'catch' => 90, 'exp' => 100, 'growth' => 'mediumFast',
@@ -466,7 +466,7 @@ return [
         'looks' => '旄牛。',
     ],
     'ling' => [
-        'name' => '麢', 'kind' => 'common', 'range' => 4, 'mountain' => '翠山',
+        'name' => '麢', 'kind' => 'common', 'range' => 4, 'mountain' => '翠山、大次之山',
         'elements' => ['metal'], 'why' => '大角。',
         'tier' => 1, 'stats' => ['hp' => 50, 'atk' => 60, 'def' => 45, 'spa' => 35, 'spd' => 45, 'spe' => 90],
         'catch' => 190, 'exp' => 72, 'growth' => 'fast',
@@ -486,5 +486,90 @@ return [
         'catch' => 45, 'exp' => 162, 'growth' => 'mediumSlow',
         'looks' => '形如鹊，赤黑而两首四足。',
         'lore' => '可以御火。',
+    ],
+    // 西次二经: 钤山 to 莱山
+    'baishe' => [
+        'name' => '白蛇', 'kind' => 'common', 'range' => 5, 'mountain' => '泰冒之山',
+        'elements' => ['water'], 'why' => '生于浴水中。',
+        'tier' => 2, 'stats' => ['hp' => 60, 'atk' => 50, 'def' => 55, 'spa' => 75, 'spd' => 65, 'spe' => 70],
+        'catch' => 120, 'exp' => 95, 'growth' => 'mediumFast',
+        'looks' => '浴水中的白蛇。',
+    ],
+    'hu' => [
+        'name' => '虎', 'kind' => 'common', 'range' => 5, 'mountain' => '女床之山、厎阳之山',
+        'elements' => ['metal'], 'why' => '原文没有别的依据，取西山经的本地属性。',
+        'tier' => 2, 'stats' => ['hp' => 85, 'atk' => 100, 'def' => 70, 'spa' => 40, 'spd' => 55, 'spe' => 65],
+        'catch' => 75, 'exp' => 120, 'growth' => 'mediumSlow',
+        'looks' => '虎。',
+    ],
+    'bao' => [
+        'name' => '豹', 'kind' => 'common', 'range' => 5, 'mountain' => '女床之山',
+        'elements' => ['metal'], 'why' => '原文没有别的依据，取西山经的本地属性。',
+        'tier' => 2, 'stats' => ['hp' => 70, 'atk' => 90, 'def' => 60, 'spa' => 40, 'spd' => 55, 'spe' => 90],
+        'catch' => 90, 'exp' => 112, 'growth' => 'mediumFast',
+        'looks' => '豹。',
+    ],
+    'luanniao' => [
+        'name' => '鸾鸟', 'kind' => 'strange', 'range' => 5, 'mountain' => '女床之山',
+        'elements' => ['wood'], 'why' => '鸟。',
+        'tier' => 4, 'stats' => ['hp' => 90, 'atk' => 60, 'def' => 80, 'spa' => 110, 'spd' => 100, 'spe' => 85],
+        'catch' => 45, 'exp' => 200, 'growth' => 'slow',
+        'looks' => '形如翟而五采文。',
+        'omen' => '见则天下安宁。',
+    ],
+    'baihao' => [
+        'name' => '白豪', 'kind' => 'common', 'range' => 5, 'mountain' => '鹿台之山',
+        'elements' => ['metal'], 'why' => '原文没有别的依据，取西山经的本地属性。',
+        'tier' => 2, 'stats' => ['hp' => 75, 'atk' => 80, 'def' => 85, 'spa' => 35, 'spd' => 60, 'spe' => 50],
+        'catch' => 120, 'exp' => 98, 'growth' => 'mediumFast',
+        'looks' => '白色的豪猪。',
+        'unchecked' => '原文只有名字；「白色的豪猪」是照竹山的豪彘推的，待查注本。',
+    ],
+    'fuxi' => [
+        'name' => '凫徯', 'kind' => 'strange', 'range' => 5, 'mountain' => '鹿台之山',
+        'elements' => ['metal', 'wood'], 'why' => '见则有兵；鸟。',
+        'tier' => 3, 'stats' => ['hp' => 70, 'atk' => 95, 'def' => 70, 'spa' => 65, 'spd' => 65, 'spe' => 85],
+        'catch' => 60, 'exp' => 148, 'growth' => 'mediumSlow',
+        'looks' => '形如雄鸡而人面。',
+        'sound' => '叫的就是自己的名字。',
+        'omen' => '见则有兵。',
+    ],
+    'zhuyan' => [
+        'name' => '朱厌', 'kind' => 'strange', 'range' => 5, 'mountain' => '小次之山',
+        'elements' => ['metal'], 'why' => '见则大兵。',
+        'tier' => 3, 'stats' => ['hp' => 80, 'atk' => 110, 'def' => 70, 'spa' => 55, 'spd' => 70, 'spe' => 100],
+        'catch' => 45, 'exp' => 165, 'growth' => 'mediumSlow',
+        'looks' => '形如猿，白首赤足。',
+        'omen' => '见则大兵。',
+    ],
+    'zhuo' => [
+        'name' => '犳', 'kind' => 'common', 'range' => 5, 'mountain' => '厎阳之山',
+        'elements' => ['metal'], 'why' => '原文没有别的依据，取西山经的本地属性。',
+        'tier' => 2, 'stats' => ['hp' => 65, 'atk' => 85, 'def' => 60, 'spa' => 40, 'spd' => 55, 'spe' => 85],
+        'catch' => 120, 'exp' => 100, 'growth' => 'mediumFast',
+        'looks' => '豹一类的兽。',
+        'unchecked' => '原文只有名字；「豹一类」是通行的解释，所查版本这一节没有注，待查注本。',
+    ],
+    'mi' => [
+        'name' => '麋', 'kind' => 'common', 'range' => 5, 'mountain' => '西皇之山',
+        'elements' => ['metal'], 'why' => '原文没有别的依据，取西山经的本地属性。',
+        'tier' => 2, 'stats' => ['hp' => 90, 'atk' => 70, 'def' => 75, 'spa' => 40, 'spd' => 60, 'spe' => 55],
+        'catch' => 120, 'exp' => 96, 'growth' => 'mediumFast',
+        'looks' => '麋。',
+    ],
+    'yelu' => [
+        'name' => '鹿', 'kind' => 'common', 'range' => 5, 'mountain' => '西皇之山',
+        'elements' => ['metal'], 'why' => '原文没有别的依据，取西山经的本地属性。',
+        'tier' => 1, 'stats' => ['hp' => 55, 'atk' => 55, 'def' => 45, 'spa' => 40, 'spd' => 50, 'spe' => 80],
+        'catch' => 190, 'exp' => 70, 'growth' => 'fast',
+        'looks' => '鹿。',
+    ],
+    'luoluo' => [
+        'name' => '罗罗', 'kind' => 'strange', 'range' => 5, 'mountain' => '莱山',
+        'elements' => ['wood'], 'why' => '鸟。',
+        'tier' => 3, 'stats' => ['hp' => 75, 'atk' => 70, 'def' => 65, 'spa' => 95, 'spd' => 75, 'spe' => 85],
+        'catch' => 60, 'exp' => 155, 'growth' => 'mediumSlow',
+        'looks' => '鸟，原文没有写它的形状。',
+        'lore' => '食人。',
     ],
 ];
