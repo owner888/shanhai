@@ -8,7 +8,7 @@ use Shanhai\{Data, Play};
 require __DIR__ . '/boot.php';
 require __DIR__ . '/src/load.php';
 
-$play = new Play(Data::newWorld());
+$play = new Play(Data::newWorld(random_int(0, 0x7fffffff)));
 
 App::setName('山海');
 App::whenReady(function () use ($play) {

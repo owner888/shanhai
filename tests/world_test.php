@@ -22,7 +22,7 @@ $go = function (World $w, Dir $dir, int $x, int $y, ?string $map = null): bool {
 };
 $confirm = fn(World $w) => $w->step(new Controls(confirm: true));
 
-$w = Data::newWorld();
+$w = Data::newWorld(1);
 same('zhaoyao', $w->map->id, 'a new game starts at the mountain\'s foot');
 same([9, 8], [$w->player->x, $w->player->y], 'where data/game.php says');
 
@@ -78,7 +78,9 @@ check($w->dialog !== null, 'the shaman talks');
 same(Dir::Left, $w->npcs['shaman']->dir, 'turned to the player');
 $confirm($w);
 $confirm($w);
+$confirm($w);
 check(isset($w->flags['metShaman']) && !$w->busy(), 'through her lines');
+same([['id' => 'lushu', 'level' => 5]], $w->party, 'she lends a beast');
 check($go($w, Dir::Down, 5, 6, 'zhaoyao'), 'the door inside leads back out, below the door');
 same(Dir::Down, $w->player->dir, 'facing away from it');
 

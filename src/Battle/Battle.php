@@ -72,7 +72,8 @@ final class Battle
     }
 
     /**
-     * One turn. Each side's action is ['move', which of its four] or ['switch', which of its party].
+     * One turn. Each side's action is ['move', which of its four], ['switch', which of its party] or ['pass', 0]:
+     * nothing, as when a try to flee fails.
      * A beast with no move left to use passes, whatever it was told.
      * @param array{0: string, 1: int} $a side 0's
      * @param array{0: string, 1: int} $b side 1's
@@ -88,7 +89,7 @@ final class Battle
         foreach ($actions as $side => [$what, $which]) {
             if ($what === 'switch') {
                 $this->switchTo($side, $which);
-            } elseif ($what !== 'move') {
+            } elseif ($what !== 'move' && $what !== 'pass') {
                 throw new InvalidArgumentException("no action '$what'");
             }
         }
@@ -106,6 +107,9 @@ final class Battle
             $this->residual($side);
         }
         foreach ([0, 1] as $side) {
+            if ($actions[$side][0] === 'pass') {
+                $this->residual($side);
+            }
             $this->fighter($side)->flinched = false;
         }
         $this->endWeather();

@@ -48,7 +48,10 @@ foreach (glob(__DIR__ . '/*_test.php') as $file) {
         continue;
     }
     echo "$name\n";
-    require $file;
+    // Each file in a scope of its own: a variable one sets cannot reach another, or this loop.
+    (static function (string $file): void {
+        require $file;
+    })($file);
 }
 printf("%d checks, %d failed\n", $checks, count($failures));
 exit($failures === [] ? 0 : 1);

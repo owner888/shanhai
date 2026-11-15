@@ -41,6 +41,13 @@ return [
             ['label', 'again'],
             ['say', '屋里的巫祝在等你，进去看看吧。'],
         ]],
+        ['xingxing', 17, 3, 'left', 'beast', [
+            ['ifFlag', 'metShaman', 'fight'],
+            ['say', '深草里有一只白耳的兽盯着你。没有异兽同行，还是别靠近。'],
+            ['end'],
+            ['label', 'fight'],
+            ['battle', 'xingxing', 4],
+        ]],
         ['guard', 11, 13, 'up', 'guard', [
             ['say', '再往前的山路还没修通，改日再来吧。'],
         ]],

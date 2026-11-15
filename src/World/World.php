@@ -4,11 +4,14 @@ declare(strict_types=1);
 namespace Shanhai\World;
 
 use InvalidArgumentException;
+use LogicException;
+use Shanhai\Battle\{Battle, Fighter, Rng, Screen};
 use Shanhai\Script\Vm;
 
 /**
- * The game's state outside battle, advanced one update at a time (Play runs 60 a second), with no drawing:
- * the map the player is on, who stands where, the flags, and the script or dialog that holds the controls.
+ * The game's state, advanced one update at a time (Play runs 60 a second), with no drawing: the map the player
+ * is on, who stands where, the flags, the script or dialog that holds the controls, and the battle a script began,
+ * which holds them until it is over.
  */
 final class World
 {
@@ -29,14 +32,22 @@ final class World
     public array $party = [];
     /** The line the dialog box shows, which confirm closes; null when there is none. */
     public ?string $dialog = null;
+    /** The battle going on, which a script's 'battle' began; null when there is none. */
+    public ?Screen $battle = null;
+    /** won, lost or fled: how the last battle ended. */
+    public ?string $lastBattle = null;
     /** Counts the maps entered, for what draws the world to notice a new one. */
     public int $mapChanges = 0;
 
     private ?Vm $vm = null;
     private int $turnWait = 0;
 
-    /** @param array<string, Map> $maps by id */
-    public function __construct(private readonly array $maps, string $map, int $x, int $y, Dir $dir)
+    /**
+     * @param array<string, Map> $maps by id
+     * @param array{beasts: array, learnsets: array, moves: array, elements: array}|null $book data/'s tables, which a battle needs
+     * @param ?Rng $rng the battles' dice
+     */
+    public function __construct(private readonly array $maps, string $map, int $x, int $y, Dir $dir, private readonly ?array $book = null, private readonly ?Rng $rng = null)
     {
         $this->player = new Actor('player', $x, $y, $dir, 'player');
         $this->enter($map, $x, $y, $dir);
@@ -57,6 +68,15 @@ final class World
 
     public function step(Controls $c): void
     {
+        if ($this->battle !== null) {
+            $this->battle->step($c);
+            if (!$this->battle->done) {
+                return;
+            }
+            $this->lastBattle = $this->battle->outcome;
+            $this->battle = null;
+            $c = new Controls(); // the press that closed the battle's last line does nothing else
+        }
         if ($this->vm !== null) {
             if ($this->dialog !== null && $c->confirm) {
                 $this->dialog = null;
@@ -127,6 +147,24 @@ final class World
             $this->npcs[$id] = new Actor($id, $nx, $ny, Dir::from($ndir), $look);
         }
         $this->mapChanges++;
+    }
+
+    /**
+     * Begins a battle with a wild $beast of $level. The party's beasts come to it as their level makes them, whole:
+     * what a battle leaves of them is kept from the party's screen on (roadmap phase 2).
+     */
+    public function fight(string $beast, int $level): void
+    {
+        if ($this->book === null || $this->rng === null) {
+            throw new LogicException('this world was made without the tables and dice a battle needs');
+        }
+        if ($this->party === []) {
+            throw new LogicException('a battle with no beast in the party');
+        }
+        $b = $this->book;
+        $fighter = fn(string $id, int $level) => new Fighter($id, $b['beasts'][$id] ?? throw new InvalidArgumentException("no beast '$id'"), $level, $b['learnsets'][$id], $b['moves']);
+        $mine = array_map(fn(array $p) => $fighter($p['id'], $p['level']), $this->party);
+        $this->battle = new Screen(new Battle([$mine, [$fighter($beast, $level)]], $b['elements'], $b['moves'], $this->rng), $b['moves'], $this->rng);
     }
 
     /** Runs a script, which holds the controls until it ends. */

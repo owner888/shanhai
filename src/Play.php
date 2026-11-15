@@ -6,12 +6,14 @@ namespace Shanhai;
 use MyPHP\Plugins\Game\{Game, Input};
 use MyPHP\Plugins\Game\Gamepad\{Button, Gamepad, State};
 use MyPHP\UI\{Canvas, Key, Node, Painter};
-use Shanhai\Render\Stage;
+use Shanhai\Battle\Screen;
+use Shanhai\Render\{Arena, Stage};
 use Shanhai\World\{Controls, Dir, World};
 
 /**
  * The game as MyPHP runs it (Plugins\Game): each update reads the keys and the gamepad into Controls and steps
- * the World; each frame draws the map's Stage and, over it, the dialog box. The rules are the World's: nothing here decides them.
+ * the World; each frame draws the map's Stage and, over it, the dialog box, or, in a battle, its Arena, the two
+ * beasts' boxes, the line or the list. The rules are the World's: nothing here decides them.
  */
 final class Play extends Game
 {
@@ -21,6 +23,7 @@ final class Play extends Game
         Key::LEFT => Dir::Left, Key::A => Dir::Left, Key::RIGHT => Dir::Right, Key::D => Dir::Right,
     ];
     private const CONFIRM = [Key::SPACE, Key::RETURN, Key::Z];
+    private const CANCEL = [Key::ESCAPE, Key::DELETE, Key::X];
     /** How far a gamepad's stick is pushed to walk. */
     private const STICK = 0.5;
     /** Updates a new map takes to fade in. */
@@ -30,6 +33,8 @@ final class Play extends Game
 
     private Canvas $viewport;
     private Stage $stage;
+    /** The scene of the battle going on; null outside one. */
+    private ?Arena $arena = null;
     private int $seenMap;
     private int $fade = 0;
     /** The key walked by, which goes on while held, whatever else is pressed after it is not. */
@@ -62,9 +67,12 @@ final class Play extends Game
             }
         }
         $dir = $this->walkKey !== null ? self::WALK[$this->walkKey] : null;
-        $confirm = false;
+        $confirm = $cancel = false;
         foreach (self::CONFIRM as $key) {
             $confirm = $confirm || $in->pressed($key);
+        }
+        foreach (self::CANCEL as $key) {
+            $cancel = $cancel || $in->pressed($key);
         }
         foreach (array_slice(Gamepad::pads(), 0, 1) as $pad) {
             $s = $pad->state();
@@ -73,10 +81,24 @@ final class Play extends Game
                 $dir = abs($sx) > abs($sy) ? ($sx > 0 ? Dir::Right : Dir::Left) : ($sy > 0 ? Dir::Down : Dir::Up);
             }
             $confirm = $confirm || $s->justPressed($this->lastPad, Button::South);
+            $cancel = $cancel || $s->justPressed($this->lastPad, Button::East);
             $this->lastPad = $s;
         }
 
-        $this->world->step(new Controls($dir, $confirm));
+        $this->world->step(new Controls($dir, $confirm, $cancel));
+
+        $battle = $this->world->battle;
+        if ($battle === null) {
+            if ($this->arena !== null) {
+                $this->arena = null;
+                $this->fade = self::FADE_STEPS;
+            }
+        } elseif ($this->arena === null) {
+            $this->arena = new Arena($battle);
+            $this->fade = self::FADE_STEPS;
+        } else {
+            $this->arena->sync($battle);
+        }
 
         if ($this->world->mapChanges !== $this->seenMap) {
             $this->seenMap = $this->world->mapChanges;
@@ -85,18 +107,28 @@ final class Play extends Game
         } elseif ($this->fade > 0) {
             $this->fade--;
         }
-        $this->stage->scene->step(1.0 / $this->rate());
+        ($this->arena ?? $this->stage)->scene->step(1.0 / $this->rate());
     }
 
     public function draw(Painter $p, array $r, float $alpha): void
     {
-        $this->stage->sync($this->world, $alpha);
-        $this->stage->scene->camera->aspect = $r[2] / max(1.0, $r[3]);
-        $this->viewport->renderScene($this->stage->scene);
+        $battle = $this->world->battle;
+        if ($battle !== null && $this->arena !== null) {
+            $scene = $this->arena->scene;
+        } else {
+            $this->stage->sync($this->world, $alpha);
+            $scene = $this->stage->scene;
+        }
+        $scene->camera->aspect = $r[2] / max(1.0, $r[3]);
+        $this->viewport->renderScene($scene);
         $p->image($this->viewport->bitmap(), $r, Node::FILL_BOX);
 
         if ($this->fade > 0) {
             $p->fill($r, 0x000000, 0, $this->fade / self::FADE_STEPS);
+        }
+        if ($battle !== null && $this->arena !== null) {
+            $this->battle($p, $r, $battle);
+            return;
         }
 
         $name = $this->world->map->name;
@@ -105,6 +137,60 @@ final class Play extends Game
 
         if ($this->world->dialog !== null) {
             $this->dialog($p, $r, $this->world->dialog);
+        }
+    }
+
+    /** A battle over its Arena: each beast's box (the other's at the top left, the player's at the right above the text), and the line or the list. */
+    private function battle(Painter $p, array $r, Screen $s): void
+    {
+        $this->beastBox($p, $r[0] + 24, $r[1] + 24, $s, 1);
+        $this->beastBox($p, $r[0] + $r[2] - self::BOX_WIDTH - 24, $r[1] + $r[3] - 290, $s, 0);
+        if ($s->line !== null) {
+            $this->dialog($p, $r, $s->line);
+            return;
+        }
+        $items = $s->items();
+        $lineHeight = Text::SIZE * 1.6;
+        $w = $s->phase === 'menu' ? 200.0 : 360.0;
+        $h = 2 * Text::BOX_PADDING + count($items) * $lineHeight;
+        $x = $r[0] + $r[2] - $w - 24;
+        $y = $r[1] + $r[3] - $h - 24;
+        $p->fill([$x, $y, $w, $h], 0x10141a, 12.0, 0.92);
+        $p->stroke([$x, $y, $w, $h], 0xe8dcc0, 12.0, 2.0, 0.9);
+        foreach ($items as $i => $text) {
+            $ty = $y + Text::BOX_PADDING + $i * $lineHeight;
+            if ($i === $s->cursor) {
+                $p->text($x + Text::BOX_PADDING, $ty, '▶', Text::SIZE * 0.8, 0xe8dcc0);
+            }
+            $p->text($x + Text::BOX_PADDING + Text::SIZE * 1.4, $ty, $text, Text::SIZE, 0xf4f0e6);
+        }
+    }
+
+    private const BOX_WIDTH = 300.0, BAR_HEIGHT = 10.0;
+
+    /** A beast's box: its name, level, status, and its hp as a bar; the player's with the numbers too. */
+    private function beastBox(Painter $p, float $x, float $y, Screen $s, int $side): void
+    {
+        $shown = $s->shown[$side];
+        $f = $s->battle->parties[$side][$shown['which']];
+        $h = $side === 0 ? 92.0 : 70.0;
+        $p->fill([$x, $y, self::BOX_WIDTH, $h], 0x10141a, 10.0, 0.88);
+        $p->stroke([$x, $y, self::BOX_WIDTH, $h], 0xe8dcc0, 10.0, 2.0, 0.9);
+        $p->text($x + 16, $y + 10, $f->species['name'], Text::SIZE, 0xf4f0e6);
+        $p->text($x + self::BOX_WIDTH - 76, $y + 12, 'Lv' . $f->level, Text::SIZE * 0.85, 0xf4f0e6);
+        if ($shown['status'] !== null) {
+            $p->text($x + self::BOX_WIDTH - 132, $y + 12, Screen::STATUS[$shown['status']], Text::SIZE * 0.85, 0xf0b050);
+        }
+        $part = $shown['hp'] / $f->maxHp;
+        $bar = [$x + 16, $y + 44, self::BOX_WIDTH - 32, self::BAR_HEIGHT];
+        $p->fill($bar, 0x3a3f48, self::BAR_HEIGHT / 2);
+        if ($shown['hp'] > 0) {
+            // green over a half, yellow over a fifth, red under it
+            $color = $part > 0.5 ? 0x58c060 : ($part > 0.2 ? 0xe0c040 : 0xd85040);
+            $p->fill([$bar[0], $bar[1], max(self::BAR_HEIGHT, $bar[2] * $part), $bar[3]], $color, self::BAR_HEIGHT / 2);
+        }
+        if ($side === 0) {
+            $p->text($x + 16, $y + 62, $shown['hp'] . ' / ' . $f->maxHp, Text::SIZE * 0.85, 0xf4f0e6);
         }
     }
 

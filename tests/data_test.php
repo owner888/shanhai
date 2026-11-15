@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Shanhai\Tests;
 
 use Shanhai\{Data, Elements, Text};
-use Shanhai\Render\Stage;
+use Shanhai\Render\{Arena, Stage};
 use Shanhai\World\Tile;
 use Shanhai\Script\Vm;
 use Shanhai\World\Dir;
@@ -52,8 +52,9 @@ foreach ($scripts as $where => $script) {
         if ($cmd[0] === 'warp') {
             check(isset($maps[$cmd[1]]) && $maps[$cmd[1]]->walkable($cmd[2], $cmd[3]), "$where: its warp leads to a walkable tile of a map");
         }
-        if ($cmd[0] === 'giveBeast') {
-            check(isset($beasts[$cmd[1]]), "$where: it gives a beast there is");
+        if ($cmd[0] === 'giveBeast' || $cmd[0] === 'battle') {
+            check(isset($beasts[$cmd[1]]), "$where: its beast is one there is: {$cmd[1]}");
+            check(is_int($cmd[2]) && $cmd[2] >= 1 && $cmd[2] <= 100, "$where: its beast's level is 1 to 100");
         }
     }
 }
@@ -64,6 +65,7 @@ foreach (Tile::KINDS as [$kind]) {
     check(isset(Stage::GROUND[$kind]), "the stage has a ground color for $kind");
 }
 check(isset(Stage::LOOKS['player']), 'the stage draws the player');
+same(array_keys($elements), array_keys(Arena::ELEMENTS), 'the arena has a color for a beast of each element');
 
 same(30, count($beasts), 'the beasts of the Southern Mountains: 12, 9 and 9 over its three ranges');
 foreach ([1 => 12, 2 => 9, 3 => 9] as $range => $count) {

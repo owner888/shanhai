@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Shanhai;
 
+use Shanhai\Battle\Rng;
 use Shanhai\World\{Dir, Map, World};
 
 /** Reads the game's data files (data/). */
@@ -51,10 +52,11 @@ final class Data
         return require self::DIR . '/beasts.php';
     }
 
-    /** A new game's world, the player where data/game.php starts them. */
-    public static function newWorld(): World
+    /** A new game's world, the player where data/game.php starts them; its battles' dice from $seed. */
+    public static function newWorld(int $seed): World
     {
         $start = (require self::DIR . '/game.php')['start'];
-        return new World(self::maps(), $start['map'], $start['x'], $start['y'], Dir::from($start['dir']));
+        $book = ['beasts' => self::beasts(), 'learnsets' => self::learnsets(), 'moves' => self::moves(), 'elements' => self::elements()];
+        return new World(self::maps(), $start['map'], $start['x'], $start['y'], Dir::from($start['dir']), $book, Rng::seeded($seed));
     }
 }
