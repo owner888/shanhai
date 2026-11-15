@@ -153,6 +153,8 @@ final class Formulas
 
     /** 13: of a hundred, the last number that falls to each of the seven wild beasts a map's grass holds: 30, 30, 20, 10, 5, 4 and 1 in a hundred. */
     public const WILD_SLOTS = [30, 60, 80, 90, 95, 99, 100];
+    /** 13: of a hundred, the last number that falls to each of the three wild beasts a map's water holds: 60, 30 and 10 in a hundred. */
+    public const WATER_SLOTS = [60, 90, 100];
     /** 13: the steps after entering a map, or a battle, of which only the last can meet a wild beast. */
     public const WILD_WAIT = 5;
 
@@ -162,18 +164,35 @@ final class Formulas
         return intdiv($percent * 255, 100);
     }
 
-    /** 13: which of the seven the grass gives: bytes are asked for until one is under a hundred, and it, plus one, is looked up in WILD_SLOTS. */
-    public static function wildSlot(Rng $rng): int
+    /**
+     * 13: which of its beasts the grass gives (WILD_SLOTS), or the water (WATER_SLOTS): bytes are asked for until one is
+     * under a hundred, and it, plus one, is looked up in $slots.
+     * @param list<int> $slots
+     */
+    public static function wildSlot(Rng $rng, array $slots = self::WILD_SLOTS): int
     {
         do {
             $n = $rng->byte();
         } while ($n >= 100);
-        foreach (self::WILD_SLOTS as $slot => $last) {
+        foreach ($slots as $slot => $last) {
             if ($n + 1 <= $last) {
                 return $slot;
             }
         }
         throw new \LogicException('unreachable: the last slot ends at a hundred');
+    }
+
+    /**
+     * 13: on water a wild beast's level is what the map says and up to four more, by one byte: none under 35 in a
+     * hundred of 255, one under 65, two under 85, three under 95, four from there.
+     */
+    public static function waterLevelBonus(int $byte): int
+    {
+        $bonus = 0;
+        foreach ([35, 65, 85, 95] as $percent) {
+            $bonus += $byte >= self::wildLimit($percent) ? 1 : 0;
+        }
+        return $bonus;
     }
 
     /** 7.3: the level a beast of a growth rate is at with $exp in all: the last whose experience it has. */

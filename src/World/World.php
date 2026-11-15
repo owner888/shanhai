@@ -43,6 +43,8 @@ final class World
     public ?Cursor $choiceCursor = null;
     /** Which of the choices the player last took: the script that asked reads it. */
     public ?int $chosen = null;
+    /** Whether the player is on water, carried by a beast of the party (float()). */
+    public bool $afloat = false;
     /** The battle going on, which a script's 'battle' began; null when there is none. */
     public ?Screen $battle = null;
     /** won, lost or fled: how the last battle ended. */
@@ -108,7 +110,9 @@ final class World
             if ($this->menu->done) {
                 $saves = $this->menu->saves;
                 $this->menu = null;
-                if ($saves) {
+                if ($saves && $this->afloat) {
+                    $this->run([['say', '在水面上不能存档。']]);
+                } elseif ($saves) {
                     $this->save();
                     $this->run([['say', '存档完成。']]);
                 }
@@ -160,7 +164,8 @@ final class World
     {
         $a->dir = $dir;
         [$x, $y] = [$a->x + $dir->dx(), $a->y + $dir->dy()];
-        if (!$this->free($x, $y)) {
+        // the player, afloat, goes on over water, and comes ashore by stepping onto land
+        if (!$this->free($x, $y) && !($a === $this->player && $this->afloat && $this->water($this->map, $x, $y))) {
             return false;
         }
         [$a->toX, $a->toY, $a->moving, $a->progress] = [$x, $y, true, 0];
@@ -187,11 +192,16 @@ final class World
             Dir::Down => [$x + $offset, 0],
             Dir::Up => [$x + $offset, $to->height - 1],
         };
-        if (!$to->walkable($tx, $ty)) {
+        if (!$to->walkable($tx, $ty) && !($this->afloat && $this->water($to, $tx, $ty))) {
             return false;
         }
         $this->enter($id, $tx, $ty, $dir);
         return true;
+    }
+
+    private function water(Map $map, int $x, int $y): bool
+    {
+        return $map->inside($x, $y) && Tile::name($map->tile($x, $y)) === 'water';
     }
 
     /** Whether an actor can step onto the tile: walkable, with no one and no sign on it. */
@@ -214,6 +224,7 @@ final class World
         $this->map = $this->maps[$map] ?? throw new InvalidArgumentException("no map '$map'");
         [$this->player->x, $this->player->y, $this->player->dir] = [$x, $y, $dir];
         [$this->player->moving, $this->player->progress] = [false, 0];
+        $this->afloat = $this->water($this->map, $x, $y); // afloat still, having crossed onto another map's water; else not
         $this->npcs = [];
         foreach ($this->map->npcs as [$id, $nx, $ny, $ndir, $look]) {
             $this->npcs[$id] = new Actor($id, $nx, $ny, Dir::from($ndir), $look);
@@ -271,9 +282,34 @@ final class World
         $this->run($r['script']);
     }
 
+    /** The first beast of the party that can carry the player over water: one of the water element that can fight. */
+    public function swimmer(): ?Fighter
+    {
+        foreach ($this->party as $f) {
+            if (!$f->fainted() && in_array('water', $f->species['elements'], true)) {
+                return $f;
+            }
+        }
+        return null;
+    }
+
+    /** The player, facing water with a beast to carry them, goes onto it. */
+    public function float(): void
+    {
+        $p = $this->player;
+        if ($this->swimmer() === null || !$this->water($this->map, $p->x + $p->dir->dx(), $p->y + $p->dir->dy())) {
+            throw new LogicException('no water faced, or no beast to carry the player over it');
+        }
+        $this->afloat = true;
+        $this->walk($p, $p->dir);
+    }
+
     /** What a saved game keeps: where the player is, the flags, the bag, the party. Asked for when nothing holds the controls. */
     public function state(): array
     {
+        if ($this->afloat) {
+            throw new LogicException('a game is not saved on water');
+        }
         $p = $this->player;
         return ['map' => $this->map->id, 'x' => $p->x, 'y' => $p->y, 'dir' => $p->dir->value, 'flags' => array_keys($this->flags),
             'items' => $this->items, 'party' => array_map(fn(Fighter $f) => $f->state(), $this->party)];
@@ -325,6 +361,7 @@ final class World
     private function arrived(): void
     {
         [$x, $y] = [$this->player->x, $this->player->y];
+        $this->afloat = $this->water($this->map, $x, $y); // ashore, when the step was onto land
         if (($w = $this->map->warpAt($x, $y)) !== null) {
             $this->enter($w[2], $w[3], $w[4], Dir::from($w[5]));
             return;
@@ -339,12 +376,14 @@ final class World
 
     /**
      * A step taken where wild beasts are (tall grass; scree, on the mountains with no grass) may meet one (docs/numbers.md 13): not on the first steps after entering the
-     * map or a battle; then a byte under the map's rate; then which of its seven. With no beast that can fight, none is met.
+     * map or a battle; then a byte under the map's rate; then which of its seven. Afloat, it is the map's water that
+     * holds them: three, each some levels over what the map says. With no beast that can fight, none is met.
      */
     private function grass(): void
     {
-        $wild = $this->map->wild;
-        if ($wild === null || !Tile::wild($this->map->tile($this->player->x, $this->player->y))
+        // on water: what the map's water holds, of three; else what its grass does, of seven
+        $wild = $this->afloat ? $this->map->water : $this->map->wild;
+        if ($wild === null || !($this->afloat || Tile::wild($this->map->tile($this->player->x, $this->player->y)))
             || array_filter($this->party, fn(Fighter $f) => !$f->fainted()) === []) {
             return;
         }
@@ -355,11 +394,11 @@ final class World
         if ($rng->byte() >= Formulas::wildLimit($wild['rate'])) {
             return;
         }
-        [$level, $beast] = $wild['slots'][Formulas::wildSlot($rng)];
-        $this->fight($beast, $level);
+        [$level, $beast] = $wild['slots'][Formulas::wildSlot($rng, $this->afloat ? Formulas::WATER_SLOTS : Formulas::WILD_SLOTS)];
+        $this->fight($beast, $level + ($this->afloat ? Formulas::waterLevelBonus($rng->byte()) : 0));
     }
 
-    /** Confirm, standing still: talks to who, or reads what, the player faces. */
+    /** Confirm, standing still: talks to who, or reads what, the player faces; facing water with a beast of water, asks whether to go onto it. */
     private function interact(): void
     {
         $p = $this->player;
@@ -377,6 +416,13 @@ final class World
         }
         if (($s = $this->map->signAt($x, $y)) !== null) {
             $this->run($s[2]);
+        } elseif (!$this->afloat && $this->water($this->map, $x, $y) && ($f = $this->swimmer()) !== null) {
+            $this->run([
+                ['ask', '水面平静。要乘着' . $f->species['name'] . '渡水吗？', [['渡水', 'go'], ['算了', 'stay']]],
+                ['label', 'go'],
+                ['float'],
+                ['label', 'stay'],
+            ]);
         }
     }
 }

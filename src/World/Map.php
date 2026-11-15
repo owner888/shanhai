@@ -22,6 +22,8 @@ final class Map
      * @param list<array{0: int, 1: int, 2: list<array>}> $signs
      * @param list<array{0: string, 1: int, 2: int, 3: string, 4: string, 5: list<array>}> $npcs
      * @param list<array{0: int, 1: int, 2: string, 3: list<array>}> $triggers
+     * @param ?array{rate: int, slots: list<array{0: int, 1: string}>} $water what its water holds, for one carried over it:
+     *        the chance in percent, and the three [level, beast] it may be (Formulas::WATER_SLOTS); null for none
      * @param array<string, array{0: string, 1: int}> $exits by the direction walked off an edge (a Dir's value): the map
      *        entered, at its opposite edge, and what is added to the place along the edge
      * @param ?array{rate: int, slots: list<array{0: int, 1: string}>} $wild what its tall grass holds: the chance of a step
@@ -39,6 +41,7 @@ final class Map
         public readonly array $triggers,
         public readonly ?array $wild,
         public readonly array $exits = [],
+        public readonly ?array $water = null,
     ) {}
 
     public static function fromArray(array $a): self
@@ -56,7 +59,7 @@ final class Map
             }
         }
         return new self($a['id'], $a['name'], $rows, $width, count($rows),
-            $a['warps'] ?? [], $a['signs'] ?? [], $a['npcs'] ?? [], $a['triggers'] ?? [], $a['wild'] ?? null, $a['exits'] ?? []);
+            $a['warps'] ?? [], $a['signs'] ?? [], $a['npcs'] ?? [], $a['triggers'] ?? [], $a['wild'] ?? null, $a['exits'] ?? [], $a['water'] ?? null);
     }
 
     public function inside(int $x, int $y): bool

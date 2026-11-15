@@ -89,3 +89,8 @@ same(6, $slot(100, 255, 99), 'a byte of a hundred or more is asked for again');
 
 // 8: a seal that fails seems to hold while bytes are under the limit of the first row its catch value is not over.
 same([63, 63, 75, 191, 191, 201, 253, 255], array_map(Formulas::wobbleLimit(...), [0, 1, 2, 61, 80, 81, 254, 255]), 'the table\'s rows');
+
+// 13: on water, three beasts, and up to four levels more.
+same([0, 0, 1, 1, 2], array_map(fn(int $b) => Formulas::wildSlot(\Shanhai\Battle\Rng::scripted([$b]), Formulas::WATER_SLOTS), [0, 59, 60, 89, 90]), 'a byte under a hundred, plus one, falls to one of the water\'s three: 60, 30, 10');
+// 35, 65, 85 and 95 in a hundred of 255 are 89, 165, 216 and 242
+same([0, 0, 1, 1, 2, 2, 3, 3, 4, 4], array_map(Formulas::waterLevelBonus(...), [0, 88, 89, 164, 165, 215, 216, 241, 242, 255]), 'a byte adds none to four levels');

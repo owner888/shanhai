@@ -1,7 +1,6 @@
 <?php
 // 杻阳之山, three hundred and seventy li east of 猨翼之山. The classic: on its south side much red gold, on its north
 // much white gold; 鹿蜀 lives there; the 怪水 rises on it and runs east into the 宪翼之水, and in it are many 旋龟.
-// The river's beasts wait for the waters to hold them (roadmap 3.3).
 declare(strict_types=1);
 
 return [
@@ -30,5 +29,7 @@ return [
         ]],
     ],
     // The tall grass: 鹿蜀, the mountain's one beast of the land; seldom met.
+    // The 怪水: 旋龟. Seldom met, as 鹿蜀 is.
+    'water' => ['rate' => 4, 'slots' => [[9, 'xuangui'], [10, 'xuangui'], [8, 'xuangui']]],
     'wild' => ['rate' => 4, 'slots' => [[8, 'lushu'], [9, 'lushu'], [10, 'lushu'], [9, 'lushu'], [11, 'lushu'], [10, 'lushu'], [11, 'lushu']]],
 ];

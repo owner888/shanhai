@@ -109,6 +109,22 @@ foreach ($maps as $map) {
     }
 }
 
+// What a map's water holds (docs/numbers.md 13): a rate, three beasts of the water element with their levels, each of the map's own mountain.
+foreach ($maps as $map) {
+    if ($map->water === null) {
+        continue;
+    }
+    check(str_contains(implode('', $map->rows), '~'), "{$map->id}: a map with beasts in its water has water");
+    check(is_int($map->water['rate']) && $map->water['rate'] >= 1 && $map->water['rate'] <= 100, "{$map->id}: its water's rate is 1 to 100 percent");
+    same(count(\Shanhai\Battle\Formulas::WATER_SLOTS), count($map->water['slots']), "{$map->id}: its water holds three");
+    foreach ($map->water['slots'] as [$level, $id]) {
+        check(isset($beasts[$id]) && is_int($level) && $level >= 1 && $level <= 96, "{$map->id}: $id is a beast there is, at a level that four more leave at 100 or under");
+        check(in_array('water', $beasts[$id]['elements'] ?? [], true), "{$map->id}: $id, met in water, is of water");
+        $mountains = isset($beasts[$id]) ? explode('、', $beasts[$id]['mountain']) : [];
+        check(array_filter($mountains, fn(string $m) => str_contains($map->name, $m)) !== [], "{$map->id}: $id lives on this map's mountain, as the classic has it");
+    }
+}
+
 // What a map's tall grass holds (docs/numbers.md 13): a rate, seven beasts with their levels, each one of the map's own mountain.
 foreach ($maps as $map) {
     if ($map->wild === null) {

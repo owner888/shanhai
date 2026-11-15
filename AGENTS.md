@@ -72,7 +72,7 @@ data/beasts.php    the beasts, as the classic has them (kind, range, mountain, l
                    (elements with why, tier, stats, catch rate, base experience, growth)
 docs/bestiary.md   the catalogue: what is in, what is still to be checked, what is still to be read
 data/maps/*.php    a map each: rows of tiles, exits to the maps beside it, warps, signs, NPCs and triggers with their
-                   scripts, what its tall grass holds
+                   scripts, what its tall grass and its water hold
 tools/             simulate.php (every beast against every other: win rates by beast, tier, element), matchups.php (element against
                    element), parties.php (random parties against one another, with switching), effects.php (what each effect that does no
                    damage is worth); add `think` for sides that think ahead
@@ -106,6 +106,8 @@ docs/elements.md   the elements' table and how a beast's elements are settled
   across the view while walking. Blocks on the grid are built as faces; things that stand apart are instanced.
 - **Tall grass holds wild beasts**, and scree on the mountains the classic gives no grass (`World::grass`, docs/numbers.md 13): a step onto it, after the first four on a map
   or after a battle, rolls against the map's rate, then for one of its seven; each lives on the map's own mountain.
+- **Water carries** the player who has a beast of the water element that can fight (`World::float`): afloat, water is
+  walked on, the map's `water` holds three wild beasts, and stepping onto land ends it. A game is not saved afloat.
 - **A saved game** is `World::state()`: the map and place, flags, bag, and each beast's `Fighter::state()`. What does not
   fit the data it is read with throws; a new field means a new `Save::VERSION`.
 - **A map change** is counted in `World::$mapChanges`; Play builds a new Stage when it sees one.

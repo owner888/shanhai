@@ -220,3 +220,74 @@ same(['tangting', 0, 7], [$w->map->id, $w->player->x, $w->player->y], 'east of �
 $w->enter('tangting', 19, 7, Dir::Right);
 $w->step(new Controls(Dir::Right));
 same(['yuanyi', 0, 7], [$w->map->id, $w->player->x, $w->player->y], 'and east of it 猨翼之山');
+
+// Water: a beast of the water element carries the player over it, and the water holds its own wild beasts.
+$lake = \Shanhai\World\Map::fromArray(['id' => 'lake', 'name' => 'Lake', 'rows' => ['.~~~.', '.....'],
+    'water' => ['rate' => 6, 'slots' => [[10, 'xuangui'], [12, 'chiru'], [14, 'jiyu']]], 'exits' => ['up' => ['sea', 0]]]);
+$sea = \Shanhai\World\Map::fromArray(['id' => 'sea', 'name' => 'Sea', 'rows' => ['~~~~~', '~~~~.'], 'exits' => ['down' => ['lake', 0]]]);
+$rng = \Shanhai\Battle\Rng::scripted([]);
+$w = new World(['lake' => $lake, 'sea' => $sea], 'lake', 0, 0, Dir::Right, $book, $rng, sys_get_temp_dir() . '/shanhai-afloat-test.json');
+$press = new Controls(confirm: true);
+$w->join('xingxing', 30);
+$w->step($press);
+same([false, false], [$w->busy(), $w->afloat], 'with no beast of water, facing water does nothing');
+$w->join('xuangui', 30);
+$w->party[1]->hp = 0;
+$w->step($press);
+check(!$w->busy(), 'nor with one that cannot fight');
+$w->party[1]->hp = 9;
+$w->step($press);
+same(['水面平静。要乘着旋龟渡水吗？', ['渡水', '算了']], [$w->dialog, $w->choices], 'with one, the player is asked');
+$w->step(new Controls(Dir::Down));
+$w->step($press);
+same([false, false, 0], [$w->busy(), $w->afloat, $w->player->x], 'declining stays ashore');
+$w->step($press);
+$w->step($press);
+check($w->afloat && $w->player->moving, 'accepting, the player goes onto the water');
+for ($i = 1; $i < World::WALK_STEPS; $i++) {
+    $w->step(new Controls());
+}
+same([1, 0, true, 0], [$w->player->x, $w->player->y, $w->afloat, $rng->left()], 'and is afloat; the first steps on a map meet nothing');
+$w->step(new Controls(menu: true));
+foreach ([new Controls(Dir::Down), new Controls(), new Controls(Dir::Down), $press] as $c) {
+    $w->step($c);
+}
+same('在水面上不能存档。', $w->dialog, 'the game is not saved on water');
+$w->step($press);
+// Holds a direction until the step it begins is done, or it is clear there is none: turning first takes its own updates.
+$go = function (Dir $dir) use (&$w): void {
+    [$map, $x, $y] = [$w->map->id, $w->player->x, $w->player->y];
+    for ($i = 0; $i < 2 * World::WALK_STEPS && $w->battle === null; $i++) {
+        $w->step(new Controls($dir));
+        if (!$w->player->moving && [$map, $x, $y] !== [$w->map->id, $w->player->x, $w->player->y]) {
+            return;
+        }
+    }
+};
+$go(Dir::Right);
+$go(Dir::Right);
+same([3, true], [$w->player->x, $w->afloat], 'afloat, the player goes on over water');
+$go(Dir::Left);
+$rng->more([15]);
+$go(Dir::Right);
+same([3, null, 0], [$w->player->x, $w->battle, $rng->left()], 'the fifth step asks for a roll: 15, not under the water\'s 15, meets nothing');
+$rng->more([14, 60, 216]);
+$go(Dir::Left);
+same(['chiru', 15], [$w->battle?->battle->fighter(1)->id, $w->battle?->battle->fighter(1)->level], 'the next: 14 meets a beast; 60 is the second of the three; 216 adds three levels to its 12');
+// the faster beast flees with no roll: the two lines, the menu's last entry, the last line
+foreach ([[null, true], [null, true], [Dir::Down, false], [null, false], [Dir::Down, false], [null, false], [Dir::Down, false], [null, true], [null, true]] as [$dir, $confirm]) {
+    $w->step(new Controls($dir, $confirm));
+}
+same([null, true], [$w->battle, $w->afloat], 'after the battle the player is afloat still');
+$w->step(new Controls());
+$go(Dir::Up);
+same(['sea', 2, 1, true], [$w->map->id, $w->player->x, $w->player->y, $w->afloat], 'afloat, the player crosses onto another map\'s water');
+$go(Dir::Right);
+$go(Dir::Right);
+same([4, 1, false], [$w->player->x, $w->player->y, $w->afloat], 'stepping onto land, the player is ashore');
+$go(Dir::Left);
+same(4, $w->player->x, 'and water blocks the way again');
+$w->enter('lake', 0, 0, Dir::Down);
+$go(Dir::Up);
+same(['lake', 0, 0], [$w->map->id, $w->player->x, $w->player->y], 'ashore, the player does not cross onto another map\'s water');
+check(throws(fn() => $w->float()), 'nor go onto water that is not faced');
