@@ -22,6 +22,8 @@ final class Map
      * @param list<array{0: int, 1: int, 2: list<array>}> $signs
      * @param list<array{0: string, 1: int, 2: int, 3: string, 4: string, 5: list<array>}> $npcs
      * @param list<array{0: int, 1: int, 2: string, 3: list<array>}> $triggers
+     * @param ?array{rate: int, slots: list<array{0: int, 1: string}>} $wild what its tall grass holds: the chance of a step
+     *        meeting a beast, in percent, and the seven [level, beast] it may be (Formulas::WILD_SLOTS); null for none
      */
     private function __construct(
         public readonly string $id,
@@ -33,6 +35,7 @@ final class Map
         public readonly array $signs,
         public readonly array $npcs,
         public readonly array $triggers,
+        public readonly ?array $wild,
     ) {}
 
     public static function fromArray(array $a): self
@@ -50,7 +53,7 @@ final class Map
             }
         }
         return new self($a['id'], $a['name'], $rows, $width, count($rows),
-            $a['warps'] ?? [], $a['signs'] ?? [], $a['npcs'] ?? [], $a['triggers'] ?? []);
+            $a['warps'] ?? [], $a['signs'] ?? [], $a['npcs'] ?? [], $a['triggers'] ?? [], $a['wild'] ?? null);
     }
 
     public function inside(int $x, int $y): bool

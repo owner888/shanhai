@@ -5,7 +5,7 @@ namespace Shanhai\World;
 
 use InvalidArgumentException;
 use LogicException;
-use Shanhai\Battle\{Battle, Fighter, Rng, Screen};
+use Shanhai\Battle\{Battle, Fighter, Formulas, Rng, Screen};
 use Shanhai\Script\Vm;
 
 /**
@@ -43,6 +43,8 @@ final class World
 
     private ?Vm $vm = null;
     private int $turnWait = 0;
+    /** Steps still to take before one can meet a wild beast (docs/numbers.md 13). */
+    private int $wildWait = 0;
 
     /**
      * @param array<string, Map> $maps by id
@@ -78,6 +80,7 @@ final class World
             }
             $this->lastBattle = $this->battle->outcome;
             $this->battle = null;
+            $this->wildWait = Formulas::WILD_WAIT;
             foreach ($this->party as $f) {
                 $f->leave();
             }
@@ -166,6 +169,7 @@ final class World
             $this->npcs[$id] = new Actor($id, $nx, $ny, Dir::from($ndir), $look);
         }
         $this->mapChanges++;
+        $this->wildWait = Formulas::WILD_WAIT;
     }
 
     /** A beast of $level as data/ makes it. */
@@ -224,7 +228,7 @@ final class World
         }
     }
 
-    /** The player has stepped onto a tile: its warp, else its trigger. */
+    /** The player has stepped onto a tile: its warp, else its trigger, else what its grass may hold. */
     private function arrived(): void
     {
         [$x, $y] = [$this->player->x, $this->player->y];
@@ -235,7 +239,31 @@ final class World
         if (($t = $this->map->triggerAt($x, $y)) !== null && !isset($this->flags[$t[2]])) {
             $this->flags[$t[2]] = true;
             $this->run($t[3]);
+            return;
         }
+        $this->grass();
+    }
+
+    /**
+     * A step taken in tall grass may meet a wild beast (docs/numbers.md 13): not on the first steps after entering the
+     * map or a battle; then a byte under the map's rate; then which of its seven. With no beast that can fight, none is met.
+     */
+    private function grass(): void
+    {
+        $wild = $this->map->wild;
+        if ($wild === null || Tile::name($this->map->tile($this->player->x, $this->player->y)) !== 'tallGrass'
+            || array_filter($this->party, fn(Fighter $f) => !$f->fainted()) === []) {
+            return;
+        }
+        if ($this->wildWait > 0 && --$this->wildWait > 0) {
+            return;
+        }
+        $rng = $this->rng ?? throw new LogicException('this world was made without the dice wild beasts need');
+        if ($rng->byte() >= Formulas::wildLimit($wild['rate'])) {
+            return;
+        }
+        [$level, $beast] = $wild['slots'][Formulas::wildSlot($rng)];
+        $this->fight($beast, $level);
     }
 
     /** Confirm, standing still: talks to who, or reads what, the player faces. */

@@ -43,6 +43,20 @@ foreach ($maps as $map) {
         $scripts["{$map->id}: the trigger at $x,$y"] = $script;
     }
 }
+// What a map's tall grass holds (docs/numbers.md 13): a rate, seven beasts with their levels, each one of the map's own mountain.
+foreach ($maps as $map) {
+    if ($map->wild === null) {
+        continue;
+    }
+    check(str_contains(implode('', $map->rows), ','), "{$map->id}: a map with wild beasts has tall grass");
+    check(is_int($map->wild['rate']) && $map->wild['rate'] >= 1 && $map->wild['rate'] <= 100, "{$map->id}: its rate is 1 to 100 percent");
+    same(count(\Shanhai\Battle\Formulas::WILD_SLOTS), count($map->wild['slots']), "{$map->id}: its grass holds seven");
+    foreach ($map->wild['slots'] as [$level, $id]) {
+        check(isset($beasts[$id]) && is_int($level) && $level >= 1 && $level <= 100, "{$map->id}: $id is a beast there is, at a level of 1 to 100");
+        $mountains = isset($beasts[$id]) ? explode('、', $beasts[$id]['mountain']) : [];
+        check(array_filter($mountains, fn(string $m) => str_contains($map->name, $m)) !== [], "{$map->id}: $id lives on this map's mountain, as the classic has it");
+    }
+}
 $scripts['data/game.php: waking after a battle lost'] = (require Data::DIR . '/game.php')['rest']['script'];
 foreach ($scripts as $where => $script) {
     check(!throws(fn() => Vm::check($script)), "$where: its script is well formed");

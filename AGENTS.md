@@ -55,7 +55,8 @@ src/Text.php       the dialog box's measures and line breaking
 src/Cursor.php     a list's cursor: moves on a press, not while held
 src/Data.php       reads data/
 src/Elements.php   what a move of one element does against a beast of others (double, even, half, in tenths)
-src/Render/Stage.php  a map's 3D scene: instanced tiles, trees, rocks, walls, the actors' figures, the fixed camera
+src/Render/Stage.php  a map's 3D scene: the ground and the walls as meshes of the faces that can be seen (faces()),
+                   instanced trees, grass, rocks, signs, the actors' figures, the fixed camera
 src/Render/Arena.php  a battle's 3D scene: the ground, the two beasts' figures, a camera that does not move
 src/Play.php       MyPHP's Game: keys and gamepad into Controls, World::step, draws the Stage and the dialog box,
                    or a battle's Arena, boxes, line and lists
@@ -67,13 +68,13 @@ data/learnsets.php the moves each beast learns, by level
 data/beasts.php    the beasts, as the classic has them (kind, range, mountain, looks, sound, omen, lore), and the game's own
                    (elements with why, tier, stats, catch rate, base experience, growth)
 docs/bestiary.md   the catalogue: what is in, what is still to be checked, what is still to be read
-data/maps/*.php    a map each: rows of tiles, warps, signs, NPCs and triggers with their scripts
+data/maps/*.php    a map each: rows of tiles, warps, signs, NPCs and triggers with their scripts, what its tall grass holds
 tools/             simulate.php (every beast against every other: win rates by beast, tier, element), matchups.php (element against
                    element), parties.php (random parties against one another, with switching), effects.php (what each effect that does no
                    damage is worth); add `think` for sides that think ahead
 docs/balance.md    what the simulator shows, what was changed for it, what is still open
 tests/             php tests/run.php [name]: world, script, data, formulas (each rule against a value worked out by hand),
-                   battle (turns with scripted rolls), screen (a battle played through); check()/same(), no PHPUnit;
+                   battle (turns with scripted rolls), screen (a battle played through), stage (the faces of ground and walls); check()/same(), no PHPUnit;
                    each file runs in a scope of its own
 docs/rules.md      the rule of the game
 docs/roadmap.md    the order of the work, and when each step is done
@@ -95,6 +96,11 @@ docs/elements.md   the elements' table and how a beast's elements are settled
   what it left them; stages and confusion end with it. Lost, the player wakes at `data/game.php`'s rest, the party whole.
 - **A beast grows in its Fighter**: experience, each stat's experience, the level they make, the moves it comes to
   (`gain()`, `learnable()`, `learn()`); the Screen gives them when the wild beast falls and asks which move to forget.
+- **No face lies hidden against another block** (`Stage::faces`): the ground was once a cube a tile, and the sides
+  between tiles, exactly as near as the tops' shared edge, came through the depth test now and then as a dark line
+  across the view while walking. Blocks on the grid are built as faces; things that stand apart are instanced.
+- **Tall grass holds wild beasts** (`World::grass`, docs/numbers.md 13): a step onto it, after the first four on a map
+  or after a battle, rolls against the map's rate, then for one of its seven; each lives on the map's own mountain.
 - **A map change** is counted in `World::$mapChanges`; Play builds a new Stage when it sees one.
 - **Drawing interpolates**: `Actor::place($alpha)` is between two updates' places, so motion is smoother than its steps.
 

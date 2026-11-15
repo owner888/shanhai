@@ -108,3 +108,60 @@ check(str_contains((string)$w->dialog, '海风'), 'and runs its script');
 $confirm($w);
 check($go($w, Dir::Right, 4, 10), 'steps off');
 check($go($w, Dir::Left, 3, 10) && !$w->busy(), 'it does not run a second time');
+
+// Wild beasts in tall grass (docs/numbers.md 13), with the rolls scripted.
+$book = ['beasts' => Data::beasts(), 'learnsets' => Data::learnsets(), 'moves' => Data::moves(), 'elements' => Data::elements()];
+$field = \Shanhai\World\Map::fromArray(['id' => 'field', 'name' => 'Field', 'rows' => [',,,,,,,,,,,,', '............'],
+    'wild' => ['rate' => 10, 'slots' => [[2, 'xingxing'], [3, 'baiyuan'], [4, 'xingxing'], [3, 'xingxing'], [5, 'xingxing'], [4, 'xingxing'], [9, 'fuchong']]]]);
+$rng = \Shanhai\Battle\Rng::scripted([]);
+$w = new World(['field' => $field], 'field', 0, 0, Dir::Right, $book, $rng);
+$step = function (Dir $dir = Dir::Right) use (&$w): void {
+    for ($i = 0; $i < World::WALK_STEPS; $i++) {
+        $w->step(new Controls($dir));
+    }
+};
+$step();
+$step();
+same([2, null], [$w->player->x, $w->battle], 'with no beast in the party the grass holds none, and no roll is asked for');
+$w->join('xingxing', 20);
+$w->enter('field', 0, 0, Dir::Right);
+for ($i = 0; $i < 4; $i++) {
+    $step();
+}
+same([4, null], [$w->player->x, $w->battle], 'the first four steps on a map meet nothing, and ask for no roll');
+$rng->more([25]);
+$step();
+same([5, null, 0], [$w->player->x, $w->battle, $rng->left()], 'the fifth asks for a roll: 25, not under the rate\'s 25, meets nothing');
+$rng->more([24, 200, 30]);
+$step();
+check($w->battle !== null && $rng->left() === 0, 'the next: 24 meets a beast; 200 is asked for again; 30 is the second of the seven');
+same(['baiyuan', 3], [$w->battle->battle->fighter(1)->id, $w->battle->battle->fighter(1)->level], 'which is the map\'s second, at its level');
+same([6, false], [$w->player->x, $w->player->moving], 'the player stands on the tile stepped onto');
+// the faster beast flees with no roll: the two lines, the menu's third entry, the last line
+foreach ([[null, true], [null, true], [Dir::Down, false], [null, false], [Dir::Down, false], [null, true], [null, true]] as [$dir, $confirm]) {
+    $w->step(new Controls($dir, $confirm));
+}
+same([null, 'fled'], [$w->battle, $w->lastBattle], 'the battle is fled');
+$w->step(new Controls());
+for ($i = 0; $i < 4; $i++) {
+    $step();
+}
+same([10, null], [$w->player->x, $w->battle], 'after a battle the next four steps meet nothing again');
+$rng->more([0, 99]);
+$step();
+same(['fuchong', 9], [$w->battle?->battle->fighter(1)->id, $w->battle?->battle->fighter(1)->level], 'then the fifth can: 99 is the last of the seven');
+foreach ([[null, true], [null, true], [Dir::Down, false], [null, false], [Dir::Down, false], [null, true], [null, true]] as [$dir, $confirm]) {
+    $w->step(new Controls($dir, $confirm));
+}
+$w->step(new Controls());
+$w->enter('field', 0, 1, Dir::Right);
+for ($i = 0; $i < 8; $i++) {
+    $step();
+}
+same([8, null, 0], [$w->player->x, $w->battle, $rng->left()], 'steps outside the tall grass ask for no roll');
+$w->party[0]->hp = 0;
+$w->enter('field', 0, 0, Dir::Right);
+for ($i = 0; $i < 8; $i++) {
+    $step();
+}
+same([8, null], [$w->player->x, $w->battle], 'nor do steps in it with no beast that can fight');

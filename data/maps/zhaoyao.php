@@ -41,17 +41,12 @@ return [
             ['label', 'again'],
             ['say', '屋里的巫祝在等你，进去看看吧。'],
         ]],
-        ['xingxing', 17, 3, 'left', 'beast', [
-            ['ifFlag', 'metShaman', 'fight'],
-            ['say', '深草里有一只白耳的兽盯着你。没有异兽同行，还是别靠近。'],
-            ['end'],
-            ['label', 'fight'],
-            ['battle', 'xingxing', 4],
-        ]],
         ['guard', 11, 13, 'up', 'guard', [
             ['say', '再往前的山路还没修通，改日再来吧。'],
         ]],
     ],
+    // The tall grass: 狌狌, the one beast the classic gives this mountain.
+    'wild' => ['rate' => 10, 'slots' => [[2, 'xingxing'], [3, 'xingxing'], [4, 'xingxing'], [3, 'xingxing'], [5, 'xingxing'], [4, 'xingxing'], [5, 'xingxing']]],
     'triggers' => [
         [3, 10, 'seenSea', [
             ['say', '海风从西海上吹来，带着桂花的香气。'],

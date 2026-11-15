@@ -134,6 +134,31 @@ final class Formulas
         return max(0, $exp); // 9: as meant, nothing below zero at level 1
     }
 
+    /** 13: of a hundred, the last number that falls to each of the seven wild beasts a map's grass holds: 30, 30, 20, 10, 5, 4 and 1 in a hundred. */
+    public const WILD_SLOTS = [30, 60, 80, 90, 95, 99, 100];
+    /** 13: the steps after entering a map, or a battle, of which only the last can meet a wild beast. */
+    public const WILD_WAIT = 5;
+
+    /** 13: what a random byte must be under for a step in grass to meet a wild beast, on a map whose rate is $percent. */
+    public static function wildLimit(int $percent): int
+    {
+        return intdiv($percent * 255, 100);
+    }
+
+    /** 13: which of the seven the grass gives: bytes are asked for until one is under a hundred, and it, plus one, is looked up in WILD_SLOTS. */
+    public static function wildSlot(Rng $rng): int
+    {
+        do {
+            $n = $rng->byte();
+        } while ($n >= 100);
+        foreach (self::WILD_SLOTS as $slot => $last) {
+            if ($n + 1 <= $last) {
+                return $slot;
+            }
+        }
+        throw new \LogicException('unreachable: the last slot ends at a hundred');
+    }
+
     /** 7.3: the level a beast of a growth rate is at with $exp in all: the last whose experience it has. */
     public static function levelAt(string $growth, int $exp): int
     {
