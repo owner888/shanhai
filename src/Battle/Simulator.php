@@ -14,6 +14,11 @@ final class Simulator
     public const TURNS = 300;
     /** How much better, on the scale of standing(), a beast waiting must be than the one out for a side to switch. */
     public const SWITCH_MARGIN = 0.5;
+    /**
+     * The effects a careful player keeps a move for before any other, the most worth first: those that tools/effects.php
+     * measures as worth the turn they take (docs/balance.md). A beast with none of these keeps the last such move it learned.
+     */
+    public const KEEPS_FIRST = ['sleep', 'confuse', 'paralyze'];
     /** think(): how many times each thing a side could do is played on, and for how many turns at most. */
     public const ROLLOUTS = 4, AHEAD = 40;
 
@@ -126,8 +131,8 @@ final class Simulator
 
     /**
      * Which four moves a beast keeps, of those it has learned by $level, when a player who chose with care had it: its
-     * three strongest that do damage, no two of one element, and the last it learned that does none. With no such move,
-     * or too few of the others, the strongest left fill the four.
+     * three strongest that do damage, no two of one element, and one that does none: the one whose effect is first in
+     * KEEPS_FIRST, else the last it learned. With no such move, or too few of the others, the strongest left fill the four.
      * @return list<string>
      */
     public function kept(string $id, int $level): array
@@ -144,6 +149,13 @@ final class Simulator
         }
         usort($damage, fn(string $a, string $b) => $this->moves[$b]['power'] * $this->moves[$b]['accuracy'] <=> $this->moves[$a]['power'] * $this->moves[$a]['accuracy']);
         $keep = $none === [] ? [] : [end($none)];
+        foreach (array_reverse(self::KEEPS_FIRST) as $effect) {
+            foreach ($none as $move) {
+                if ($this->moves[$move]['effect'][0] === $effect) {
+                    $keep = [$move];
+                }
+            }
+        }
         $elements = [];
         foreach ($damage as $move) { // the strongest of each element first
             $e = $this->moves[$move]['element'] ?? '';

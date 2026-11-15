@@ -239,6 +239,41 @@ foreach ($moves as $id => $m) {
         same([$m['only']], $learnedBy[$id] ?? [], "the move $id is learned by the beast it is only for");
     }
 }
+// Moves are shared, and what does no damage is a good part of what is learned, as measured from the reference (docs/numbers.md 10.5).
+$entries = $without = 0;
+$late = 0;
+foreach ($learnsets as $id => $set) {
+    $own = 0;
+    foreach ($set as [$level, $move]) {
+        $entries++;
+        if ($moves[$move]['power'] === 0) {
+            $without++;
+            $own++;
+            $late += $level >= 25 ? 1 : 0;
+        }
+    }
+    check($own >= 2, "$id learns two moves or more that do no damage");
+}
+check($without / $entries >= 0.33 && $without / $entries <= 0.5, 'a third to a half of what is learned does no damage: ' . round(100 * $without / $entries) . '%');
+check($late / $without >= 0.25, 'a quarter or more of it from level 25 on: ' . round(100 * $late / $without) . '%');
+$learners = function (array $effects) use ($moves, $learnedBy, $beasts): float {
+    $who = [];
+    foreach ($moves as $id => $m) {
+        if ($m['power'] === 0 && in_array($m['effect'][0], $effects, true)) {
+            $who = array_merge($who, $learnedBy[$id] ?? []);
+        }
+    }
+    return count(array_unique($who)) / count($beasts);
+};
+foreach (['sleep' => ['sleep'], 'confusion' => ['confuse'], 'paralysis' => ['paralyze'], 'poison' => ['poison'], 'healing' => ['heal'], 'the weather' => ['rain', 'sun', 'sandstorm']] as $what => $effects) {
+    $share = $learners($effects);
+    check($share >= 0.08 && $share <= 0.25, "$what is learned by one beast in twelve to one in four: " . round(100 * $share) . '%');
+}
+foreach ($moves as $id => $m) {
+    if ($m['power'] === 0 && !isset($m['only'])) {
+        check(count($learnedBy[$id] ?? []) >= 2, "the move $id, which does no damage, is shared: " . count($learnedBy[$id] ?? []) . ' learn it');
+    }
+}
 
 same(['你好，', '世界'], Text::wrap('你好，世界', 6), 'a CJK character takes two columns');
 same(['abc', 'def'], Text::wrap("abc\ndef", 10), 'a newline breaks');

@@ -205,7 +205,8 @@ same($sim->battle(['lushu', 'lili', 'zhu'], ['xuangui', 'huahuai', 'zhi'], 40, 3
 check(in_array($sim->battle(['lushu'], ['xuangui'], 40, 1), [0, 1, -1], true), 'and ends');
 $kept = $sim->kept('huahuai', 50);
 same(4, count($kept), 'a beast keeps four moves');
-same(1, count(array_filter($kept, fn(string $m) => Data::moves()[$m]['power'] === 0)), 'one of them the last it learned that does no damage');
+same(['slumber'], array_values(array_filter($kept, fn(string $m) => Data::moves()[$m]['power'] === 0)), 'one of them does no damage: sleep, before the later ones it learned');
+same(['sleepless'], array_values(array_filter($sim->kept('lushu', 50), fn(string $m) => Data::moves()[$m]['power'] === 0)), 'a beast with no such effect keeps the last it learned');
 check(in_array('landslide', $kept, true), 'and its strongest among the rest');
 check(throws(fn() => new Fighter('lushu', Data::beasts()['lushu'], 5, Data::learnsets()['lushu'], Data::moves(), keeps: ['scorch'])), 'a beast keeps no move it has not learned yet');
 same($sim->battle(['lushu', 'lili'], ['xuangui', 'zhu'], 40, 5, true), $sim->battle(['lushu', 'lili'], ['xuangui', 'zhu'], 40, 5, true), 'with both sides thinking ahead, too');
