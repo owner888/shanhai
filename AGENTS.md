@@ -154,4 +154,4 @@ docs/elements.md   the elements' table and how a beast's elements are settled
 - **Phase 1, battle** (M2): the engine in PHP alone with tests → a simulator that checks the tables → its scene and menus.
 - **Phase 2, the loop** (M3): wild beasts, catching, the party, the bag, growth, saving, `choose` in scripts.
 - **Phase 3, v0.1** (M4): the Southern Mountains' maps, a cave, the first trial.
-- **Phase 4**: the other ranges, phones, models, sound.
+- **Phase 4**: the other ranges (the Western Mountains' first is in), phones, models, sound.

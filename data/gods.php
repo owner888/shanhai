@@ -41,4 +41,14 @@ return [
         'moves' => ['burrow', 'bite', 'bewilder', 'revive'],
         'from' => '凡南次三经之首，自天虞之山以至南禺之山，凡一十四山，六千五百三十里。其神皆龙身而人面。',
     ],
+    'xishan' => [
+        'name' => '羭山之神', 'range' => 4,
+        'looks' => '原文没有写它的形状。',
+        'elements' => ['metal'],
+        'why' => '西山经属金；原文没有写它的形状，不加副属性。',
+        'stats' => ['hp' => 90, 'atk' => 105, 'def' => 90, 'spa' => 70, 'spd' => 80, 'spe' => 75],
+        'exp' => 205, 'growth' => 'slow',
+        'moves' => ['slumber', 'gore', 'bite', 'rebuke'],
+        'from' => '凡西经之首，自钱来之山至于騩山，凡十九山，二千九百五十七里。华山，冢也。羭山，神也。',
+    ],
 ];

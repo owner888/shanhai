@@ -2,7 +2,8 @@
 // 南禺之山, five hundred and eighty li east of 禺槀之山, the last of the range. The classic: on it much gold and jade,
 // below it much water; there is a hole in it that the water comes out of in summer and that is shut in winter; the
 // 佐水 rises on it and runs southeast into the sea; 凤皇 and 鵷鶵 live there (neither is in the grass: docs/todo.md).
-// The god of the range, a dragon's body with a human face, keeps its end.
+// The god of the range, a dragon's body with a human face, keeps its end, and sends who has passed its trial on to
+// the Western Mountains.
 declare(strict_types=1);
 
 return [
@@ -42,13 +43,16 @@ return [
             ['label', 'go'],
             ['trial', '南次三经之神', [['xi', 18], ['nanci3', 20]]],
             ['setFlag', 'passedNanci3'],
-            ['say', '「好。南山经三列的山，你都走过了。」'],
+            ['say', '「好。南山经三列的山，你都走过了。想去西山时再来找我。」'],
             ['end'],
             ['label', 'wait'],
             ['say', '「准备好了再来。」'],
             ['end'],
             ['label', 'passed'],
-            ['say', '「南山经到这里为止。西边的山，路还没有开。」'],
+            ['ask', '「西山经之首是钱来之山。要我送你去吗？」', [['去钱来之山', 'send'], ['留在这里', 'stay']]],
+            ['label', 'send'],
+            ['warp', 'qianlai', 17, 7, 'left'],
+            ['label', 'stay'],
         ]],
     ],
 ];

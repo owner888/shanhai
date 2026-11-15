@@ -25,7 +25,7 @@ final class Atlas
         $placed = [];
         foreach ($ranges as $n => $range) {
             $out .= "\n## {$range['book']} · {$range['name']}\n\n";
-            $own = self::inOrder(array_filter($maps, fn(Map $m) => $m->range === $n));
+            $own = self::inOrder(array_filter($maps, fn(Map $m) => $m->range === $n), $range['toward']);
             if ($own === []) {
                 $out .= "还没有地图。\n";
             } else {
@@ -49,12 +49,13 @@ final class Atlas
     }
 
     /**
-     * A range's maps as they are walked: from the one with no way west, east by the exits; a map entered by a door
+     * A range's maps as they are walked: from the one with no way back, on by the exits the way the classic goes; a map entered by a door
      * after the one its door is in.
      * @param array<string, Map> $maps @return list<Map>
      */
-    private static function inOrder(array $maps): array
+    private static function inOrder(array $maps, string $toward): array
     {
+        $back = $toward === 'right' ? 'left' : 'right';
         $out = [];
         $add = function (Map $m) use (&$out, &$add, $maps): void {
             if (in_array($m, $out, true)) {
@@ -68,8 +69,8 @@ final class Atlas
             }
         };
         foreach ($maps as $m) {
-            if ($m->exits !== [] && !isset($m->exits['left'])) {
-                for ($at = $m; $at !== null; $at = isset($at->exits['right']) ? ($maps[$at->exits['right'][0]] ?? null) : null) {
+            if ($m->exits !== [] && !isset($m->exits[$back])) {
+                for ($at = $m; $at !== null; $at = isset($at->exits[$toward]) ? ($maps[$at->exits[$toward][0]] ?? null) : null) {
                     $add($at);
                 }
             }

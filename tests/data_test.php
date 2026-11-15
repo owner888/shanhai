@@ -195,8 +195,8 @@ foreach (Tile::KINDS as [$kind]) {
 check(isset(Stage::LOOKS['player']), 'the stage draws the player');
 same(array_keys($elements), array_keys(Arena::ELEMENTS), 'the arena has a color for a beast of each element');
 
-same(30, count($beasts), 'the beasts of the Southern Mountains: 12, 9 and 9 over its three ranges');
-foreach ([1 => 12, 2 => 9, 3 => 9] as $range => $count) {
+same(58, count($beasts), 'the beasts: 12, 9 and 9 over the Southern Mountains\' three ranges, 28 in the Western\'s first');
+foreach ([1 => 12, 2 => 9, 3 => 9, 4 => 28] as $range => $count) {
     same($count, count(array_filter($beasts, fn(array $b) => $b['range'] === $range)), "range $range");
 }
 same(['guanguan', 'lushu', 'xuangui'], (function () use ($beasts) {
@@ -374,6 +374,9 @@ foreach ($moves as $id => $m) {
 // beasts of its range; the others are at its level or up to five under.
 $ranges = Data::ranges();
 same(range(1, count($ranges)), array_keys($ranges), 'the ranges are numbered from 1, in the classic\'s order');
+foreach ($ranges as $n => $r) {
+    check(in_array($r['toward'], ['left', 'right'], true), "range $n says which way the classic walks it");
+}
 foreach ($maps as $map) {
     check(isset($ranges[$map->range]), "{$map->id} says which range it is of, one there is");
 }

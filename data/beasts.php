@@ -1,11 +1,12 @@
 <?php
-// The beasts of the Classic of Mountains and Seas' Southern Mountains (南山经), all three ranges.
+// The beasts of the Classic of Mountains and Seas: the Southern Mountains (南山经), all three ranges, and the first
+// range of the Western (西山经之首).
 //
-// Every field here restates what the classic says, checked against its text (zh.wikisource.org/wiki/山海經/南山經,
-// which carries Guo Pu's commentary; the names and wording cross-checked with a second edition where one could be
-// read). Nothing is written from memory.
+// Every field here restates what the classic says, checked against its text (zh.wikisource.org/wiki/山海經/南山經 and
+// /西山經, which carry Guo Pu's commentary; the names and wording cross-checked with a second edition where one could
+// be read, and where none could, the entry's `unchecked` says what is still to be). Nothing is written from memory.
 //   kind      'strange': a beast the text names and describes; 'common': an ordinary animal the text says a mountain has many of
-//   range     1, 2 or 3: which of the Southern Mountains' three ranges
+//   range     which of the classic's ranges (data/ranges.php); a beast of several is entered under the first
 //   mountain  where the text places it (several, when it names several)
 //   looks     its shape; 'note' when that comes from the commentary, not the text
 //   sound     what its call is like
@@ -204,14 +205,14 @@ return [
 
     // 南次三经: 天虞之山 to 南禺之山
     'xi' => [
-        'name' => '犀', 'kind' => 'common', 'range' => 3, 'mountain' => '祷过之山',
+        'name' => '犀', 'kind' => 'common', 'range' => 3, 'mountain' => '祷过之山、嶓冢之山',
         'elements' => ['metal'], 'why' => '有角。',
         'tier' => 2, 'stats' => ['hp' => 90, 'atk' => 85, 'def' => 80, 'spa' => 30, 'spd' => 45, 'spe' => 40],
         'catch' => 90, 'exp' => 124, 'growth' => 'mediumFast',
         'looks' => '似水牛，猪头，黑身，三角。', 'note' => '形貌据郭璞注。',
     ],
     'si' => [
-        'name' => '兕', 'kind' => 'common', 'range' => 3, 'mountain' => '祷过之山',
+        'name' => '兕', 'kind' => 'common', 'range' => 3, 'mountain' => '祷过之山、嶓冢之山',
         'elements' => ['metal'], 'why' => '有角。',
         'tier' => 2, 'stats' => ['hp' => 90, 'atk' => 90, 'def' => 75, 'spa' => 30, 'spd' => 45, 'spe' => 45],
         'catch' => 90, 'exp' => 126, 'growth' => 'mediumFast',
@@ -274,5 +275,216 @@ return [
         'tier' => 4, 'stats' => ['hp' => 85, 'atk' => 55, 'def' => 80, 'spa' => 115, 'spd' => 100, 'spe' => 100],
         'catch' => 45, 'exp' => 203, 'growth' => 'slow',
         'looks' => '凤一类的鸟。', 'note' => '形貌据郭璞注，正文未载。',
+    ],
+    // 西山经之首: 钱来之山 to 騩山
+    'qianyang' => [
+        'name' => '羬羊', 'kind' => 'strange', 'range' => 4, 'mountain' => '钱来之山、英山',
+        'elements' => ['metal'], 'why' => '原文没有别的依据，取西山经的本地属性。',
+        'tier' => 2, 'stats' => ['hp' => 70, 'atk' => 70, 'def' => 65, 'spa' => 40, 'spd' => 55, 'spe' => 60],
+        'catch' => 120, 'exp' => 90, 'growth' => 'mediumFast',
+        'looks' => '形如羊而马尾。',
+        'lore' => '其脂可以治皮肤皴裂。',
+    ],
+    'tongqu' => [
+        'name' => '䳋渠', 'kind' => 'strange', 'range' => 4, 'mountain' => '松果之山',
+        'elements' => ['wood'], 'why' => '鸟。',
+        'tier' => 2, 'stats' => ['hp' => 50, 'atk' => 45, 'def' => 50, 'spa' => 75, 'spd' => 60, 'spe' => 80],
+        'catch' => 120, 'exp' => 88, 'growth' => 'mediumFast',
+        'looks' => '形如山鸡，黑身赤足。',
+        'lore' => '可以治皮肤皴起。',
+    ],
+    'feiwei' => [
+        'name' => '肥𧔥', 'kind' => 'strange', 'range' => 4, 'mountain' => '太华之山',
+        'elements' => ['fire'], 'why' => '见则天下大旱。',
+        'tier' => 4, 'stats' => ['hp' => 85, 'atk' => 75, 'def' => 80, 'spa' => 110, 'spd' => 85, 'spe' => 90],
+        'catch' => 45, 'exp' => 190, 'growth' => 'slow',
+        'looks' => '蛇，六足四翼。',
+        'omen' => '见则天下大旱。',
+    ],
+    'zuoniu' => [
+        'name' => '㸲牛', 'kind' => 'common', 'range' => 4, 'mountain' => '小华之山、英山',
+        'elements' => ['metal'], 'why' => '原文没有别的依据，取西山经的本地属性。',
+        'tier' => 2, 'stats' => ['hp' => 95, 'atk' => 85, 'def' => 75, 'spa' => 30, 'spd' => 50, 'spe' => 45],
+        'catch' => 120, 'exp' => 95, 'growth' => 'mediumFast',
+        'looks' => '山牛，肉重千斤。', 'note' => '形貌据郭璞注。',
+    ],
+    'chibi' => [
+        'name' => '赤鷩', 'kind' => 'common', 'range' => 4, 'mountain' => '小华之山、嶓冢之山',
+        'elements' => ['wood', 'fire'], 'why' => '鸟；赤。',
+        'tier' => 2, 'stats' => ['hp' => 55, 'atk' => 50, 'def' => 55, 'spa' => 80, 'spd' => 70, 'spe' => 75],
+        'catch' => 120, 'exp' => 96, 'growth' => 'mediumFast',
+        'looks' => '山鸡一类。', 'note' => '形貌据郭璞注。',
+        'lore' => '可以御火。',
+    ],
+    'conglong' => [
+        'name' => '葱聋', 'kind' => 'strange', 'range' => 4, 'mountain' => '符禺之山',
+        'elements' => ['fire'], 'why' => '赤鬣。',
+        'tier' => 2, 'stats' => ['hp' => 65, 'atk' => 55, 'def' => 60, 'spa' => 80, 'spd' => 65, 'spe' => 65],
+        'catch' => 90, 'exp' => 105, 'growth' => 'mediumSlow',
+        'looks' => '形如羊而赤鬣。',
+    ],
+    'min' => [
+        'name' => '鴖', 'kind' => 'strange', 'range' => 4, 'mountain' => '符禺之山',
+        'elements' => ['wood'], 'why' => '鸟。',
+        'tier' => 2, 'stats' => ['hp' => 50, 'atk' => 40, 'def' => 50, 'spa' => 80, 'spd' => 65, 'spe' => 85],
+        'catch' => 120, 'exp' => 92, 'growth' => 'mediumFast',
+        'looks' => '形如翠而赤喙。',
+        'lore' => '可以御火。',
+    ],
+    'bangyu' => [
+        'name' => '䰷鱼', 'kind' => 'strange', 'range' => 4, 'mountain' => '英山',
+        'elements' => ['water'], 'why' => '生于禺水中。',
+        'tier' => 2, 'stats' => ['hp' => 70, 'atk' => 45, 'def' => 85, 'spa' => 75, 'spd' => 70, 'spe' => 40],
+        'catch' => 90, 'exp' => 100, 'growth' => 'mediumSlow',
+        'looks' => '禺水中的鱼，形如鳖。',
+        'sound' => '如羊。',
+    ],
+    'feiyi' => [
+        'name' => '肥遗', 'kind' => 'strange', 'range' => 4, 'mountain' => '英山',
+        'elements' => ['wood'], 'why' => '鸟。',
+        'tier' => 2, 'stats' => ['hp' => 55, 'atk' => 50, 'def' => 50, 'spa' => 75, 'spd' => 60, 'spe' => 80],
+        'catch' => 120, 'exp' => 92, 'growth' => 'mediumFast',
+        'looks' => '形如鹑，黄身而赤喙。',
+        'lore' => '食之治疠，可以杀虫。',
+    ],
+    'haozhi' => [
+        'name' => '豪彘', 'kind' => 'strange', 'range' => 4, 'mountain' => '竹山',
+        'elements' => ['metal'], 'why' => '毛大如笄而黑端，是兵。',
+        'tier' => 3, 'stats' => ['hp' => 80, 'atk' => 95, 'def' => 90, 'spa' => 45, 'spd' => 65, 'spe' => 60],
+        'catch' => 75, 'exp' => 140, 'growth' => 'mediumFast',
+        'looks' => '形如豚而白毛，毛大如笄而黑端。',
+        'unchecked' => '所查版本作「毫彘」，通行本作「豪彘」，待另一版本核对。',
+    ],
+    'renyu' => [
+        'name' => '人鱼', 'kind' => 'strange', 'range' => 4, 'mountain' => '竹山',
+        'elements' => ['water'], 'why' => '生于丹水中。',
+        'tier' => 3, 'stats' => ['hp' => 90, 'atk' => 55, 'def' => 70, 'spa' => 90, 'spd' => 85, 'spe' => 60],
+        'catch' => 60, 'exp' => 150, 'growth' => 'mediumSlow',
+        'looks' => '丹水中的鱼，如䱱鱼，四足。', 'note' => '形貌据郭璞注，正文未载。',
+    ],
+    'xiao' => [
+        'name' => '嚻', 'kind' => 'strange', 'range' => 4, 'mountain' => '羭次之山',
+        'elements' => ['metal'], 'why' => '原文没有别的依据，取西山经的本地属性。',
+        'tier' => 3, 'stats' => ['hp' => 70, 'atk' => 100, 'def' => 65, 'spa' => 50, 'spd' => 65, 'spe' => 90],
+        'catch' => 75, 'exp' => 142, 'growth' => 'mediumFast',
+        'looks' => '形如禺而长臂，善投。',
+    ],
+    'tuofei' => [
+        'name' => '橐𩇯', 'kind' => 'strange', 'range' => 4, 'mountain' => '羭次之山',
+        'elements' => ['wood'], 'why' => '鸟。',
+        'tier' => 3, 'stats' => ['hp' => 75, 'atk' => 55, 'def' => 70, 'spa' => 100, 'spd' => 85, 'spe' => 70],
+        'catch' => 60, 'exp' => 152, 'growth' => 'mediumSlow',
+        'looks' => '形如枭，人面而一足。',
+        'lore' => '冬见夏蛰。服之不畏雷。',
+    ],
+    'mengbao' => [
+        'name' => '猛豹', 'kind' => 'common', 'range' => 4, 'mountain' => '南山',
+        'elements' => ['metal'], 'why' => '能食铜铁。',
+        'tier' => 2, 'stats' => ['hp' => 70, 'atk' => 90, 'def' => 70, 'spa' => 40, 'spd' => 60, 'spe' => 75],
+        'catch' => 90, 'exp' => 110, 'growth' => 'mediumFast',
+        'looks' => '似熊而小，毛浅有光泽，能食蛇，食铜铁。', 'note' => '形貌据郭璞注。',
+    ],
+    'shijiu' => [
+        'name' => '尸鸠', 'kind' => 'common', 'range' => 4, 'mountain' => '南山',
+        'elements' => ['wood'], 'why' => '鸟。',
+        'tier' => 1, 'stats' => ['hp' => 45, 'atk' => 40, 'def' => 40, 'spa' => 60, 'spd' => 50, 'spe' => 65],
+        'catch' => 255, 'exp' => 60, 'growth' => 'mediumFast',
+        'looks' => '布谷一类的鸟。', 'note' => '形貌据郭璞注。',
+    ],
+    'xiong' => [
+        'name' => '熊', 'kind' => 'common', 'range' => 4, 'mountain' => '嶓冢之山',
+        'elements' => ['metal'], 'why' => '原文没有别的依据，取西山经的本地属性。',
+        'tier' => 2, 'stats' => ['hp' => 90, 'atk' => 95, 'def' => 75, 'spa' => 40, 'spd' => 60, 'spe' => 50],
+        'catch' => 90, 'exp' => 112, 'growth' => 'mediumFast',
+        'looks' => '熊。',
+    ],
+    'pi' => [
+        'name' => '罴', 'kind' => 'common', 'range' => 4, 'mountain' => '嶓冢之山',
+        'elements' => ['metal'], 'why' => '原文没有别的依据，取西山经的本地属性。',
+        'tier' => 2, 'stats' => ['hp' => 100, 'atk' => 100, 'def' => 80, 'spa' => 35, 'spd' => 55, 'spe' => 45],
+        'catch' => 75, 'exp' => 118, 'growth' => 'mediumSlow',
+        'looks' => '似熊而黄白色，猛憨能拔树。', 'note' => '形貌据郭璞注。',
+    ],
+    'baihan' => [
+        'name' => '白翰', 'kind' => 'common', 'range' => 4, 'mountain' => '嶓冢之山',
+        'elements' => ['wood'], 'why' => '鸟。',
+        'tier' => 1, 'stats' => ['hp' => 45, 'atk' => 40, 'def' => 45, 'spa' => 65, 'spd' => 55, 'spe' => 70],
+        'catch' => 190, 'exp' => 66, 'growth' => 'mediumFast',
+        'looks' => '白雉。', 'note' => '形貌据郭璞注。',
+    ],
+    'xibian' => [
+        'name' => '谿边', 'kind' => 'strange', 'range' => 4, 'mountain' => '天帝之山',
+        'elements' => ['metal'], 'why' => '原文没有别的依据，取西山经的本地属性。',
+        'tier' => 3, 'stats' => ['hp' => 75, 'atk' => 90, 'def' => 80, 'spa' => 50, 'spd' => 70, 'spe' => 75],
+        'catch' => 75, 'exp' => 140, 'growth' => 'mediumFast',
+        'looks' => '形如狗。',
+        'lore' => '席其皮者不蛊。',
+        'unchecked' => '所查版本只作「谿」一字，通行本作「谿边」，待另一版本核对。',
+    ],
+    'li' => [
+        'name' => '栎', 'kind' => 'strange', 'range' => 4, 'mountain' => '天帝之山',
+        'elements' => ['wood'], 'why' => '鸟。',
+        'tier' => 2, 'stats' => ['hp' => 55, 'atk' => 50, 'def' => 55, 'spa' => 75, 'spd' => 65, 'spe' => 75],
+        'catch' => 120, 'exp' => 94, 'growth' => 'mediumFast',
+        'looks' => '形如鹑，黑文而赤翁。',
+        'lore' => '食之治痔。',
+    ],
+    'jueru' => [
+        'name' => '𤣎如', 'kind' => 'strange', 'range' => 4, 'mountain' => '皋涂之山',
+        'elements' => ['metal'], 'why' => '四角。',
+        'tier' => 3, 'stats' => ['hp' => 80, 'atk' => 100, 'def' => 75, 'spa' => 60, 'spd' => 70, 'spe' => 85],
+        'catch' => 45, 'exp' => 160, 'growth' => 'mediumSlow',
+        'looks' => '形如鹿而白尾，马足人手而四角。',
+    ],
+    'shusi' => [
+        'name' => '数斯', 'kind' => 'strange', 'range' => 4, 'mountain' => '皋涂之山',
+        'elements' => ['wood'], 'why' => '鸟。',
+        'tier' => 2, 'stats' => ['hp' => 60, 'atk' => 55, 'def' => 55, 'spa' => 80, 'spd' => 65, 'spe' => 75],
+        'catch' => 90, 'exp' => 104, 'growth' => 'mediumSlow',
+        'looks' => '形如鸱而人足。',
+        'unchecked' => '「食之已…」一句在所查版本中残缺，通行本作「食之已瘿」，待另一版本核对后补上。',
+    ],
+    'minniu' => [
+        'name' => '𤛎', 'kind' => 'strange', 'range' => 4, 'mountain' => '黄山',
+        'elements' => ['metal'], 'why' => '原文没有别的依据，取西山经的本地属性。',
+        'tier' => 3, 'stats' => ['hp' => 100, 'atk' => 90, 'def' => 90, 'spa' => 45, 'spd' => 70, 'spe' => 45],
+        'catch' => 60, 'exp' => 150, 'growth' => 'mediumSlow',
+        'looks' => '形如牛，苍黑而大目。',
+    ],
+    'yingwu' => [
+        'name' => '鹦䳇', 'kind' => 'strange', 'range' => 4, 'mountain' => '黄山',
+        'elements' => ['wood'], 'why' => '鸟。',
+        'tier' => 2, 'stats' => ['hp' => 50, 'atk' => 40, 'def' => 50, 'spa' => 85, 'spd' => 70, 'spe' => 85],
+        'catch' => 90, 'exp' => 100, 'growth' => 'mediumFast',
+        'looks' => '形如鸮，青羽赤喙，人舌能言。',
+    ],
+    'maoniu' => [
+        'name' => '旄牛', 'kind' => 'common', 'range' => 4, 'mountain' => '翠山',
+        'elements' => ['metal'], 'why' => '原文没有别的依据，取西山经的本地属性。',
+        'tier' => 2, 'stats' => ['hp' => 95, 'atk' => 80, 'def' => 85, 'spa' => 30, 'spd' => 55, 'spe' => 40],
+        'catch' => 120, 'exp' => 98, 'growth' => 'mediumFast',
+        'looks' => '旄牛。',
+    ],
+    'ling' => [
+        'name' => '麢', 'kind' => 'common', 'range' => 4, 'mountain' => '翠山',
+        'elements' => ['metal'], 'why' => '大角。',
+        'tier' => 1, 'stats' => ['hp' => 50, 'atk' => 60, 'def' => 45, 'spa' => 35, 'spd' => 45, 'spe' => 90],
+        'catch' => 190, 'exp' => 72, 'growth' => 'fast',
+        'looks' => '似羊而大角，好在山崖间。', 'note' => '形貌据郭璞注。',
+    ],
+    'she' => [
+        'name' => '麝', 'kind' => 'common', 'range' => 4, 'mountain' => '翠山',
+        'elements' => ['metal'], 'why' => '原文没有别的依据，取西山经的本地属性。',
+        'tier' => 1, 'stats' => ['hp' => 45, 'atk' => 50, 'def' => 40, 'spa' => 40, 'spd' => 50, 'spe' => 85],
+        'catch' => 255, 'exp' => 64, 'growth' => 'fast',
+        'looks' => '似獐而小，有香。', 'note' => '形貌据郭璞注。',
+    ],
+    'leiniao' => [
+        'name' => '鸓', 'kind' => 'strange', 'range' => 4, 'mountain' => '翠山',
+        'elements' => ['wood'], 'why' => '鸟。',
+        'tier' => 3, 'stats' => ['hp' => 75, 'atk' => 60, 'def' => 65, 'spa' => 100, 'spd' => 80, 'spe' => 90],
+        'catch' => 45, 'exp' => 162, 'growth' => 'mediumSlow',
+        'looks' => '形如鹊，赤黑而两首四足。',
+        'lore' => '可以御火。',
     ],
 ];
