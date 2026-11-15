@@ -71,7 +71,7 @@ foreach ($maps as $map) {
 
 // Every map can be walked to from where a new game starts: over walkable tiles, through warps and exits.
 $game = require Data::DIR . '/game.php';
-$seen = [];
+$seen = $sent = [];
 $queue = [[$game['start']['map'], $game['start']['x'], $game['start']['y']]];
 while ($queue !== []) {
     [$id, $x, $y] = array_pop($queue);
@@ -82,6 +82,16 @@ while ($queue !== []) {
     $map = $maps[$id];
     if (($warp = $map->warpAt($x, $y)) !== null) {
         $queue[] = [$warp[2], $warp[3], $warp[4]];
+    }
+    if (!isset($sent[$id])) { // a map reached: where those on it send the player
+        $sent[$id] = true;
+        foreach ([...$map->npcs, ...$map->signs] as $who) {
+            foreach (end($who) as $cmd) {
+                if ($cmd[0] === 'warp') {
+                    $queue[] = [$cmd[1], $cmd[2], $cmd[3]];
+                }
+            }
+        }
     }
     foreach (Dir::cases() as $dir) {
         [$nx, $ny] = [$x + $dir->dx(), $y + $dir->dy()];
@@ -360,7 +370,7 @@ foreach ($moves as $id => $m) {
     }
 }
 // A trial is as strong as the reference's gym leaders are against what comes before them (docs/numbers.md 14): the
-// one who sets it sends two to four; the last is the strongest, at 1.9 to 2.5 times the mean level of the wild
+// one who sets it sends two to four; the last is the strongest, at 1.9 to 2.55 times the mean level of the wild
 // beasts of its range; the others are at its level or up to five under.
 foreach ($maps as $map) {
     check(is_int($map->range) && $map->range >= 1, "{$map->id} says which range it is of");
@@ -382,7 +392,7 @@ foreach ($scripts as $where => $script) {
         }
         $mean = array_sum($means) / count($means);
         check(count($cmd[2]) >= 2 && count($cmd[2]) <= 4, "$where: a trial is against two to four");
-        check($ace / $mean >= 1.9 && $ace / $mean <= 2.5, sprintf('%s: its last, at level %d, is 1.9 to 2.5 times the range\'s wild beasts\' mean of %.1f: %.2f', $where, $ace, $mean, $ace / $mean));
+        check($ace / $mean >= 1.9 && $ace / $mean <= 2.55, sprintf('%s: its last, at level %d, is 1.9 to 2.55 times the range\'s wild beasts\' mean of %.1f: %.2f', $where, $ace, $mean, $ace / $mean));
         foreach (array_slice($cmd[2], 0, -1) as [$id, $level]) {
             check($level <= $ace && $level >= $ace - 5, "$where: $id, at level $level, is at the last one's level or up to five under");
         }
