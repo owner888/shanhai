@@ -195,8 +195,8 @@ foreach (Tile::KINDS as [$kind]) {
 check(isset(Stage::LOOKS['player']), 'the stage draws the player');
 same(array_keys($elements), array_keys(Arena::ELEMENTS), 'the arena has a color for a beast of each element');
 
-same(69, count($beasts), 'the beasts: 12, 9 and 9 over the Southern Mountains\' three ranges, 28 and 11 over the Western\'s first two');
-foreach ([1 => 12, 2 => 9, 3 => 9, 4 => 28, 5 => 11] as $range => $count) {
+same(91, count($beasts), 'the beasts: 12, 9 and 9 over the Southern Mountains\' three ranges, 28, 11 and 22 over the Western\'s first three');
+foreach ([1 => 12, 2 => 9, 3 => 9, 4 => 28, 5 => 11, 6 => 22] as $range => $count) {
     same($count, count(array_filter($beasts, fn(array $b) => $b['range'] === $range)), "range $range");
 }
 same(['guanguan', 'lushu', 'xuangui'], (function () use ($beasts) {
