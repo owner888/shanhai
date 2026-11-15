@@ -6,6 +6,7 @@ declare(strict_types=1);
 return [
     'id' => 'danyuan',
     'name' => '亶爰之山 · 山脚',
+    'range' => 1,
     'rows' => [
         '^^^^^^^^^^^^^^^^^^^^',
         '^^^^^^^^^^^^^^^^^^^^',
@@ -29,5 +30,5 @@ return [
         ]],
     ],
     // The scree: 类, the one beast the classic gives this mountain.
-    'wild' => ['rate' => 10, 'slots' => [[12, 'lei'], [13, 'lei'], [14, 'lei'], [13, 'lei'], [15, 'lei'], [14, 'lei'], [15, 'lei']]],
+    'wild' => ['rate' => 10, 'slots' => [[4, 'lei'], [4, 'lei'], [5, 'lei'], [5, 'lei'], [4, 'lei'], [5, 'lei'], [5, 'lei']]],
 ];

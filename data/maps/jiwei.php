@@ -8,6 +8,7 @@ declare(strict_types=1);
 return [
     'id' => 'jiwei',
     'name' => '箕尾之山',
+    'range' => 1,
     'rows' => [
         '^^^^^^^^^^^^^^^~~~~~',
         '^^^----^^^----~~~~~~',
@@ -35,7 +36,7 @@ return [
             ['label', 'ask'],
             ['ask', '「想去南次二经，先让我看看你和异兽的本事。」', [['接受试炼', 'go'], ['再等等', 'wait']]],
             ['label', 'go'],
-            ['trial', '鹊山之神', [['boyi', 20], ['chiru', 21], ['queshan', 24]]],
+            ['trial', '鹊山之神', [['boyi', 7], ['queshan', 9]]],
             ['setFlag', 'passedQueshan'],
             ['say', '「好。南次二经的山路，为你而开。」'],
             ['end'],

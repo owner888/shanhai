@@ -6,6 +6,7 @@ declare(strict_types=1);
 return [
     'id' => 'niuyang',
     'name' => '杻阳之山',
+    'range' => 1,
     'rows' => [
         '^^^^^^^^^^^^^^^^^^^^',
         '^^..,,,..^^^..,,,.^^',
@@ -30,6 +31,6 @@ return [
     ],
     // The tall grass: 鹿蜀, the mountain's one beast of the land; seldom met.
     // The 怪水: 旋龟. Seldom met, as 鹿蜀 is.
-    'water' => ['rate' => 4, 'slots' => [[9, 'xuangui'], [10, 'xuangui'], [8, 'xuangui']]],
-    'wild' => ['rate' => 4, 'slots' => [[8, 'lushu'], [9, 'lushu'], [10, 'lushu'], [9, 'lushu'], [11, 'lushu'], [10, 'lushu'], [11, 'lushu']]],
+    'water' => ['rate' => 4, 'slots' => [[3, 'xuangui'], [4, 'xuangui'], [2, 'xuangui']]],
+    'wild' => ['rate' => 4, 'slots' => [[3, 'lushu'], [4, 'lushu'], [5, 'lushu'], [3, 'lushu'], [6, 'lushu'], [5, 'lushu'], [5, 'lushu']]],
 ];

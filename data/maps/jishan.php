@@ -6,6 +6,7 @@ declare(strict_types=1);
 return [
     'id' => 'jishan',
     'name' => '基山',
+    'range' => 1,
     'rows' => [
         'TTTTTTTTTTTTTTTTTTTT',
         'TTT,,,TTTT,,,,TTT,,T',
@@ -29,5 +30,5 @@ return [
         ]],
     ],
     // The tall grass: 猼訑 and 尚付, the two beasts the classic gives this mountain.
-    'wild' => ['rate' => 10, 'slots' => [[14, 'boyi'], [14, 'changfu'], [15, 'boyi'], [16, 'changfu'], [16, 'boyi'], [17, 'changfu'], [17, 'boyi']]],
+    'wild' => ['rate' => 10, 'slots' => [[3, 'boyi'], [4, 'changfu'], [5, 'boyi'], [3, 'changfu'], [6, 'boyi'], [5, 'changfu'], [5, 'boyi']]],
 ];

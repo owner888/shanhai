@@ -6,6 +6,7 @@ declare(strict_types=1);
 return [
     'id' => 'dishan',
     'name' => '柢山',
+    'range' => 1,
     'rows' => [
         '^^^^^^^^^^^^^^^^^^^^',
         '^~~~--::::--~~~~--^^',
@@ -29,5 +30,5 @@ return [
         ]],
     ],
     // The scree: 鯥, the one beast the classic gives this mountain.
-    'wild' => ['rate' => 10, 'slots' => [[10, 'lu'], [11, 'lu'], [12, 'lu'], [11, 'lu'], [13, 'lu'], [12, 'lu'], [13, 'lu']]],
+    'wild' => ['rate' => 10, 'slots' => [[4, 'lu'], [4, 'lu'], [5, 'lu'], [5, 'lu'], [4, 'lu'], [5, 'lu'], [5, 'lu']]],
 ];

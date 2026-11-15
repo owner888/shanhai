@@ -7,6 +7,7 @@ declare(strict_types=1);
 return [
     'id' => 'yuanyi',
     'name' => '猨翼之山 · 山脚',
+    'range' => 1,
     'rows' => [
         '^^^^^^^^^^^^^^^^^^^^',
         '^^^^^^^^^^^^^^^^^^^^',
@@ -31,5 +32,5 @@ return [
         ]],
     ],
     // The tall grass: 蝮虫, the one beast of this mountain the classic names.
-    'wild' => ['rate' => 10, 'slots' => [[6, 'fuchong'], [7, 'fuchong'], [8, 'fuchong'], [7, 'fuchong'], [9, 'fuchong'], [8, 'fuchong'], [9, 'fuchong']]],
+    'wild' => ['rate' => 10, 'slots' => [[3, 'fuchong'], [3, 'fuchong'], [4, 'fuchong'], [4, 'fuchong'], [3, 'fuchong'], [4, 'fuchong'], [4, 'fuchong']]],
 ];

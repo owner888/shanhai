@@ -109,6 +109,8 @@ docs/elements.md   the elements' table and how a beast's elements are settled
   or after a battle, rolls against the map's rate, then for one of its seven; each lives on the map's own mountain.
 - **A trial** (`World::trial`, the script's `trial`) is a battle against the beasts of the one who sets it, a god
   among them fighting as a beast does: not fled, none bound, experience at each fall and half as much again.
+- **A range is a gym** (docs/numbers.md 14): its wild beasts' levels and its god's trial are those of the reference's
+  gym of the same number and the areas before it; a map says its `range`, and a test holds the trial to the measure.
 - **Water carries** the player who has a beast of the water element that can fight (`World::float`): afloat, water is
   walked on, the map's `water` holds three wild beasts, and stepping onto land ends it. A game is not saved afloat.
 - **A saved game** is `World::state()`: the map and place, flags, bag, and each beast's `Fighter::state()`. What does not

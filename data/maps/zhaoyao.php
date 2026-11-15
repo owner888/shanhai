@@ -6,6 +6,7 @@ declare(strict_types=1);
 return [
     'id' => 'zhaoyao',
     'name' => '招摇之山 · 山麓',
+    'range' => 1,
     'rows' => [
         '~~~TTTTTTTTTTTTTTTTT',
         '~~~T......TT.....,,T',
@@ -49,7 +50,7 @@ return [
         ]],
     ],
     // The tall grass: 狌狌, the one beast the classic gives this mountain.
-    'wild' => ['rate' => 10, 'slots' => [[2, 'xingxing'], [3, 'xingxing'], [4, 'xingxing'], [3, 'xingxing'], [5, 'xingxing'], [4, 'xingxing'], [5, 'xingxing']]],
+    'wild' => ['rate' => 10, 'slots' => [[2, 'xingxing'], [2, 'xingxing'], [3, 'xingxing'], [3, 'xingxing'], [2, 'xingxing'], [3, 'xingxing'], [3, 'xingxing']]],
     'triggers' => [
         [3, 10, 'seenSea', [
             ['say', '海风从西海上吹来，带着桂花的香气。'],

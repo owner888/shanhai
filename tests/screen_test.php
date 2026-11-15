@@ -466,10 +466,10 @@ check(in_array('狌狌倒下了！', $lines, true) && !in_array('野生的狌狌
 same(['鹿蜀获得了51点经验！', '山神派出了鹊山之神！'], array_slice($lines, array_search('狌狌倒下了！', $lines, true) + 1, 2), 'when it falls its experience is given, half as much again, and their next comes out');
 same([51, null, 1], [$w->party[0]->exp - $before, $s->outcome, $s->battle->active[1]], 'the battle goes on against the next');
 same('queshan', $s->battle->fighter(1)->id, 'which is a god, fighting as a beast does');
-same(['bite', 'flame', 'cassia', 'sleepless'], array_column($s->battle->fighter(1)->moves, 'id'), 'with the moves its entry gives it');
+same(Data::gods()['queshan']['moves'], array_column($s->battle->fighter(1)->moves, 'id'), 'with the moves its entry gives it');
 // Their move: the one that would do most to the beast that is out.
 $theirs = $s->battle->fighter(1);
-$would = array_map(fn(int $i) => $s->battle->estimate($theirs, $w->party[0], $i), [0, 1, 2, 3]);
+$would = array_map(fn(int $i) => $s->battle->estimate($theirs, $w->party[0], $i), array_keys($theirs->moves));
 $best = array_search(max($would), $would, true);
 check(max($would) > 0 && count(array_keys($would, max($would), true)) === 1, 'one of the god\'s moves would do most to 鹿蜀: ' . implode(' ', array_map('intval', $would)));
 $uses = array_column($theirs->moves, 'pp');

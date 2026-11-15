@@ -359,6 +359,37 @@ foreach ($moves as $id => $m) {
         same([$m['only']], $learnedBy[$id] ?? [], "the move $id is learned by the beast it is only for");
     }
 }
+// A trial is as strong as the reference's gym leaders are against what comes before them (docs/numbers.md 14): the
+// one who sets it sends two to four; the last is the strongest, at 1.9 to 2.5 times the mean level of the wild
+// beasts of its range; the others are at its level or up to five under.
+foreach ($maps as $map) {
+    check(is_int($map->range) && $map->range >= 1, "{$map->id} says which range it is of");
+}
+$trials = 0;
+foreach ($scripts as $where => $script) {
+    foreach ($script as $cmd) {
+        if ($cmd[0] !== 'trial') {
+            continue;
+        }
+        $trials++;
+        [$aceId, $ace] = end($cmd[2]);
+        check(isset($gods[$aceId]), "$where: the trial's last is a god: $aceId");
+        $means = [];
+        foreach ($maps as $map) {
+            if ($map->range === ($gods[$aceId]['range'] ?? null) && $map->wild !== null) {
+                $means[] = array_sum(array_column($map->wild['slots'], 0)) / count($map->wild['slots']);
+            }
+        }
+        $mean = array_sum($means) / count($means);
+        check(count($cmd[2]) >= 2 && count($cmd[2]) <= 4, "$where: a trial is against two to four");
+        check($ace / $mean >= 1.9 && $ace / $mean <= 2.5, sprintf('%s: its last, at level %d, is 1.9 to 2.5 times the range\'s wild beasts\' mean of %.1f: %.2f', $where, $ace, $mean, $ace / $mean));
+        foreach (array_slice($cmd[2], 0, -1) as [$id, $level]) {
+            check($level <= $ace && $level >= $ace - 5, "$where: $id, at level $level, is at the last one's level or up to five under");
+        }
+    }
+}
+same(count($gods), $trials, 'each god sets one trial');
+
 // The gods (data/gods.php): what a beast's entry has to fight with, moves there are, and the classic's line.
 foreach ($gods as $id => $g) {
     check(!isset($beasts[$id]), "the god $id is not also a beast");

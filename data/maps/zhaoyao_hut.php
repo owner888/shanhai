@@ -5,6 +5,7 @@ declare(strict_types=1);
 return [
     'id' => 'zhaoyao_hut',
     'name' => '巫祝的小屋',
+    'range' => 1,
     'rows' => [
         'HHHHHHHH',
         'H______H',

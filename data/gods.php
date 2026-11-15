@@ -7,6 +7,7 @@
 //   looks    its shape, in the classic's words restated
 //   why      why these elements
 //   from     the classic's line
+// How strong a god and its trial are is measured from the reference's gym leaders (docs/numbers.md 14).
 declare(strict_types=1);
 
 return [
@@ -15,9 +16,9 @@ return [
         'looks' => '鸟身而龙首。',
         'elements' => ['fire', 'wood'],
         'why' => '南山经属火；鸟身，鸟在书里归木。',
-        'stats' => ['hp' => 85, 'atk' => 80, 'def' => 80, 'spa' => 105, 'spd' => 90, 'spe' => 95],
+        'stats' => ['hp' => 80, 'atk' => 75, 'def' => 75, 'spa' => 100, 'spd' => 85, 'spe' => 95],
         'exp' => 205, 'growth' => 'slow',
-        'moves' => ['bite', 'flame', 'cassia', 'sleepless'],
+        'moves' => ['spark', 'breeze', 'chant'],
         'from' => '凡鹊山之首，自招摇之山以至箕尾之山，凡十山，二千九百五十里。其神状皆鸟身而龙首。',
     ],
 ];

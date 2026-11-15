@@ -5,6 +5,7 @@ declare(strict_types=1);
 return [
     'id' => 'tangting',
     'name' => '堂庭之山',
+    'range' => 1,
     'rows' => [
         'TTTTTTTTTTTTTTTTTTTT',
         'T,,,,..TT....^^....T',
@@ -35,5 +36,5 @@ return [
         ]],
     ],
     // The tall grass: 白猿, the one beast the classic gives this mountain.
-    'wild' => ['rate' => 10, 'slots' => [[4, 'baiyuan'], [5, 'baiyuan'], [6, 'baiyuan'], [5, 'baiyuan'], [7, 'baiyuan'], [6, 'baiyuan'], [7, 'baiyuan']]],
+    'wild' => ['rate' => 10, 'slots' => [[3, 'baiyuan'], [3, 'baiyuan'], [4, 'baiyuan'], [4, 'baiyuan'], [3, 'baiyuan'], [4, 'baiyuan'], [4, 'baiyuan']]],
 ];

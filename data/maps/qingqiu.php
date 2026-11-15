@@ -7,6 +7,7 @@ declare(strict_types=1);
 return [
     'id' => 'qingqiu',
     'name' => '青丘之山',
+    'range' => 1,
     'rows' => [
         '^^^^^^^^^^^^^^^^^^^^',
         '^^.,,,,^^..TT.,,,,^^',
@@ -30,7 +31,7 @@ return [
         ]],
     ],
     // The 英水: 赤鱬.
-    'water' => ['rate' => 6, 'slots' => [[16, 'chiru'], [17, 'chiru'], [15, 'chiru']]],
+    'water' => ['rate' => 6, 'slots' => [[3, 'chiru'], [4, 'chiru'], [2, 'chiru']]],
     // The tall grass: 灌灌, and seldom the nine-tailed fox.
-    'wild' => ['rate' => 10, 'slots' => [[16, 'guanguan'], [17, 'guanguan'], [18, 'guanguan'], [17, 'guanguan'], [19, 'guanguan'], [20, 'jiuweihu'], [22, 'jiuweihu']]],
+    'wild' => ['rate' => 10, 'slots' => [[4, 'guanguan'], [4, 'guanguan'], [5, 'guanguan'], [5, 'guanguan'], [4, 'guanguan'], [6, 'jiuweihu'], [6, 'jiuweihu']]],
 ];
