@@ -79,7 +79,9 @@ same(Dir::Left, $w->npcs['shaman']->dir, 'turned to the player');
 $confirm($w);
 $confirm($w);
 $confirm($w);
+$confirm($w);
 check(isset($w->flags['metShaman']) && !$w->busy(), 'through her lines');
+same(['seal' => 5], $w->items, 'she gives seals');
 same([['lushu', 5]], array_map(fn($f) => [$f->id, $f->level], $w->party), 'she lends a beast');
 check($go($w, Dir::Down, 5, 6, 'zhaoyao'), 'the door inside leads back out, below the door');
 same(Dir::Down, $w->player->dir, 'facing away from it');
@@ -110,7 +112,7 @@ check($go($w, Dir::Right, 4, 10), 'steps off');
 check($go($w, Dir::Left, 3, 10) && !$w->busy(), 'it does not run a second time');
 
 // Wild beasts in tall grass (docs/numbers.md 13), with the rolls scripted.
-$book = ['beasts' => Data::beasts(), 'learnsets' => Data::learnsets(), 'moves' => Data::moves(), 'elements' => Data::elements()];
+$book = ['beasts' => Data::beasts(), 'learnsets' => Data::learnsets(), 'moves' => Data::moves(), 'elements' => Data::elements(), 'items' => Data::items()];
 $field = \Shanhai\World\Map::fromArray(['id' => 'field', 'name' => 'Field', 'rows' => [',,,,,,,,,,,,', '............'],
     'wild' => ['rate' => 10, 'slots' => [[2, 'xingxing'], [3, 'baiyuan'], [4, 'xingxing'], [3, 'xingxing'], [5, 'xingxing'], [4, 'xingxing'], [9, 'fuchong']]]]);
 $rng = \Shanhai\Battle\Rng::scripted([]);
@@ -137,8 +139,8 @@ $step();
 check($w->battle !== null && $rng->left() === 0, 'the next: 24 meets a beast; 200 is asked for again; 30 is the second of the seven');
 same(['baiyuan', 3], [$w->battle->battle->fighter(1)->id, $w->battle->battle->fighter(1)->level], 'which is the map\'s second, at its level');
 same([6, false], [$w->player->x, $w->player->moving], 'the player stands on the tile stepped onto');
-// the faster beast flees with no roll: the two lines, the menu's third entry, the last line
-foreach ([[null, true], [null, true], [Dir::Down, false], [null, false], [Dir::Down, false], [null, true], [null, true]] as [$dir, $confirm]) {
+// the faster beast flees with no roll: the two lines, the menu's last entry, the last line
+foreach ([[null, true], [null, true], [Dir::Down, false], [null, false], [Dir::Down, false], [null, false], [Dir::Down, false], [null, true], [null, true]] as [$dir, $confirm]) {
     $w->step(new Controls($dir, $confirm));
 }
 same([null, 'fled'], [$w->battle, $w->lastBattle], 'the battle is fled');
@@ -150,7 +152,7 @@ same([10, null], [$w->player->x, $w->battle], 'after a battle the next four step
 $rng->more([0, 99]);
 $step();
 same(['fuchong', 9], [$w->battle?->battle->fighter(1)->id, $w->battle?->battle->fighter(1)->level], 'then the fifth can: 99 is the last of the seven');
-foreach ([[null, true], [null, true], [Dir::Down, false], [null, false], [Dir::Down, false], [null, true], [null, true]] as [$dir, $confirm]) {
+foreach ([[null, true], [null, true], [Dir::Down, false], [null, false], [Dir::Down, false], [null, false], [Dir::Down, false], [null, true], [null, true]] as [$dir, $confirm]) {
     $w->step(new Controls($dir, $confirm));
 }
 $w->step(new Controls());

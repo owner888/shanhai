@@ -5,7 +5,7 @@ namespace Shanhai\Battle;
 
 use LogicException;
 use Shanhai\Cursor;
-use Shanhai\World\{Controls, PartyMenu};
+use Shanhai\World\{Controls, Menu, PartyMenu, World};
 
 /**
  * A battle with a wild beast as the player goes through it, with no drawing: step() takes an update's Controls.
@@ -13,23 +13,28 @@ use Shanhai\World\{Controls, PartyMenu};
  * side (which beast, its hp, its status) changes with the line that tells it, not when the turn is worked out.
  * The player is side 0, and chooses the next beast when one falls. The wild beast uses any move it has left.
  * When it falls, the player's beasts that fought it and still stand gain experience (docs/numbers.md 7.3), and one
- * that comes to a move knowing four already is asked which to forget.
+ * that comes to a move knowing four already is asked which to forget. A seal from the bag tries to bind the wild
+ * beast (docs/numbers.md 8): bound, it is $caught and the battle ends; else the turn is the wild beast's.
  */
 final class Screen
 {
     /** The menu between turns, in its order. */
-    public const MENU = ['fight' => '战斗', 'party' => '异兽', 'flee' => '逃跑'];
+    public const MENU = ['fight' => '战斗', 'party' => '异兽', 'bag' => '背包', 'flee' => '逃跑'];
+    /** What is said when a seal fails, by how many times it seemed to hold, from none to three. */
+    public const BROKE = ['啊，%s挣脱了！', '可惜，还以为结契了！', '啧，就差一点！', '太可惜了，只差最后一下！'];
     public const STATS = ['atk' => '攻击', 'def' => '防御', 'spa' => '特攻', 'spd' => '特防', 'spe' => '速度', 'acc' => '命中', 'eva' => '闪避'];
     public const STATUS = ['poison' => '毒', 'burn' => '灼', 'paralyze' => '麻', 'sleep' => '眠'];
 
-    /** text: a line is showing; menu, moves, party, forget: a list is, with $cursor on one of it. */
+    /** text: a line is showing; menu, moves, party, bag, forget: a list is, with $cursor on one of it. */
     public string $phase = 'text';
     public Cursor $cursor;
     public ?string $line = null;
     /** @var array{0: array{which: int, hp: int, status: ?string, level: int, exp: int}, 1: array} what is shown of each side: which beast, and its hp, status, level and experience */
     public array $shown;
-    /** won, lost or fled, once it is known; $done when its last line has been read. */
+    /** won, lost, fled or caught, once it is known; $done when its last line has been read. */
     public ?string $outcome = null;
+    /** The wild beast, once a seal has bound it. */
+    public ?Fighter $caught = null;
     public bool $done = false;
 
     /** @var list<array{0: string, 1: array}> the lines still to read, each with what is shown once it is */
@@ -42,9 +47,17 @@ final class Screen
     /** Whether the line asking which move to forget for the first of $toLearn has been said. */
     private bool $asked = false;
 
-    /** @param array<string, array> $moves data/moves.php */
-    public function __construct(public readonly Battle $battle, private readonly array $moves, private readonly Rng $rng)
+    /** @var array<string, int> the player's bag, which using a thing takes from */
+    private array $bag;
+
+    /**
+     * @param array<string, array> $moves data/moves.php
+     * @param array<string, array> $things data/items.php
+     * @param array<string, int> $bag the player's bag: item id => how many
+     */
+    public function __construct(public readonly Battle $battle, private readonly array $moves, private readonly Rng $rng, private readonly array $things, array &$bag)
     {
+        $this->bag = &$bag;
         $this->cursor = new Cursor();
         $this->shown = [$this->truth(0), $this->truth(1)];
         $this->fought = [$battle->active[0] => true];
@@ -76,6 +89,7 @@ final class Screen
                 'menu' => $this->chosen(array_keys(self::MENU)[$this->cursor->at]),
                 'moves' => $this->move($this->cursor->at),
                 'party' => $this->send($this->cursor->at),
+                'bag' => $this->use(array_keys($this->bag)[$this->cursor->at]),
                 'forget' => $this->forget($this->cursor->at),
             };
         }
@@ -90,6 +104,7 @@ final class Screen
             'menu' => array_values(self::MENU),
             'moves' => array_map(fn(array $m) => sprintf('%s  %d/%d', $this->moves[$m['id']]['name'], $m['pp'], $this->moves[$m['id']]['pp']), $me->moves),
             'party' => array_map(PartyMenu::line(...), $this->battle->parties[0]),
+            'bag' => Menu::bag($this->bag, $this->things),
             'forget' => [
                 ...array_map(fn(array $m) => $this->moves[$m['id']]['name'], $this->battle->parties[0][$this->toLearn[0][0]]->moves),
                 '不学' . $this->moves[$this->toLearn[0][1]]['name'],
@@ -106,6 +121,13 @@ final class Screen
     {
         if ($what === 'party') {
             $this->open('party');
+        } elseif ($what === 'bag') {
+            if ($this->bag === []) {
+                $this->say('背包里什么也没有。');
+                $this->next();
+            } else {
+                $this->open('bag');
+            }
         } elseif ($what === 'flee') {
             $this->flee();
         } elseif ($this->battle->usable(0) === []) {
@@ -209,6 +231,44 @@ final class Screen
             $stages[$side] = $this->battle->fighter($side)->stages;
         }
         return [$hp, $status, $stages];
+    }
+
+    /** A thing of the bag is used: a seal is thrown; another is of no use here. */
+    private function use(string $id): void
+    {
+        $thing = $this->things[$id];
+        if (($thing['use'] ?? null) !== 'catch') {
+            $this->say($thing['name'] . '在这里用不上。');
+            $this->next();
+            return;
+        }
+        if (count($this->battle->parties[0]) >= World::PARTY) {
+            $this->say('队伍已经满了，没法再结契。');
+            $this->next();
+            return;
+        }
+        if (--$this->bag[$id] === 0) {
+            unset($this->bag[$id]);
+        }
+        $foe = $this->battle->fighter(1);
+        $name = $foe->species['name'];
+        $this->say('使用了' . $thing['name'] . '！');
+        // docs/numbers.md 8: a byte not over what the catch needs binds it.
+        $needs = Formulas::catchValue($foe->species['catch'], $foe->maxHp, $foe->hp, $foe->status);
+        if ($this->rng->byte() <= $needs) {
+            [$this->outcome, $this->caught] = ['caught', $foe];
+            $this->say('结契成功！' . $name . '成了你的同伴！');
+            $this->next();
+            return;
+        }
+        // It fails: the seal seems to hold up to three times, each a byte under the limit, before the beast is free and takes its turn.
+        $held = 0;
+        $limit = Formulas::wobbleLimit($needs);
+        while ($held < 3 && $this->rng->byte() < $limit) {
+            $held++;
+        }
+        $this->say(sprintf(self::BROKE[$held], $name));
+        $this->turn(['pass', 0]);
     }
 
     /** docs/numbers.md 11.4. A try that fails is the player's turn: the wild beast still takes its own. */

@@ -134,6 +134,23 @@ final class Formulas
         return max(0, $exp); // 9: as meant, nothing below zero at level 1
     }
 
+    /** 8: by what a catch needs (catchValue), the first row it is not over: what a random byte must be under for the binding to hold once more before it breaks. */
+    public const WOBBLES = [
+        [1, 63], [2, 75], [3, 84], [4, 90], [5, 95], [7, 103], [10, 113], [15, 126], [20, 134], [30, 149], [40, 160], [50, 169],
+        [60, 177], [80, 191], [100, 201], [120, 211], [140, 220], [160, 227], [180, 234], [200, 240], [220, 246], [240, 251], [254, 253], [255, 255],
+    ];
+
+    /** 8: for a catch that failed, what a random byte must be under for each of the three times the binding seems to hold. */
+    public static function wobbleLimit(int $catchValue): int
+    {
+        foreach (self::WOBBLES as [$upTo, $limit]) {
+            if ($catchValue <= $upTo) {
+                return $limit;
+            }
+        }
+        throw new InvalidArgumentException("no catch value $catchValue");
+    }
+
     /** 13: of a hundred, the last number that falls to each of the seven wild beasts a map's grass holds: 30, 30, 20, 10, 5, 4 and 1 in a hundred. */
     public const WILD_SLOTS = [30, 60, 80, 90, 95, 99, 100];
     /** 13: the steps after entering a map, or a battle, of which only the last can meet a wild beast. */

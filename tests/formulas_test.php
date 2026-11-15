@@ -86,3 +86,6 @@ same([25, 5, 15], [Formulas::wildLimit(10), Formulas::wildLimit(2), Formulas::wi
 $slot = fn(int ...$bytes) => Formulas::wildSlot(\Shanhai\Battle\Rng::scripted($bytes));
 same([0, 0, 1, 1, 2, 3, 4, 5, 5, 6], array_map($slot, [0, 29, 30, 59, 79, 89, 94, 95, 98, 99]), 'a byte under a hundred, plus one, falls to a slot: 30, 30, 20, 10, 5, 4, 1');
 same(6, $slot(100, 255, 99), 'a byte of a hundred or more is asked for again');
+
+// 8: a seal that fails seems to hold while bytes are under the limit of the first row its catch value is not over.
+same([63, 63, 75, 191, 191, 201, 253, 255], array_map(Formulas::wobbleLimit(...), [0, 1, 2, 61, 80, 81, 254, 255]), 'the table\'s rows');

@@ -45,11 +45,12 @@ boot.php           loads MyPHP (myphp.json's framework, or MYPHP_HOME)
 src/load.php       the autoloader of Shanhai\ (src/)
 src/World/         the game outside battle, with no drawing: Dir, Tile (the characters maps are written in), Map,
                    Actor, Controls, World (step(): walking, turning, what blocks, warps, triggers, talking; the party,
-                   its battles, rest), PartyMenu (the party's screen: the beasts in order, two change places)
+                   its battles, rest), Menu (what the menu button opens: the party's screen, the bag), PartyMenu (the beasts in
+                   order, two change places)
 src/Script/Vm.php  the event script interpreter: say, flags, jumps, face, move, warp, give, battle, rest; check() as written
 src/Battle/        the battle, with no drawing: Rng (bytes, from a seed or a test's script), Formulas (docs/numbers.md as code,
                    a function a rule), Fighter, Battle (turn(): order, what stops a beast, a move, statuses, weather, switching),
-                   Screen (a wild battle as the player goes through it: lines, the menu, its lists, fleeing),
+                   Screen (a wild battle as the player goes through it: lines, the menu, its lists, the bag's seal, fleeing),
                    Simulator (battles with no player, to weigh the tables)
 src/Text.php       the dialog box's measures and line breaking
 src/Cursor.php     a list's cursor: moves on a press, not while held
@@ -61,6 +62,7 @@ src/Render/Arena.php  a battle's 3D scene: the ground, the two beasts' figures, 
 src/Play.php       MyPHP's Game: keys and gamepad into Controls, World::step, draws the Stage and the dialog box,
                    or a battle's Arena, boxes, line and lists
 data/game.php      where a new game starts, and where the player wakes after a battle is lost
+data/items.php     the things a bag holds: the seal that binds a wild beast
 data/elements.php  the five elements: what each overcomes and feeds, physical or special, its region
 data/tiers.php     the five tiers a beast's numbers are built in: bands measured from the reference's distribution
 data/moves.php     the moves: element (or none), power, accuracy, uses, effect, and what in the classic each comes from
@@ -79,6 +81,7 @@ tests/             php tests/run.php [name]: world, script, data, formulas (each
 docs/rules.md      the rule of the game
 docs/roadmap.md    the order of the work, and when each step is done
 docs/numbers.md    the numbers' baseline: each formula and constant, and where it was read
+docs/todo.md       what is not yet as the reference has it, to come back to; what was written before it was read; what is open
 docs/elements.md   the elements' table and how a beast's elements are settled
 ```
 
@@ -110,6 +113,8 @@ docs/elements.md   the elements' table and how a beast's elements are settled
 - A new map, NPC or script: add the data, run `php tests/run.php data`; it says what is wrong with it.
 - A new tile kind: `Tile::KINDS`, `Stage::GROUND` (the test asks for both), then how the Stage draws it.
 - A new beast: read its passage first (rule 4), then the entry.
+- Leaving something not as the reference has it (rule 2): a line in `docs/todo.md` then, saying what the reference
+  does and what we do; when it is done, the line is deleted.
 
 ## Roadmap
 

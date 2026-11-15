@@ -8,12 +8,12 @@ use Shanhai\{Data, Text};
 use Shanhai\Battle\{Battle, Fighter, Rng, Screen};
 use Shanhai\World\{Controls, Dir, Map, World};
 
-$book = ['beasts' => Data::beasts(), 'learnsets' => Data::learnsets(), 'moves' => Data::moves(), 'elements' => Data::elements(),
+$book = ['beasts' => Data::beasts(), 'learnsets' => Data::learnsets(), 'moves' => Data::moves(), 'elements' => Data::elements(), 'items' => Data::items(),
     'rest' => ['map' => 'hut', 'x' => 1, 'y' => 0, 'dir' => 'up', 'script' => [['say', 'awake']]]];
 $fighter = fn(string $id, int $level) => new Fighter($id, $book['beasts'][$id], $level, $book['learnsets'][$id], $book['moves']);
-$screen = function (array $mine, array $wild, Rng $rng) use ($book, $fighter): Screen {
+$screen = function (array $mine, array $wild, Rng $rng, array &$bag = []) use ($book, $fighter): Screen {
     $party = array_map(fn(array $x) => $fighter(...$x), $mine);
-    return new Screen(new Battle([$party, [$fighter(...$wild)]], $book['elements'], $book['moves'], $rng, [true, false]), $book['moves'], $rng);
+    return new Screen(new Battle([$party, [$fighter(...$wild)]], $book['elements'], $book['moves'], $rng, [true, false]), $book['moves'], $rng, $book['items'], $bag);
 };
 $confirm = new Controls(confirm: true);
 $cancel = new Controls(cancel: true);
@@ -29,7 +29,7 @@ same('野生的狌狌出现了！', $s->line, 'a line stays until confirm');
 $s->step($confirm);
 same('去吧，鹿蜀！', $s->line, 'then the player\'s beast is sent');
 $s->step($confirm);
-same(['menu', null, ['战斗', '异兽', '逃跑'], 0], [$s->phase, $s->line, $s->items(), $s->cursor->at], 'then the menu, on its first entry');
+same(['menu', null, ['战斗', '异兽', '背包', '逃跑'], 0], [$s->phase, $s->line, $s->items(), $s->cursor->at], 'then the menu, on its first entry');
 
 // The cursor moves when a direction is pressed, once, and stays inside the list.
 $s->step($down);
@@ -39,7 +39,11 @@ $s->step($none);
 $s->step($down);
 $s->step($none);
 $s->step($down);
-same(2, $s->cursor->at, 'the cursor stops at the last entry');
+$s->step($none);
+$s->step($down);
+same(3, $s->cursor->at, 'the cursor stops at the last entry');
+$s->step($none);
+$s->step($up);
 $s->step($none);
 $s->step($up);
 same(1, $s->cursor->at, 'and goes back up');
@@ -92,7 +96,7 @@ same(1, $s->shown[0]['which'], 'the line shows the beast sent');
 
 // Fleeing (docs/numbers.md 11.4): the faster always gets away.
 $s = $screen([['xingxing', 20]], ['lu', 5], Rng::scripted([]));
-foreach ([$confirm, $confirm, $down, $none, $down, $confirm] as $c) {
+foreach ([$confirm, $confirm, $down, $none, $down, $none, $down, $confirm] as $c) {
     $s->step($c);
 }
 same(['fled', '顺利逃走了！', false], [$s->outcome, $s->line, $s->done], 'the faster beast flees with no roll');
@@ -107,7 +111,7 @@ $limit = intdiv($slow * 32, intdiv($fast, 4));
 check($limit < 225, "the limit of the first try leaves room to fail: $limit");
 $rng = Rng::scripted([$limit + 1, 0]); // the flee fails; the wild beast uses its first move, 善走, which asks for no roll
 $s = $screen([['lu', 5]], ['xingxing', 20], $rng);
-foreach ([$confirm, $confirm, $down, $none, $down, $confirm] as $c) {
+foreach ([$confirm, $confirm, $down, $none, $down, $none, $down, $confirm] as $c) {
     $s->step($c);
 }
 same([null, '逃不掉！', 1], [$s->outcome, $s->line, $s->battle->turns], 'a roll over the limit fails, and the turn is the wild beast\'s');
@@ -119,7 +123,7 @@ same(0, $rng->left(), 'every roll was asked for');
 $s->step($confirm);
 $second = intdiv($slow * 32, intdiv($s->battle->fighter(1)->stat('spe'), 4)) + 30; // against the speed it has now, two stages up
 $rng->more([$second]);
-foreach ([$down, $none, $down, $confirm] as $c) {
+foreach ([$down, $none, $down, $none, $down, $confirm] as $c) {
     $s->step($c);
 }
 same('fled', $s->outcome, 'the second try adds 30 to the limit, and a roll that is not over it flees');
@@ -138,7 +142,8 @@ for ($seed = 1; $seed <= 150; $seed++) {
     $pick = Rng::seeded($seed * 7919);
     $any = fn(int $n) => $pick->byte() % $n;
     $mine = [[$ids[$any(count($ids))], 30], [$ids[$any(count($ids))], 30]];
-    $s = $screen($mine, [$ids[$any(count($ids))], 30], Rng::seeded($seed));
+    $bag = ['seal' => 2];
+    $s = $screen($mine, [$ids[$any(count($ids))], 30], Rng::seeded($seed), $bag);
     for ($steps = 0; !$s->done && $steps < 4000; $steps++) {
         if ($s->phase === 'text') {
             $lines[$s->line] = true;
@@ -153,7 +158,7 @@ for ($seed = 1; $seed <= 150; $seed++) {
     $outcomes[$s->outcome] = true;
 }
 ksort($outcomes);
-same(['fled', 'lost', 'won'], array_keys($outcomes), 'they end each way');
+same(['caught', 'fled', 'lost', 'won'], array_keys($outcomes), 'they end each way');
 foreach (array_keys($lines) as $line) {
     check(count(Text::wrap($line, Text::columns())) <= Text::LINES, "the line fits the box: $line");
 }
@@ -229,38 +234,115 @@ $w->fight('xingxing', 4);
 same(1, $w->battle->battle->active[0], 'a battle begins with the first beast that can fight');
 check(throws(fn() => (new World($maps, 'field', 0, 0, Dir::Down))->join('xingxing', 4)), 'a world made without the tables has no beasts');
 
-// The party's screen: the menu button opens it; two picked change places; cancel lets go, then closes.
+// The menu the menu button opens: the party's screen and the bag. In the party's, two picked change places.
 $w = new World($maps, 'field', 0, 0, Dir::Down, $book, Rng::seeded(3));
 $menu = new Controls(menu: true);
 $w->step($menu);
-same(null, $w->menu, 'with no beast there is no party\'s screen');
+same(['背包'], $w->menu->items($w->party, $w->items, $book['items']), 'with no beast the menu has only the bag');
+$w->step($confirm);
+same(['bag', ['（空）']], [$w->menu->phase, $w->menu->items($w->party, $w->items, $book['items'])], 'which, empty, says so');
+$w->step($cancel);
+$w->step($cancel);
+same(null, $w->menu, 'cancel goes back, and from the first list closes the menu');
 $w->join('lushu', 5);
 $w->join('xuangui', 7);
 $w->join('guanguan', 9);
 $w->party[1]->status = 'poison';
+$w->run([['give', 'seal', 3]]);
 $w->step($menu);
-check($w->menu !== null, 'the menu button opens it');
-same(['鹿蜀  Lv5  ' . $w->party[0]->hp . '/' . $w->party[0]->maxHp, '旋龟  Lv7  ' . $w->party[1]->hp . '/' . $w->party[1]->maxHp . '  毒'], array_slice($w->menu->items($w->party), 0, 2), 'a line a beast: name, level, hp, status');
+same(['异兽', '背包'], $w->menu->items($w->party, $w->items, $book['items']), 'with a party, the party\'s screen comes first');
 $w->step(new Controls(Dir::Right));
-same([0, false], [$w->player->x, $w->player->moving], 'the player does not walk while it is open');
+same([0, false], [$w->player->x, $w->player->moving], 'the player does not walk while the menu is open');
 $w->step($none);
+$w->step($down);
 $w->step($confirm);
-check(str_starts_with($w->menu->items($w->party)[0], '◆ '), 'confirm picks a beast, which is marked');
+same(['契印  ×3'], $w->menu->items($w->party, $w->items, $book['items']), 'the bag: a line a kind of thing, with how many');
+$w->step($cancel);
+$w->step($confirm);
+same('party', $w->menu->phase, 'the first entry is the party\'s screen');
+same(['鹿蜀  Lv5  ' . $w->party[0]->hp . '/' . $w->party[0]->maxHp, '旋龟  Lv7  ' . $w->party[1]->hp . '/' . $w->party[1]->maxHp . '  毒'], array_slice($w->menu->items($w->party, $w->items, $book['items']), 0, 2), 'a line a beast: name, level, hp, status');
+$w->step($confirm);
+check(str_starts_with($w->menu->items($w->party, $w->items, $book['items'])[0], '◆ '), 'confirm picks a beast, which is marked');
 $w->step($down);
 $w->step($none);
 $w->step($down);
+same(2, $w->menu->at(), 'the cursor is the party\'s screen\'s');
 $w->step($confirm);
 same(['guanguan', 'xuangui', 'lushu'], array_map(fn($f) => $f->id, $w->party), 'confirm on another changes their places');
-same(null, $w->menu->picked, 'and none is picked');
 $w->step($confirm);
 $w->step($cancel);
-check($w->menu !== null && $w->menu->picked === null, 'cancel lets go of the one picked');
+check($w->menu->phase === 'party' && $w->menu->party->picked === null, 'cancel lets go of the one picked');
 $w->step($cancel);
-same(null, $w->menu, 'and then closes the screen');
+same('top', $w->menu->phase, 'then goes back to the first list');
+$w->step($confirm);
 $w->step($menu);
-$w->step($none);
-$w->step($menu);
-same(null, $w->menu, 'the menu button closes it too');
+same(null, $w->menu, 'the menu button closes the menu from anywhere');
+for ($i = 0; $i < 3; $i++) {
+    $w->join('xingxing', 2);
+}
+check(throws(fn() => $w->join('xingxing', 2)), 'a party holds six');
+
+// A seal (docs/numbers.md 8). 狌狌 (catch rate 190) at level 4, whole: 17 hp; 3M = 51, 2H = 34; 190 × 17 ÷ 51 = 63.
+$open = [$confirm, $confirm, $down, $none, $down, $confirm]; // the two lines; the menu's third entry
+$bag = [];
+$s = $screen([['lushu', 5]], ['xingxing', 4], Rng::scripted([]), $bag);
+same(17, $s->battle->fighter(1)->maxHp, '狌狌 at level 4 has 17 hp');
+foreach ($open as $c) {
+    $s->step($c);
+}
+same(['text', '背包里什么也没有。'], [$s->phase, $s->line], 'an empty bag says so');
+$bag = ['jade' => 1, 'seal' => 2];
+$things = $book['items'] + ['jade' => ['name' => '玉']];
+$rng = Rng::scripted([63]);
+$s = new Screen(new Battle([[$fighter('lushu', 5)], [$fighter('xingxing', 4)]], $book['elements'], $book['moves'], $rng, [true, false]), $book['moves'], $rng, $things, $bag);
+foreach ($open as $c) {
+    $s->step($c);
+}
+same(['bag', ['玉  ×1', '契印  ×2']], [$s->phase, $s->items()], 'the bag\'s list');
+$s->step($confirm);
+same(['玉在这里用不上。', ['jade' => 1, 'seal' => 2], 0], [$s->line, $bag, $s->battle->turns], 'a thing of no use in battle is not used');
+foreach ([$confirm, $none, $down, $none, $down, $confirm, $none, $down, $confirm] as $c) { // back to the menu; the bag; its second
+    $s->step($c);
+}
+same(['使用了契印！', ['jade' => 1, 'seal' => 1]], [$s->line, $bag], 'a seal is used: one fewer in the bag');
+$s->step($confirm);
+same(['结契成功！狌狌成了你的同伴！', 'caught', 'xingxing', 0, 0], [$s->line, $s->outcome, $s->caught?->id, $s->battle->turns, $rng->left()], 'a byte of 63, not over the 63 it needs, binds it; no turn is taken');
+$s->step($confirm);
+check($s->done, 'and the battle is done');
+
+// A byte over fails. The seal seems to hold while bytes are under the limit, 191 for a catch that needs 63, three times at most.
+foreach ([[[64, 191], 0, '啊，狌狌挣脱了！'], [[64, 190, 191], 1, '可惜，还以为结契了！'], [[64, 0, 0, 191], 2, '啧，就差一点！'], [[64, 0, 0, 0], 3, '太可惜了，只差最后一下！']] as [$rolls, $held, $line]) {
+    $bag = ['seal' => 1];
+    $rng = Rng::scripted([...$rolls, 0]); // then the wild beast's move: its first
+    $s = $screen([['lushu', 30]], ['xingxing', 4], $rng, $bag);
+    $wild = $s->battle->fighter(1);
+    $wild->moves = [['id' => 'swift', 'pp' => 1]]; // a move that asks for no roll, at the first place
+    foreach ($open as $c) {
+        $s->step($c);
+    }
+    $s->step($confirm);
+    $s->step($confirm);
+    same([$line, [], null, 1, 0], [$s->line, $bag, $s->outcome, $s->battle->turns, $rng->left()], "it seems to hold $held times, then breaks: the last seal is gone, and the turn is the wild beast's");
+}
+
+// Bound, the wild beast joins the party as the battle left it; a full party cannot bind.
+$w = new World($maps, 'field', 0, 0, Dir::Down, $book, Rng::scripted([0]));
+$w->join('lushu', 30);
+$w->run([['give', 'seal', 1], ['battle', 'xingxing', 4], ['say', 'after']]);
+$w->battle->battle->fighter(1)->hp = 7;
+foreach ([...$open, $confirm, $confirm, $confirm] as $c) {
+    $w->step($c);
+}
+same([null, 'caught', ['lushu', 'xingxing'], 7, [], 'after'], [$w->battle, $w->lastBattle, array_map(fn($f) => $f->id, $w->party), $w->party[1]->hp, $w->items, $w->dialog], 'it joins the party with the hp it had, the seal is spent, and the script goes on');
+$w->step($confirm);
+for ($i = 0; $i < 4; $i++) {
+    $w->join('xingxing', 2);
+}
+$w->run([['give', 'seal', 1], ['battle', 'xingxing', 4]]);
+foreach ([...$open, $confirm] as $c) {
+    $w->step($c);
+}
+same(['队伍已经满了，没法再结契。', ['seal' => 1]], [$w->battle->line, $w->items], 'with six in the party a seal is not used');
 
 // Experience (docs/numbers.md 7.1, 7.3). 鹿蜀 at level 5 has 135; a 狌狌 of level 4 (base experience 81) gives 81 × 4 ÷ 7 = 46,
 // which makes 181: level 6 begins at 179. Its hp at most goes from 23 to 26, and at level 6 it learns 歌谣.

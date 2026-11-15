@@ -19,6 +19,8 @@ final class World
     public const WALK_STEPS = 16;
     /** Updates a direction is held, facing another way, before the player steps: a tap only turns. */
     public const TURN_STEPS = 4;
+    /** The most beasts a party holds. */
+    public const PARTY = 6;
 
     public Map $map;
     public Actor $player;
@@ -30,8 +32,8 @@ final class World
     public array $items = [];
     /** @var list<Fighter> the beasts with the player, as their battles have left them; the first begins a battle */
     public array $party = [];
-    /** The party's screen, open; null when it is not. */
-    public ?PartyMenu $menu = null;
+    /** The menu the menu button opens; null when it is not open. */
+    public ?Menu $menu = null;
     /** The line the dialog box shows, which confirm closes; null when there is none. */
     public ?string $dialog = null;
     /** The battle going on, which a script's 'battle' began; null when there is none. */
@@ -48,7 +50,7 @@ final class World
 
     /**
      * @param array<string, Map> $maps by id
-     * @param array{beasts: array, learnsets: array, moves: array, elements: array, rest: array}|null $book data/'s tables, which
+     * @param array{beasts: array, learnsets: array, moves: array, elements: array, items: array, rest: array}|null $book data/'s tables, which
      *        beasts and battles need, and where the player wakes after losing (data/game.php's rest)
      * @param ?Rng $rng the battles' dice
      */
@@ -79,6 +81,9 @@ final class World
                 return;
             }
             $this->lastBattle = $this->battle->outcome;
+            if ($this->battle->caught !== null) {
+                $this->party[] = $this->battle->caught;
+            }
             $this->battle = null;
             $this->wildWait = Formulas::WILD_WAIT;
             foreach ($this->party as $f) {
@@ -91,7 +96,7 @@ final class World
             $c = new Controls(); // the press that closed the battle's last line does nothing else
         }
         if ($this->menu !== null) {
-            $this->menu->step($c, $this->party);
+            $this->menu->step($c, $this->party, $this->items);
             if ($this->menu->done) {
                 $this->menu = null;
             }
@@ -106,8 +111,8 @@ final class World
                 $this->vm = null;
             }
         } elseif (!$this->player->moving) {
-            if ($c->menu && $this->party !== []) {
-                $this->menu = new PartyMenu();
+            if ($c->menu) {
+                $this->menu = new Menu();
             } elseif ($c->confirm) {
                 $this->interact();
             } elseif ($c->dir === null) {
@@ -182,6 +187,9 @@ final class World
     /** A beast of $level joins the party. */
     public function join(string $beast, int $level): void
     {
+        if (count($this->party) >= self::PARTY) {
+            throw new LogicException('the party is full');
+        }
         $this->party[] = $this->beast($beast, $level);
     }
 
@@ -204,7 +212,7 @@ final class World
         }
         $wild = $this->beast($beast, $level);
         $b = $this->book;
-        $this->battle = new Screen(new Battle([$this->party, [$wild]], $b['elements'], $b['moves'], $this->rng, [true, false]), $b['moves'], $this->rng);
+        $this->battle = new Screen(new Battle([$this->party, [$wild]], $b['elements'], $b['moves'], $this->rng, [true, false]), $b['moves'], $this->rng, $b['items'], $this->items);
     }
 
     /** The battle was lost: the script that began it is dropped, and the player wakes where data/game.php rests them, the party whole. */

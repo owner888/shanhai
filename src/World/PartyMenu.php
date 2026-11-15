@@ -9,7 +9,7 @@ use Shanhai\Cursor;
 /**
  * The party's screen outside battle, with no drawing: the beasts in their order, each with its level, hp and status.
  * Confirm on one, then on another, and the two change places: the first of the party is the one a battle begins with.
- * Cancel lets go of the one picked, or closes the screen.
+ * Cancel lets go of the one picked, or leaves the screen.
  */
 final class PartyMenu
 {
@@ -29,8 +29,8 @@ final class PartyMenu
         if ($this->cursor->move($c, count($party))) {
             return;
         }
-        if ($c->cancel || $c->menu) {
-            if ($this->picked === null || $c->menu) {
+        if ($c->cancel) {
+            if ($this->picked === null) {
                 $this->done = true;
             }
             $this->picked = null;

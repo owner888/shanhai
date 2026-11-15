@@ -42,7 +42,8 @@ final class Play extends Game
     private ?int $walkKey = null;
     private State $lastPad;
 
-    public function __construct(public readonly World $world)
+    /** @param array<string, array> $items data/items.php, for the names a bag shows */
+    public function __construct(public readonly World $world, private readonly array $items)
     {
         $this->viewport = new Canvas(self::VIEW_WIDTH, self::VIEW_HEIGHT);
         $this->stage = new Stage($world);
@@ -141,7 +142,8 @@ final class Play extends Game
         $p->text($r[0] + 28, $r[1] + 24, $name, 15, 0xffffff);
 
         if ($this->world->menu !== null) {
-            $this->choices($p, $r, $this->world->menu->items($this->world->party), $this->world->menu->cursor->at, 420.0);
+            $menu = $this->world->menu;
+            $this->choices($p, $r, $menu->items($this->world->party, $this->world->items, $this->items), $menu->at(), $menu->phase === 'top' ? 200.0 : 420.0);
         }
         if ($this->world->dialog !== null) {
             $this->dialog($p, $r, $this->world->dialog);

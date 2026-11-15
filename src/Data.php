@@ -46,6 +46,12 @@ final class Data
         return require self::DIR . '/learnsets.php';
     }
 
+    /** @return array<string, array> item id => its entry */
+    public static function items(): array
+    {
+        return require self::DIR . '/items.php';
+    }
+
     /** @return array<string, array> beast id => its entry */
     public static function beasts(): array
     {
@@ -57,7 +63,7 @@ final class Data
     {
         $game = require self::DIR . '/game.php';
         $start = $game['start'];
-        $book = ['beasts' => self::beasts(), 'learnsets' => self::learnsets(), 'moves' => self::moves(), 'elements' => self::elements(), 'rest' => $game['rest']];
+        $book = ['beasts' => self::beasts(), 'learnsets' => self::learnsets(), 'moves' => self::moves(), 'elements' => self::elements(), 'items' => self::items(), 'rest' => $game['rest']];
         return new World(self::maps(), $start['map'], $start['x'], $start['y'], Dir::from($start['dir']), $book, Rng::seeded($seed));
     }
 }

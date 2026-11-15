@@ -14,6 +14,11 @@ $maps = Data::maps();
 $beasts = Data::beasts();
 $elements = Data::elements();
 $tiers = Data::tiers();
+$items = Data::items();
+foreach ($items as $id => $item) {
+    check(($item['name'] ?? '') !== '' && ($item['from'] ?? '') !== '', "the thing $id has a name and where it comes from");
+    check(array_diff(array_keys($item), ['name', 'use', 'from']) === [] && in_array($item['use'] ?? null, [null, 'catch'], true), "the thing $id has only the fields there are, and a use there is");
+}
 
 $scripts = [];
 foreach ($maps as $map) {
@@ -66,6 +71,9 @@ foreach ($scripts as $where => $script) {
         }
         if ($cmd[0] === 'warp') {
             check(isset($maps[$cmd[1]]) && $maps[$cmd[1]]->walkable($cmd[2], $cmd[3]), "$where: its warp leads to a walkable tile of a map");
+        }
+        if ($cmd[0] === 'give') {
+            check(isset($items[$cmd[1]]) && is_int($cmd[2]) && $cmd[2] >= 1, "$where: it gives a thing there is, one or more: {$cmd[1]}");
         }
         if ($cmd[0] === 'giveBeast' || $cmd[0] === 'battle') {
             check(isset($beasts[$cmd[1]]), "$where: its beast is one there is: {$cmd[1]}");
