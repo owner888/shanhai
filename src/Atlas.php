@@ -154,7 +154,7 @@ final class Atlas
     {
         $to = [];
         foreach ($m->exits as $way => [$id]) {
-            $to[] = ['left' => '西', 'right' => '东', 'up' => '北', 'down' => '南'][$way] . '：' . $maps[$id]->name;
+            $to[] = ((Data::ranges()[$m->range]['compass'] ?? []) + ['left' => '西', 'right' => '东', 'up' => '北', 'down' => '南'])[$way] . '：' . $maps[$id]->name;
         }
         foreach ($m->warps as $w) {
             $to[] = '门：' . $maps[$w[2]]->name;

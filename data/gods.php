@@ -81,4 +81,14 @@ return [
         'moves' => ['lowing', 'spur', 'fearless', 'tusk'],
         'from' => '凡西次四经，自阴山以下，至于崦嵫之山，凡十九山，三千六百八十里。其神祠礼，皆用一白鸡祈，糈以稻米，白菅为席。',
     ],
+    'beishan' => [
+        'name' => '北山经之首之神', 'range' => 8,
+        'looks' => '人面蛇身。',
+        'elements' => ['water', 'earth'],
+        'why' => '北山经属水；人面，人在五虫里是倮虫，倮虫属土。',
+        'stats' => ['hp' => 95, 'atk' => 80, 'def' => 95, 'spa' => 100, 'spd' => 95, 'spe' => 75],
+        'exp' => 205, 'growth' => 'slow',
+        'moves' => ['dust', 'billow', 'landslide', 'bite'],
+        'from' => '凡北山经之首，自单狐之山至于隄山，凡二十五山，五千四百九十里，其神皆人面蛇身。',
+    ],
 ];

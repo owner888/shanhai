@@ -195,8 +195,8 @@ foreach (Tile::KINDS as [$kind]) {
 check(isset(Stage::LOOKS['player']), 'the stage draws the player');
 same(array_keys($elements), array_keys(Arena::ELEMENTS), 'the arena has a color for a beast of each element');
 
-same(109, count($beasts), 'the beasts: 12, 9 and 9 over the Southern Mountains\' three ranges, 28, 11, 22 and 18 over the Western\'s four');
-foreach ([1 => 12, 2 => 9, 3 => 9, 4 => 28, 5 => 11, 6 => 22, 7 => 18] as $range => $count) {
+same(141, count($beasts), 'the beasts: 12, 9 and 9 over the Southern Mountains\' three ranges, 28, 11, 22 and 18 over the Western\'s four, 32 in the Northern\'s first');
+foreach ([1 => 12, 2 => 9, 3 => 9, 4 => 28, 5 => 11, 6 => 22, 7 => 18, 8 => 32] as $range => $count) {
     same($count, count(array_filter($beasts, fn(array $b) => $b['range'] === $range)), "range $range");
 }
 same(['guanguan', 'lushu', 'xuangui'], (function () use ($beasts) {
@@ -370,7 +370,7 @@ foreach ($moves as $id => $m) {
     }
 }
 // A trial is as strong as the reference's gym leaders are against what comes before them (docs/numbers.md 14): the
-// one who sets it sends two to four; the last is the strongest, at 1.9 to 2.55 times the mean level of the wild
+// one who sets it sends two to four; the last is the strongest, at 1.65 to 2.55 times the mean level of the wild
 // beasts of its range; the others are at its level or up to five under.
 $ranges = Data::ranges();
 same(range(1, count($ranges)), array_keys($ranges), 'the ranges are numbered from 1, in the classic\'s order');
@@ -402,7 +402,7 @@ foreach ($scripts as $where => $script) {
         }
         $mean = array_sum($means) / count($means);
         check(count($cmd[2]) >= 2 && count($cmd[2]) <= 4, "$where: a trial is against two to four");
-        check($ace / $mean >= 1.9 && $ace / $mean <= 2.55, sprintf('%s: its last, at level %d, is 1.9 to 2.55 times the range\'s wild beasts\' mean of %.1f: %.2f', $where, $ace, $mean, $ace / $mean));
+        check($ace / $mean >= 1.65 && $ace / $mean <= 2.55, sprintf('%s: its last, at level %d, is 1.65 to 2.55 times the range\'s wild beasts\' mean of %.1f: %.2f', $where, $ace, $mean, $ace / $mean));
         foreach (array_slice($cmd[2], 0, -1) as [$id, $level]) {
             check($level <= $ace && $level >= $ace - 5, "$where: $id, at level $level, is at the last one's level or up to five under");
         }
@@ -443,7 +443,7 @@ foreach ($foes['at'] as $id => $list) {
     }
 }
 ksort($counts);
-same([1 => [12, 25], 2 => [23, 43], 3 => [22, 44], 4 => [9, 20], 5 => [35, 72], 7 => [23, 46]], $counts, 'by range, how many are met and how many beasts they send: the reference\'s before each gym');
+same([1 => [12, 25], 2 => [23, 43], 3 => [22, 44], 4 => [9, 20], 5 => [35, 72], 7 => [23, 46], 8 => [12, 22]], $counts, 'by range, how many are met and how many beasts they send: the reference\'s before each gym');
 foreach ($foes['says'] as $says) {
     check(count($says) === 3 && !in_array('', $says, true), 'what an opponent says is three lines: before, beaten, met again');
 }

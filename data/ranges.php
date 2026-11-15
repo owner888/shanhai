@@ -4,6 +4,8 @@
 //   name   as the classic names it
 //   gym    which of the reference's gyms its levels and its trial are measured from (docs/numbers.md 14)
 //   toward which way the classic walks it, mountain after mountain: its first map is the one with no way back
+//   compass what the maps' left and right are called, when the classic does not walk the range west or east:
+//          the Northern Mountains go north, which the maps draw to the right
 declare(strict_types=1);
 
 return [
@@ -14,4 +16,5 @@ return [
     5 => ['book' => '西山经', 'name' => '西次二经', 'gym' => 5, 'toward' => 'left'],
     6 => ['book' => '西山经', 'name' => '西次三经', 'gym' => 6, 'toward' => 'left'],
     7 => ['book' => '西山经', 'name' => '西次四经', 'gym' => 7, 'toward' => 'left'],
+    8 => ['book' => '北山经', 'name' => '北山经之首', 'gym' => 8, 'toward' => 'right', 'compass' => ['left' => '南', 'right' => '北']],
 ];

@@ -127,7 +127,7 @@ docs/elements.md   the elements' table and how a beast's elements are settled
 - **Those on the road** (`data/opponents.php`, docs/numbers.md 15) stand and watch (`Map::$watch`): a player who comes
   to stand straight ahead of one within their sight is stopped and fought, by a trial's rules, until that one is beaten.
 - **A range is a gym** (docs/numbers.md 14): its wild beasts' levels and its god's trial are those of the reference's
-  gym of the same number and the areas before it; a map says its `range`, and a test holds the trial to the measure.
+  gym of the same number and the areas before it (past the sixteenth, ours, going on as the sixteen go); a map says its `range`, and a test holds the trial to the measure.
 - **Water carries** the player who has a beast of the water element that can fight, once the fourth range's trial is
   passed (`World::float`, `data/game.php`'s `float`): afloat, water is
   walked on, the map's `water` holds three wild beasts, and stepping onto land ends it. A game is not saved afloat.
@@ -158,4 +158,4 @@ docs/elements.md   the elements' table and how a beast's elements are settled
 - **Phase 1, battle** (M2): the engine in PHP alone with tests → a simulator that checks the tables → its scene and menus.
 - **Phase 2, the loop** (M3): wild beasts, catching, the party, the bag, growth, saving, `choose` in scripts.
 - **Phase 3, v0.1** (M4): the Southern Mountains' maps, a cave, the first trial.
-- **Phase 4**: the other ranges (the Western Mountains' four are in), phones, models, sound.
+- **Phase 4**: the other ranges (the Western Mountains' four and the Northern's first are in), phones, models, sound.

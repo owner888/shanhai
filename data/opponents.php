@@ -314,5 +314,41 @@ return [
         'yanzi' => [
             [10, 6, 'down', 1, '樵夫', [['she', 24], ['bifang', 25], ['luomu', 24]]],
         ],
+        'danhu' => [
+            [10, 6, 'down', 1, '牧人', [['baishe', 25], ['yelu', 25]]],
+        ],
+        'daishan' => [
+            [10, 6, 'down', 1, '巫祝弟子', [['xingxing', 24], ['maoniu', 26]]],
+        ],
+        'zhuoguang' => [
+            [10, 6, 'down', 3, '采玉人', [['ling', 23], ['she', 23], ['xiao', 25]]],
+        ],
+        'guowei' => [
+            [10, 6, 'down', 3, '渔人', [['chigui', 25], ['xingxing', 25]]],
+        ],
+        'shizhe' => [
+            [10, 6, 'down', 2, '采药人', [['lu', 25], ['zhuhuai', 25]]],
+        ],
+        'manlian' => [
+            [10, 6, 'down', 5, '巫祝弟子', [['feiyi', 27]]],
+        ],
+        'guanti' => [
+            [10, 6, 'down', 5, '行商', [['tuotuo', 27]]],
+        ],
+        'xiaoxian' => [
+            [10, 6, 'down', 3, '樵夫', [['chigui', 34], ['xingxing', 34], ['baiyuan', 34]]],
+        ],
+        'dunhong' => [
+            [10, 6, 'down', 3, '渔人', [['zhu', 37]]],
+        ],
+        'yufa' => [
+            [10, 6, 'down', 1, '采药人', [['she', 34], ['haozhi', 36]]],
+        ],
+        'hunxi' => [
+            [10, 6, 'down', 1, '行商', [['shijiu', 34], ['lili', 36]]],
+        ],
+        'picha' => [
+            [10, 6, 'down', 1, '猎户', [['zhu', 37]]],
+        ],
     ],
 ];
