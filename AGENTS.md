@@ -44,20 +44,22 @@ view.php           the window's view (Content::file): SpriteView of the Play
 boot.php           loads MyPHP (myphp.json's framework, or MYPHP_HOME)
 src/load.php       the autoloader of Shanhai\ (src/)
 src/World/         the game outside battle, with no drawing: Dir, Tile (the characters maps are written in), Map,
-                   Actor, Controls, World (step(): walking, turning, what blocks, warps, triggers, talking)
-src/Script/Vm.php  the event script interpreter: say, flags, jumps, face, move, warp, give, battle; check() as written
+                   Actor, Controls, World (step(): walking, turning, what blocks, warps, triggers, talking; the party,
+                   its battles, rest), PartyMenu (the party's screen: the beasts in order, two change places)
+src/Script/Vm.php  the event script interpreter: say, flags, jumps, face, move, warp, give, battle, rest; check() as written
 src/Battle/        the battle, with no drawing: Rng (bytes, from a seed or a test's script), Formulas (docs/numbers.md as code,
                    a function a rule), Fighter, Battle (turn(): order, what stops a beast, a move, statuses, weather, switching),
                    Screen (a wild battle as the player goes through it: lines, the menu, its lists, fleeing),
                    Simulator (battles with no player, to weigh the tables)
 src/Text.php       the dialog box's measures and line breaking
+src/Cursor.php     a list's cursor: moves on a press, not while held
 src/Data.php       reads data/
 src/Elements.php   what a move of one element does against a beast of others (double, even, half, in tenths)
 src/Render/Stage.php  a map's 3D scene: instanced tiles, trees, rocks, walls, the actors' figures, the fixed camera
 src/Render/Arena.php  a battle's 3D scene: the ground, the two beasts' figures, a camera that does not move
 src/Play.php       MyPHP's Game: keys and gamepad into Controls, World::step, draws the Stage and the dialog box,
                    or a battle's Arena, boxes, line and lists
-data/game.php      where a new game starts
+data/game.php      where a new game starts, and where the player wakes after a battle is lost
 data/elements.php  the five elements: what each overcomes and feeds, physical or special, its region
 data/tiers.php     the five tiers a beast's numbers are built in: bands measured from the reference's distribution
 data/moves.php     the moves: element (or none), power, accuracy, uses, effect, and what in the classic each comes from
@@ -89,6 +91,8 @@ docs/elements.md   the elements' table and how a beast's elements are settled
   (signs, NPCs) blocks them; warps and triggers act when the player arrives on theirs.
 - **A battle holds the controls** like a script: `World::$battle` is its Screen, which `World::step` steps until it is
   done; the script that began it then goes on. The Screen shows a turn line by line: hp changes with the line that tells it.
+- **The party is its Fighters**: a battle is fought by the party's own beasts, so their hp, status and moves' uses are
+  what it left them; stages and confusion end with it. Lost, the player wakes at `data/game.php`'s rest, the party whole.
 - **A map change** is counted in `World::$mapChanges`; Play builds a new Stage when it sees one.
 - **Drawing interpolates**: `Actor::place($alpha)` is between two updates' places, so motion is smoother than its steps.
 

@@ -12,8 +12,8 @@ use Shanhai\World\{Controls, Dir, World};
 
 /**
  * The game as MyPHP runs it (Plugins\Game): each update reads the keys and the gamepad into Controls and steps
- * the World; each frame draws the map's Stage and, over it, the dialog box, or, in a battle, its Arena, the two
- * beasts' boxes, the line or the list. The rules are the World's: nothing here decides them.
+ * the World; each frame draws the map's Stage and, over it, the dialog box or the party's screen, or, in a battle,
+ * its Arena, the two beasts' boxes, the line or the list. The rules are the World's: nothing here decides them.
  */
 final class Play extends Game
 {
@@ -24,6 +24,7 @@ final class Play extends Game
     ];
     private const CONFIRM = [Key::SPACE, Key::RETURN, Key::Z];
     private const CANCEL = [Key::ESCAPE, Key::DELETE, Key::X];
+    private const MENU = [Key::TAB, Key::M];
     /** How far a gamepad's stick is pushed to walk. */
     private const STICK = 0.5;
     /** Updates a new map takes to fade in. */
@@ -67,12 +68,15 @@ final class Play extends Game
             }
         }
         $dir = $this->walkKey !== null ? self::WALK[$this->walkKey] : null;
-        $confirm = $cancel = false;
+        $confirm = $cancel = $menu = false;
         foreach (self::CONFIRM as $key) {
             $confirm = $confirm || $in->pressed($key);
         }
         foreach (self::CANCEL as $key) {
             $cancel = $cancel || $in->pressed($key);
+        }
+        foreach (self::MENU as $key) {
+            $menu = $menu || $in->pressed($key);
         }
         foreach (array_slice(Gamepad::pads(), 0, 1) as $pad) {
             $s = $pad->state();
@@ -82,10 +86,11 @@ final class Play extends Game
             }
             $confirm = $confirm || $s->justPressed($this->lastPad, Button::South);
             $cancel = $cancel || $s->justPressed($this->lastPad, Button::East);
+            $menu = $menu || $s->justPressed($this->lastPad, Button::Start);
             $this->lastPad = $s;
         }
 
-        $this->world->step(new Controls($dir, $confirm, $cancel));
+        $this->world->step(new Controls($dir, $confirm, $cancel, $menu));
 
         $battle = $this->world->battle;
         if ($battle === null) {
@@ -135,6 +140,9 @@ final class Play extends Game
         $p->fill([$r[0] + 16, $r[1] + 16, mb_strwidth($name) * 8 + 24, 34], 0x000000, 8.0, 0.55);
         $p->text($r[0] + 28, $r[1] + 24, $name, 15, 0xffffff);
 
+        if ($this->world->menu !== null) {
+            $this->choices($p, $r, $this->world->menu->items($this->world->party), $this->world->menu->cursor->at, 420.0);
+        }
         if ($this->world->dialog !== null) {
             $this->dialog($p, $r, $this->world->dialog);
         }
@@ -149,9 +157,13 @@ final class Play extends Game
             $this->dialog($p, $r, $s->line);
             return;
         }
-        $items = $s->items();
+        $this->choices($p, $r, $s->items(), $s->cursor->at, $s->phase === 'menu' ? 200.0 : 420.0);
+    }
+
+    /** A list at the bottom right of the view, $w wide, the cursor's mark by one of its entries. @param list<string> $items */
+    private function choices(Painter $p, array $r, array $items, int $cursor, float $w): void
+    {
         $lineHeight = Text::SIZE * 1.6;
-        $w = $s->phase === 'menu' ? 200.0 : 360.0;
         $h = 2 * Text::BOX_PADDING + count($items) * $lineHeight;
         $x = $r[0] + $r[2] - $w - 24;
         $y = $r[1] + $r[3] - $h - 24;
@@ -159,7 +171,7 @@ final class Play extends Game
         $p->stroke([$x, $y, $w, $h], 0xe8dcc0, 12.0, 2.0, 0.9);
         foreach ($items as $i => $text) {
             $ty = $y + Text::BOX_PADDING + $i * $lineHeight;
-            if ($i === $s->cursor) {
+            if ($i === $cursor) {
                 $p->text($x + Text::BOX_PADDING, $ty, '▶', Text::SIZE * 0.8, 0xe8dcc0);
             }
             $p->text($x + Text::BOX_PADDING + Text::SIZE * 1.4, $ty, $text, Text::SIZE, 0xf4f0e6);

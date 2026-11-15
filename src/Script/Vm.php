@@ -20,7 +20,8 @@ use Shanhai\World\{Dir, World};
  *     ['warp', map, x, y, dir]
  *     ['give', item, count]
  *     ['giveBeast', beast, level]
- *     ['battle', beast, level]   a wild one; the script goes on when it is over
+ *     ['battle', beast, level]   a wild one; the script goes on when it is over, unless it was lost
+ *     ['rest']                   the party's beasts are whole again
  *     ['end']
  */
 final class Vm
@@ -28,7 +29,7 @@ final class Vm
     /** command => how many arguments */
     public const ARGS = [
         'say' => 1, 'setFlag' => 1, 'clearFlag' => 1, 'ifFlag' => 2, 'ifNotFlag' => 2, 'goto' => 1, 'label' => 1,
-        'face' => 2, 'move' => 3, 'warp' => 4, 'give' => 2, 'giveBeast' => 2, 'battle' => 2, 'end' => 0,
+        'face' => 2, 'move' => 3, 'warp' => 4, 'give' => 2, 'giveBeast' => 2, 'battle' => 2, 'rest' => 0, 'end' => 0,
     ];
 
     public bool $done = false;
@@ -116,7 +117,8 @@ final class Vm
                 case 'move': [$this->moving, $this->moveDir, $this->moveLeft] = [$cmd[1], Dir::from($cmd[2]), $cmd[3]]; break;
                 case 'warp': $w->enter($cmd[1], $cmd[2], $cmd[3], Dir::from($cmd[4])); break;
                 case 'give': $w->items[$cmd[1]] = ($w->items[$cmd[1]] ?? 0) + $cmd[2]; break;
-                case 'giveBeast': $w->party[] = ['id' => $cmd[1], 'level' => $cmd[2]]; break;
+                case 'giveBeast': $w->join($cmd[1], $cmd[2]); break;
+                case 'rest': $w->rest(); break;
                 case 'battle': $w->fight($cmd[1], $cmd[2]); break;
                 case 'end': $this->done = true; break;
             }

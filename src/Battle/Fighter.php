@@ -79,6 +79,16 @@ final class Fighter
         return $n;
     }
 
+    /** Whole again, as rest makes it: its hp, no status, every move's uses. @param array<string, array> $moves data/moves.php */
+    public function restore(array $moves): void
+    {
+        [$this->hp, $this->status, $this->sleep] = [$this->maxHp, null, 0];
+        foreach ($this->moves as $i => $m) {
+            $this->moves[$i]['pp'] = $moves[$m['id']]['pp'];
+        }
+        $this->leave();
+    }
+
     /** What switching out leaves behind: stages, confusion, a flinch. The status stays. */
     public function leave(): void
     {

@@ -43,6 +43,7 @@ foreach ($maps as $map) {
         $scripts["{$map->id}: the trigger at $x,$y"] = $script;
     }
 }
+$scripts['data/game.php: waking after a battle lost'] = (require Data::DIR . '/game.php')['rest']['script'];
 foreach ($scripts as $where => $script) {
     check(!throws(fn() => Vm::check($script)), "$where: its script is well formed");
     foreach ($script as $cmd) {
@@ -58,8 +59,13 @@ foreach ($scripts as $where => $script) {
         }
     }
 }
-$start = (require Data::DIR . '/game.php')['start'];
-check(isset($maps[$start['map']]) && $maps[$start['map']]->walkable($start['x'], $start['y']), 'a new game starts on a walkable tile');
+$game = require Data::DIR . '/game.php';
+foreach (['start' => 'a new game starts', 'rest' => 'the player wakes after losing'] as $key => $what) {
+    $at = $game[$key];
+    check(isset($maps[$at['map']]) && $maps[$at['map']]->walkable($at['x'], $at['y']), "$what on a walkable tile");
+    check(Dir::tryFrom($at['dir']) !== null, "$what facing a direction");
+}
+check($maps[$game['rest']['map']]->warpAt($game['rest']['x'], $game['rest']['y']) === null, 'not on a warp');
 
 foreach (Tile::KINDS as [$kind]) {
     check(isset(Stage::GROUND[$kind]), "the stage has a ground color for $kind");

@@ -80,7 +80,7 @@ $confirm($w);
 $confirm($w);
 $confirm($w);
 check(isset($w->flags['metShaman']) && !$w->busy(), 'through her lines');
-same([['id' => 'lushu', 'level' => 5]], $w->party, 'she lends a beast');
+same([['lushu', 5]], array_map(fn($f) => [$f->id, $f->level], $w->party), 'she lends a beast');
 check($go($w, Dir::Down, 5, 6, 'zhaoyao'), 'the door inside leads back out, below the door');
 same(Dir::Down, $w->player->dir, 'facing away from it');
 

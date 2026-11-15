@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Shanhai\Tests;
 
+use Shanhai\Data;
 use Shanhai\Script\Vm;
 use Shanhai\World\{Controls, Dir, Map, World};
 
@@ -15,7 +16,8 @@ same(['a' => 1], Vm::check([['goto', 'a'], ['label', 'a']]), 'labels are found')
 
 $map = Map::fromArray(['id' => 'room', 'name' => 'Room', 'rows' => ['_____', '_____', '__T__'],
     'npcs' => [['cat', 4, 0, 'left', 'elder', []]]]);
-$w = new World(['room' => $map], 'room', 0, 0, Dir::Down);
+$book = ['beasts' => Data::beasts(), 'learnsets' => Data::learnsets(), 'moves' => Data::moves(), 'elements' => Data::elements()];
+$w = new World(['room' => $map], 'room', 0, 0, Dir::Down, $book);
 
 $w->run([
     ['ifNotFlag', 'seen', 'first'],
@@ -32,7 +34,8 @@ $w->run([
 ]);
 check(isset($w->flags['seen']), 'setFlag');
 same(3, $w->items['jade'], 'give adds up');
-same([['id' => 'xingxing', 'level' => 5]], $w->party, 'giveBeast');
+same([['xingxing', 5]], array_map(fn($f) => [$f->id, $f->level], $w->party), 'giveBeast');
+check(throws(fn() => (new World(['room' => $map], 'room', 0, 0, Dir::Down))->run([['giveBeast', 'xingxing', 5]])), 'a world made without the tables has no beasts');
 same(Dir::Down, $w->npcs['cat']->dir, 'face turns an actor');
 check($w->busy() && $w->dialog === null && $w->player->moving, 'move starts the walk and waits');
 for ($i = 0; $i < 2 * World::WALK_STEPS; $i++) {

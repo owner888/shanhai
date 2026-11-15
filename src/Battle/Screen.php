@@ -4,14 +4,14 @@ declare(strict_types=1);
 namespace Shanhai\Battle;
 
 use LogicException;
-use Shanhai\World\{Controls, Dir};
+use Shanhai\Cursor;
+use Shanhai\World\{Controls, PartyMenu};
 
 /**
  * A battle with a wild beast as the player goes through it, with no drawing: step() takes an update's Controls.
  * Lines are read one at a time, confirm going on; between turns the menu asks what to do. What is shown of each
  * side (which beast, its hp, its status) changes with the line that tells it, not when the turn is worked out.
- * The player is side 0. The wild beast uses any move it has left; the player's next beast comes out by itself
- * when one falls (choosing it comes with the party's screen, roadmap phase 2).
+ * The player is side 0, and chooses the next beast when one falls. The wild beast uses any move it has left.
  */
 final class Screen
 {
@@ -22,7 +22,7 @@ final class Screen
 
     /** text: a line is showing; menu, moves, party: a list is, with $cursor on one of it. */
     public string $phase = 'text';
-    public int $cursor = 0;
+    public Cursor $cursor;
     public ?string $line = null;
     /** @var array{0: array{which: int, hp: int, status: ?string}, 1: array{which: int, hp: int, status: ?string}} what is shown of each side */
     public array $shown;
@@ -32,12 +32,12 @@ final class Screen
 
     /** @var list<array{0: string, 1: array}> the lines still to read, each with what is shown once it is */
     private array $queue = [];
-    private ?Dir $held = null;
     private int $fleeTries = 0;
 
     /** @param array<string, array> $moves data/moves.php */
     public function __construct(public readonly Battle $battle, private readonly array $moves, private readonly Rng $rng)
     {
+        $this->cursor = new Cursor();
         $this->shown = [$this->truth(0), $this->truth(1)];
         $this->say('野生的' . $battle->fighter(1)->species['name'] . '出现了！');
         $this->say('去吧，' . $battle->fighter(0)->species['name'] . '！');
@@ -49,25 +49,22 @@ final class Screen
         if ($this->done) {
             throw new LogicException('the battle is over');
         }
-        // A list's cursor moves when a direction is pressed, not while it is held.
-        $pressed = $c->dir !== $this->held ? $c->dir : null;
-        $this->held = $c->dir;
         if ($this->phase === 'text') {
             if ($c->confirm) {
                 $this->next();
             }
             return;
         }
-        $count = count($this->items());
-        if ($pressed === Dir::Up || $pressed === Dir::Down) {
-            $this->cursor = max(0, min($count - 1, $this->cursor + ($pressed === Dir::Down ? 1 : -1)));
-        } elseif ($c->cancel && $this->phase !== 'menu') {
+        if ($this->cursor->move($c, count($this->items()))) {
+            return;
+        }
+        if ($c->cancel && $this->phase !== 'menu' && !$this->battle->awaits(0)) { // a fallen beast's place must be taken
             $this->open('menu');
         } elseif ($c->confirm) {
             match ($this->phase) {
-                'menu' => $this->chosen(array_keys(self::MENU)[$this->cursor]),
-                'moves' => $this->move($this->cursor),
-                'party' => $this->send($this->cursor),
+                'menu' => $this->chosen(array_keys(self::MENU)[$this->cursor->at]),
+                'moves' => $this->move($this->cursor->at),
+                'party' => $this->send($this->cursor->at),
             };
         }
     }
@@ -80,13 +77,13 @@ final class Screen
             'text' => [],
             'menu' => array_values(self::MENU),
             'moves' => array_map(fn(array $m) => sprintf('%s  %d/%d', $this->moves[$m['id']]['name'], $m['pp'], $this->moves[$m['id']]['pp']), $me->moves),
-            'party' => array_map(fn(Fighter $f) => sprintf('%s  Lv%d  %d/%d', $f->species['name'], $f->level, $f->hp, $f->maxHp), $this->battle->parties[0]),
+            'party' => array_map(PartyMenu::line(...), $this->battle->parties[0]),
         };
     }
 
     private function open(string $phase): void
     {
-        [$this->phase, $this->cursor, $this->line] = [$phase, 0, null];
+        [$this->phase, $this->cursor, $this->line] = [$phase, new Cursor(), null];
     }
 
     private function chosen(string $what): void
@@ -115,15 +112,37 @@ final class Screen
     private function send(int $which): void
     {
         $f = $this->battle->parties[0][$which];
-        if ($which === $this->battle->active[0]) {
+        if ($f->fainted()) {
+            $this->say($f->species['name'] . '已经没有力气战斗了。');
+            $this->next();
+        } elseif ($which === $this->battle->active[0]) {
             $this->say($f->species['name'] . '已经在场上了。');
             $this->next();
-        } elseif ($f->fainted()) {
-            $this->say($f->species['name'] . '已经没有力气战斗了。');
+        } elseif ($this->battle->awaits(0)) {
+            [$hp, $status, $stages] = $this->before();
+            $from = count($this->battle->log);
+            $this->battle->send(0, $which);
+            $this->tell(array_slice($this->battle->log, $from), $hp, $status, $stages);
             $this->next();
         } else {
             $this->turn(['switch', $which]);
         }
+    }
+
+    /**
+     * Every beast's hp and status, and the stages of the two out, as they are now: tell() applies to these what the battle then writes.
+     * @return array{0: array, 1: array, 2: array}
+     */
+    private function before(): array
+    {
+        $hp = $status = $stages = [];
+        foreach ([0, 1] as $side) {
+            foreach ($this->battle->parties[$side] as $i => $f) {
+                [$hp[$side][$i], $status[$side][$i]] = [$f->hp, $f->status];
+            }
+            $stages[$side] = $this->battle->fighter($side)->stages;
+        }
+        return [$hp, $status, $stages];
     }
 
     /** docs/numbers.md 11.4. A try that fails is the player's turn: the wild beast still takes its own. */
@@ -149,14 +168,7 @@ final class Screen
                 $foe[1] = $this->rng->byte() & 3;
             } while (!in_array($foe[1], $usable, true));
         }
-        // Every beast's hp and status, and the stages of the two out, as they are before the turn: tell() applies the turn's events to these.
-        $hp = $status = $stages = [];
-        foreach ([0, 1] as $side) {
-            foreach ($this->battle->parties[$side] as $i => $f) {
-                [$hp[$side][$i], $status[$side][$i]] = [$f->hp, $f->status];
-            }
-            $stages[$side] = $this->battle->fighter($side)->stages;
-        }
+        [$hp, $status, $stages] = $this->before();
         $from = count($this->battle->log);
         $this->battle->turn($action, $foe);
         $this->tell(array_slice($this->battle->log, $from), $hp, $status, $stages);
@@ -281,7 +293,7 @@ final class Screen
         $this->queue[array_key_last($this->queue)][1] = $shown;
     }
 
-    /** The next line; with none left, the menu, or the end. */
+    /** The next line; with none left, the end, or the party's list when the player's beast has fallen, or the menu. */
     private function next(): void
     {
         if ($this->queue !== []) {
@@ -290,7 +302,7 @@ final class Screen
         } elseif ($this->outcome !== null) {
             $this->done = true;
         } else {
-            $this->open('menu');
+            $this->open($this->battle->awaits(0) ? 'party' : 'menu');
         }
     }
 }

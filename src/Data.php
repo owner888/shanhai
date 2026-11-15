@@ -55,8 +55,9 @@ final class Data
     /** A new game's world, the player where data/game.php starts them; its battles' dice from $seed. */
     public static function newWorld(int $seed): World
     {
-        $start = (require self::DIR . '/game.php')['start'];
-        $book = ['beasts' => self::beasts(), 'learnsets' => self::learnsets(), 'moves' => self::moves(), 'elements' => self::elements()];
+        $game = require self::DIR . '/game.php';
+        $start = $game['start'];
+        $book = ['beasts' => self::beasts(), 'learnsets' => self::learnsets(), 'moves' => self::moves(), 'elements' => self::elements(), 'rest' => $game['rest']];
         return new World(self::maps(), $start['map'], $start['x'], $start['y'], Dir::from($start['dir']), $book, Rng::seeded($seed));
     }
 }

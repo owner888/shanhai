@@ -40,16 +40,25 @@ final class Battle
      * @param array{0: list<Fighter>, 1: list<Fighter>} $parties
      * @param array<string, array> $elements data/elements.php
      * @param array<string, array> $moves data/moves.php
+     * @param array{0: bool, 1: bool} $chooses whether each side chooses its next beast when one falls (send()), or its first that can fight comes out
      */
-    public function __construct(public readonly array $parties, private readonly array $elements, private readonly array $moves, private readonly Rng $rng)
+    public function __construct(public readonly array $parties, private readonly array $elements, private readonly array $moves, private readonly Rng $rng, private readonly array $chooses = [false, false])
     {
         $this->chart = new Elements($elements);
+        foreach ([0, 1] as $side) { // each side begins with its first that can fight
+            foreach ($parties[$side] as $i => $f) {
+                if (!$f->fainted()) {
+                    $this->active[$side] = $i;
+                    break;
+                }
+            }
+        }
     }
 
     /** The battle as it stands, to play on from apart: its beasts copied, its log empty, its rolls from $rng. */
     public function copy(Rng $rng): self
     {
-        $copy = new self(array_map(fn(array $party) => array_map(fn(Fighter $f) => clone $f, $party), $this->parties), $this->elements, $this->moves, $rng);
+        $copy = new self(array_map(fn(array $party) => array_map(fn(Fighter $f) => clone $f, $party), $this->parties), $this->elements, $this->moves, $rng, $this->chooses);
         [$copy->active, $copy->weather, $copy->weatherLeft, $copy->turns, $copy->winner] = [$this->active, $this->weather, $this->weatherLeft, $this->turns, $this->winner];
         return $copy;
     }
@@ -83,6 +92,9 @@ final class Battle
         if ($this->winner !== null) {
             throw new LogicException('the battle is over');
         }
+        if ($this->awaits(0) || $this->awaits(1)) {
+            throw new LogicException('a side has yet to send its next beast');
+        }
         $this->turns++;
         $actions = [$a, $b];
         // 11.1: switching comes before any move.
@@ -114,6 +126,21 @@ final class Battle
         }
         $this->endWeather();
         $this->replaceFallen();
+    }
+
+    /** Whether the side chooses its next beast, its beast has fallen and it has yet to send() it. */
+    public function awaits(int $side): bool
+    {
+        return $this->chooses[$side] && $this->winner === null && $this->fighter($side)->fainted();
+    }
+
+    /** The side that awaits sends its next beast, between turns. */
+    public function send(int $side, int $which): void
+    {
+        if (!$this->awaits($side)) {
+            throw new LogicException("side $side's beast has not fallen");
+        }
+        $this->switchTo($side, $which);
     }
 
     private function switchTo(int $side, int $which): void
@@ -348,7 +375,7 @@ final class Battle
         }
     }
 
-    /** A side whose beast fell sends its next that can fight; one with none left has lost. */
+    /** A side whose beast fell sends its next that can fight, unless it chooses (send()); one with none left has lost. */
     private function replaceFallen(): void
     {
         $out = [];
@@ -365,7 +392,7 @@ final class Battle
             }
             if ($next === null) {
                 $out[] = $side;
-            } else {
+            } elseif (!$this->chooses[$side]) {
                 $this->fighter($side)->leave();
                 $this->active[$side] = $next;
                 $this->log[] = ['switch', $side, $next];
