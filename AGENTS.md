@@ -59,6 +59,7 @@ src/Battle/        the battle, with no drawing: Rng (bytes, from a seed or a tes
                    Simulator (battles with no player, to weigh the tables)
 src/Text.php       the dialog box's measures and line breaking
 src/Cursor.php     a list's cursor: moves on a press, not while held
+src/Journey.php    a player with no hands: plays a game through every trial by World::step alone (tools/journey.php, its test)
 src/Save.php       the one saved game, a file of JSON in the app's own folder: World::state() written and read
 src/Data.php       reads data/
 src/Elements.php   what a move of one element does against a beast of others (double, even, half, in tenths)
@@ -84,10 +85,11 @@ data/maps/*.php    a map each: rows of tiles, exits to the maps beside it, warps
                    scripts, what its tall grass and its water hold
 tools/             simulate.php (every beast against every other: win rates by beast, tier, element), matchups.php (element against
                    element), parties.php (random parties against one another, with switching), effects.php (what each effect that does no
-                   damage is worth); add `think` for sides that think ahead
+                   damage is worth); add `think` for sides that think ahead; journey.php (whole games played through:
+                   at what level and after how many battles each trial is passed)
 docs/balance.md    what the simulator shows, what was changed for it, what is still open
 tests/             php tests/run.php [name]: world, script, data, formulas (each rule against a value worked out by hand),
-                   battle (turns with scripted rolls), screen (a battle played through), stage (the faces of ground and walls), save; check()/same(), no PHPUnit;
+                   battle (turns with scripted rolls), screen (a battle played through), stage (the faces of ground and walls), save, journey (a game played through with each beast to choose from); check()/same(), no PHPUnit;
                    each file runs in a scope of its own
 docs/rules.md      the rule of the game
 docs/roadmap.md    the order of the work, and when each step is done

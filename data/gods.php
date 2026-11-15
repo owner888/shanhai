@@ -31,4 +31,14 @@ return [
         'moves' => ['spark', 'splash', 'infantcry'],
         'from' => '凡南次二经之首，自柜山至于漆吴之山，凡十七山，七千二百里。其神状皆龙身而鸟首。',
     ],
+    'nanci3' => [
+        'name' => '南次三经之神', 'range' => 3,
+        'looks' => '龙身而人面。',
+        'elements' => ['fire', 'earth'],
+        'why' => '南山经属火；人面，人在五虫里是倮虫，倮虫属土。',
+        'stats' => ['hp' => 95, 'atk' => 90, 'def' => 100, 'spa' => 75, 'spd' => 75, 'spe' => 75],
+        'exp' => 205, 'growth' => 'slow',
+        'moves' => ['burrow', 'bite', 'bewilder', 'revive'],
+        'from' => '凡南次三经之首，自天虞之山以至南禺之山，凡一十四山，六千五百三十里。其神皆龙身而人面。',
+    ],
 ];

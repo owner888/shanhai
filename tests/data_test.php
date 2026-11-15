@@ -406,6 +406,22 @@ foreach ($scripts as $where => $script) {
     }
 }
 same(count($gods), $trials, 'each god sets one trial');
+// A range after the first is come to from the one before it, and gone back from: someone on a map of each sends the
+// player to a map of the other.
+$sent = [];
+foreach ($maps as $map) {
+    foreach ($map->npcs as $npc) {
+        foreach (end($npc) as $cmd) {
+            if ($cmd[0] === 'warp') {
+                $sent[$map->range][$maps[$cmd[1]]->range] = true;
+            }
+        }
+    }
+}
+foreach (array_slice(array_keys($ranges), 1) as $n) {
+    check(isset($sent[$n - 1][$n]), "range $n is come to from range " . ($n - 1));
+    check(isset($sent[$n][$n - 1]), "range $n has a way back to range " . ($n - 1));
+}
 // Water may be crossed after the fourth range's trial, as after the reference's fourth gym: the flag that lets it is the one that trial sets.
 $sets = [];
 foreach ($scripts as $script) {

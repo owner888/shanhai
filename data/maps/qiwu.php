@@ -1,7 +1,8 @@
 <?php
 // 漆吴之山, five hundred li east of 鹿吴之山, the last of the range. The classic: no grass or trees; much 博石, no
 // jade; it stands in the Eastern Sea and looks out on 丘山; a light comes and goes there: it is where the sun rests.
-// The god of the range, a dragon's body with a bird's head, keeps its end.
+// The god of the range, a dragon's body with a bird's head, keeps its end, and sends who has passed its trial on to
+// the third range.
 declare(strict_types=1);
 
 return [
@@ -38,13 +39,16 @@ return [
             ['label', 'go'],
             ['trial', '南次二经之神', [['jiyu', 14], ['biluo', 14], ['nanci2', 16]]],
             ['setFlag', 'passedNanci2'],
-            ['say', '「好。南次三经在更南的地方，路通了，自会有人告诉你。」'],
+            ['say', '「好。南次三经的山路，为你而开。想去时再来找我。」'],
             ['end'],
             ['label', 'wait'],
             ['say', '「准备好了再来。」'],
             ['end'],
             ['label', 'passed'],
-            ['say', '「日出日入，都在这片海上。去吧。」'],
+            ['ask', '「南次三经之首是天虞之山。要我送你去吗？」', [['去天虞之山', 'send'], ['留在这里', 'stay']]],
+            ['label', 'send'],
+            ['warp', 'tianyu', 2, 7, 'right'],
+            ['label', 'stay'],
         ]],
     ],
 ];

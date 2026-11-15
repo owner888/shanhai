@@ -132,10 +132,10 @@ final class Atlas
     {
         $lines = [];
         foreach ($m->signs as $sign) {
-            foreach (end($sign) as $cmd) {
-                if ($cmd[0] === 'say') {
-                    $lines[] = trim(explode('——', $cmd[1])[1] ?? $cmd[1]);
-                }
+            // a sign's first line is the classic's; what its script says after is the game's
+            $first = array_values(array_filter(end($sign), fn(array $cmd) => $cmd[0] === 'say'))[0] ?? null;
+            if ($first !== null) {
+                $lines[] = trim(explode('——', $first[1])[1] ?? $first[1]);
             }
         }
         return implode('；', $lines);
