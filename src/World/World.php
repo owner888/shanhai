@@ -280,6 +280,16 @@ final class World
         $this->begin(array_map(fn(array $t) => $this->beast($t[0], $t[1]), $theirs), $who);
     }
 
+    /**
+     * Begins a battle with one met on the road, who sends their beasts in order: a trial's rules (not fled, none bound,
+     * experience at each fall and half as much again), told as a challenge.
+     * @param list<array{0: string, 1: int}> $theirs [beast, level]
+     */
+    public function duel(string $who, array $theirs): void
+    {
+        $this->begin(array_map(fn(array $t) => $this->beast($t[0], $t[1]), $theirs), $who, true);
+    }
+
     /** Begins a battle with a wild $beast of $level: the party's beasts come to it as they are, and it leaves them as it ends. */
     public function fight(string $beast, int $level): void
     {
@@ -287,7 +297,7 @@ final class World
     }
 
     /** @param list<Fighter> $theirs */
-    private function begin(array $theirs, ?string $trial): void
+    private function begin(array $theirs, ?string $trial, bool $duel = false): void
     {
         if ($this->rng === null) {
             throw new LogicException('this world was made without the dice a battle needs');
@@ -296,7 +306,7 @@ final class World
             throw new LogicException('a battle with no beast in the party that can fight');
         }
         $b = $this->book;
-        $this->battle = new Screen(new Battle([$this->party, $theirs], $b['elements'], $b['moves'], $this->rng, [true, false]), $b['moves'], $this->rng, $b['items'], $this->items, $trial);
+        $this->battle = new Screen(new Battle([$this->party, $theirs], $b['elements'], $b['moves'], $this->rng, [true, false]), $b['moves'], $this->rng, $b['items'], $this->items, $trial, $duel);
     }
 
     /**
@@ -413,7 +423,44 @@ final class World
             $this->run($t[3]);
             return;
         }
+        if (($who = $this->seenBy()) !== null) {
+            $this->player->dir = $this->npcs[$who[0]]->dir->opposite();
+            $this->run($who[5]);
+            return;
+        }
         $this->grass();
+    }
+
+    /**
+     * The one on the map who watches (Map::$watch), has not yet been beaten, and sees the player where they now stand:
+     * straight ahead of them, within their sight, with nothing between. None sees a player with no beast that can fight.
+     * @return ?array the map's entry of that one
+     */
+    private function seenBy(): ?array
+    {
+        if (array_filter($this->party, fn(Fighter $f) => !$f->fainted()) === []) {
+            return null;
+        }
+        foreach ($this->map->watch as [$id, $sight, $flag]) {
+            $npc = $this->npcs[$id];
+            if (isset($this->flags[$flag]) || $npc->moving) {
+                continue;
+            }
+            for ($i = 1, [$x, $y] = [$npc->x, $npc->y]; $i <= $sight; $i++) {
+                [$x, $y] = [$x + $npc->dir->dx(), $y + $npc->dir->dy()];
+                if ($x === $this->player->x && $y === $this->player->y) {
+                    foreach ($this->map->npcs as $def) {
+                        if ($def[0] === $id) {
+                            return $def;
+                        }
+                    }
+                }
+                if (!$this->free($x, $y)) {
+                    break;
+                }
+            }
+        }
+        return null;
     }
 
     /**

@@ -169,7 +169,7 @@ foreach ($scripts as $where => $script) {
         if ($cmd[0] === 'give') {
             check(isset($items[$cmd[1]]) && is_int($cmd[2]) && $cmd[2] >= 1, "$where: it gives a thing there is, one or more: {$cmd[1]}");
         }
-        if ($cmd[0] === 'trial') {
+        if ($cmd[0] === 'trial' || $cmd[0] === 'duel') {
             check(count($cmd[2]) <= 6, "$where: a trial is against six beasts at most");
             foreach ($cmd[2] as [$id, $level]) {
                 check((isset($beasts[$id]) || isset($gods[$id])) && $level >= 1 && $level <= 100, "$where: its trial's $id is a beast or a god there is, at a level of 1 to 100");
@@ -409,6 +409,44 @@ foreach ($scripts as $where => $script) {
     }
 }
 same(count($gods), $trials, 'each god sets one trial');
+// Those met on the roads (data/opponents.php): how many a range has and how many beasts they send are the reference's
+// before the gym of its number (docs/numbers.md 15); each stands on ground of a map under the sky, beside its road
+// and looking across it, on no one's and nothing's tile.
+$foes = Data::opponents();
+$raw = [];
+foreach (glob(Data::DIR . '/maps/*.php') as $file) {
+    $a = require $file;
+    $raw[$a['id']] = $a;
+}
+$counts = [];
+foreach ($foes['at'] as $id => $list) {
+    $map = $maps[$id] ?? null;
+    check($map !== null && !$map->indoor && $id !== $game['start']['map'], "opponents are on a map there is, under the sky, not the one the game starts on: $id");
+    $taken = [];
+    foreach (['signs', 'npcs', 'warps', 'triggers'] as $key) {
+        foreach ($raw[$id][$key] ?? [] as $e) {
+            $taken[] = $key === 'npcs' ? [$e[1], $e[2]] : [$e[0], $e[1]];
+        }
+    }
+    foreach ($list as $i => [$x, $y, $dir, $sight, $who, $team]) {
+        $where = "data/opponents.php: $id, the " . ($i + 1) . 'th';
+        $d = Dir::tryFrom($dir);
+        check($map->walkable($x, $y) && Tile::name($map->tile($x, $y)) !== 'path' && !Tile::wild($map->tile($x, $y)) && !in_array([$x, $y], $taken, true), "$where stands on open ground that is no one's");
+        $taken[] = [$x, $y];
+        check($d !== null && $map->inside($x + $d->dx(), $y + $d->dy()) && Tile::name($map->tile($x + $d->dx(), $y + $d->dy())) === 'path', "$where looks across the road beside them");
+        check(is_int($sight) && $sight >= 0 && $sight <= 5 && $who !== '' && count($team) >= 1 && count($team) <= 6, "$where sees 0 to 5 tiles, has a name, and sends one to six");
+        foreach ($team as [$beast, $level]) {
+            check(isset($beasts[$beast]) && $beasts[$beast]['range'] <= $map->range && $level >= 1 && $level <= 100, "$where sends a beast of this range or an earlier: $beast");
+        }
+        $counts[$map->range][0] = ($counts[$map->range][0] ?? 0) + 1;
+        $counts[$map->range][1] = ($counts[$map->range][1] ?? 0) + count($team);
+    }
+}
+ksort($counts);
+same([1 => [12, 25], 2 => [23, 43], 3 => [22, 44], 4 => [9, 20], 5 => [35, 72]], $counts, 'by range, how many are met and how many beasts they send: the reference\'s before each gym');
+foreach ($foes['says'] as $says) {
+    check(count($says) === 3 && !in_array('', $says, true), 'what an opponent says is three lines: before, beaten, met again');
+}
 // Each range has somewhere the party is made whole, as the reference has a place to heal in each town.
 $rests = [];
 foreach ($maps as $map) {

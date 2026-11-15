@@ -502,6 +502,40 @@ for ($i = 0; $w->battle !== null && $i < 4000; $i++) {
 same(['lost', 'hut', 'awake'], [$w->lastBattle, $w->map->id, $w->dialog], 'lost: the player wakes where the game rests them, and the script is dropped');
 check(throws(fn() => \Shanhai\Script\Vm::check([['trial', '山神', []]])) && throws(fn() => \Shanhai\Script\Vm::check([['trial', '山神', [['xingxing']]]])), 'a trial with no beasts, or a beast with no level, is refused');
 
+// One met on the road: seen from straight ahead within their sight, the player is challenged; the battle goes by a
+// trial's rules and is told as a challenge; beaten, they watch no more.
+$road = Map::fromArray(['id' => 'road', 'name' => 'road', 'rows' => ['.....', '=====', '.....'], 'npcs' => [['foe0', 2, 0, 'down', 'foe', [
+    ['ifFlag', 'beat', 'after'], ['say', 'halt'], ['duel', '猎户', [['xingxing', 2]]], ['setFlag', 'beat'], ['say', 'well'], ['end'], ['label', 'after'], ['say', 'again'],
+]]], 'watch' => [['foe0', 2, 'beat']]]);
+$w = new World(['road' => $road, 'hut' => $maps['hut']], 'road', 0, 1, Dir::Right, $book, Rng::seeded(3));
+$right = new Controls(Dir::Right);
+$walk = function () use ($w, $right, $none): void {
+    for ($i = 0; $i < World::WALK_STEPS + 2 && !$w->busy(); $i++) {
+        $w->step($right);
+    }
+    $w->step($none);
+};
+$walk();
+$walk();
+same([[2, 1], false], [[$w->player->x, $w->player->y], $w->busy()], 'with no beast the player passes unseen');
+$w->enter('road', 0, 1, Dir::Right);
+$w->join('lushu', 30);
+$walk();
+check(!$w->busy(), 'beside their line of sight nothing happens');
+$walk();
+same([[2, 1], true, 'halt', Dir::Up], [[$w->player->x, $w->player->y], $w->busy(), $w->dialog, $w->player->dir], 'stepping into it, the player is stopped, turned to them, and hailed');
+$w->step($confirm);
+same(['猎户', true, '猎户向你挑战！'], [$w->battle->trial, $w->battle->duel, $w->battle->line], 'the battle is theirs, told as a challenge');
+for ($i = 0; $w->battle !== null && $i < 400; $i++) {
+    $w->step($i % 2 === 0 ? $confirm : $none);
+}
+same(['won', true, 'well'], [$w->lastBattle, isset($w->flags['beat']), $w->dialog], 'won, they are beaten and say so');
+$w->step($confirm);
+$w->enter('road', 0, 1, Dir::Right);
+$walk();
+$walk();
+same([[2, 1], false], [[$w->player->x, $w->player->y], $w->busy()], 'and see the player no more');
+
 // Cues: what a line tells of, for what draws and sounds the battle. A hit comes with the line of the move that made it.
 $s = $screen([['lushu', 30]], ['xingxing', 30], Rng::seeded(21));
 $s->battle->fighter(0)->moves = $s->battle->fighter(1)->moves = [['id' => 'ram', 'pp' => 5]];

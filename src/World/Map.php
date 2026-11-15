@@ -13,6 +13,8 @@ use InvalidArgumentException;
  *     signs    [[x, y, script], ...]
  *     npcs     [[id, x, y, dir, look, script], ...]
  *     triggers [[x, y, flag, script], ...]            runs once, then sets flag
+ *     watch    [[npc id, sight, flag], ...]           that one's script runs when the player comes to stand straight
+ *              ahead of them within so many tiles, until the flag is set
  */
 final class Map
 {
@@ -47,6 +49,8 @@ final class Map
         public readonly ?array $water = null,
         public readonly ?int $range = null,
         public readonly bool $indoor = false,
+        /** @var list<array{0: string, 1: int, 2: string}> */
+        public readonly array $watch = [],
     ) {}
 
     public static function fromArray(array $a): self
@@ -64,7 +68,7 @@ final class Map
             }
         }
         return new self($a['id'], $a['name'], $rows, $width, count($rows),
-            $a['warps'] ?? [], $a['signs'] ?? [], $a['npcs'] ?? [], $a['triggers'] ?? [], $a['wild'] ?? null, $a['exits'] ?? [], $a['water'] ?? null, $a['range'] ?? null, $a['indoor'] ?? false);
+            $a['warps'] ?? [], $a['signs'] ?? [], $a['npcs'] ?? [], $a['triggers'] ?? [], $a['wild'] ?? null, $a['exits'] ?? [], $a['water'] ?? null, $a['range'] ?? null, $a['indoor'] ?? false, $a['watch'] ?? []);
     }
 
     public function inside(int $x, int $y): bool

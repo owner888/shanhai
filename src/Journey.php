@@ -9,9 +9,10 @@ use Shanhai\World\{Controls, Dir, Map, Tile, World};
 /**
  * A player with no hands: plays a game from its start through every trial there is, by the same World::step and the
  * same Controls a person's keys make, so that what it meets is what a person would. It walks the roads, takes the
- * first of what it is offered (but what a question must be answered to be taken somewhere or to rest), fights every wild beast that comes with the move that would do most, and goes to a
- * trial when its first beast is at the level it wants: 0 at first, so it tries at once, and two more than it had each
- * time it fails. Before a trial it has its beasts made whole at the nearest place that does so.
+ * first of what it is offered (but what a question must be answered to be taken somewhere or to rest), fights those
+ * on the road who see it and every wild beast that comes, with the move that would do most, and goes to a trial when
+ * its first beast is at the level it wants: 0 at first, so it tries at once, and two more than it had each time it
+ * fails. Before a trial it has its beasts made whole at the nearest place that does so.
  *
  * It is for knowing that the game can be played through and what that takes (tools/journey.php), not for playing well:
  * it binds no beast, uses no move that does no damage, and never flees.
@@ -35,6 +36,7 @@ final class Journey
     /** @var array<int, int> by range: how often its trial was tried */
     private array $tries = [];
     private ?int $trying = null;
+    private bool $roadLost = false;
     /** @var list<array{range: int, map: string, npc: string, flag: string, who: string}> the trials, in the ranges' order */
     private array $trials = [];
 
@@ -73,7 +75,16 @@ final class Journey
                 if ($this->trying !== null) {
                     $this->want[$this->trying] = $this->w->party[0]->level + 2;
                     $this->trying = null;
+                } elseif ($this->roadLost) {
+                    // to one met on the road, who will be there again: a level more first, in the wild of the range being walked
+                    foreach ($this->trials as $t) {
+                        if (!isset($this->w->flags[$t['flag']])) {
+                            $this->want[$t['range']] = max($this->want[$t['range']] ?? 0, $this->w->party[0]->level + 1);
+                            break;
+                        }
+                    }
                 }
+                $this->roadLost = false;
             }
         }
     }
@@ -452,6 +463,7 @@ final class Journey
             $this->wild += $trial ? 0 : 1;
             if ($this->w->lastBattle === 'lost') {
                 $this->lost++;
+                $this->roadLost = $trial && $this->trying === null;
                 throw new Woke();
             }
         }

@@ -15,11 +15,41 @@ final class Data
     public static function maps(): array
     {
         $maps = [];
+        $foes = self::opponents();
         foreach (glob(self::DIR . '/maps/*.php') as $file) {
-            $map = Map::fromArray(require $file);
+            $a = require $file;
+            // Those met on the map's road (data/opponents.php) stand on it as people do, and watch.
+            foreach ($foes['at'][$a['id']] ?? [] as $i => [$x, $y, $dir, $sight, $who, $team]) {
+                [$id, $flag] = ["foe$i", "beat.{$a['id']}.$i"];
+                [$hail, $lost, $after] = $foes['says'][$i % count($foes['says'])];
+                $a['npcs'][] = [$id, $x, $y, $dir, 'foe', [
+                    ['ifFlag', $flag, 'after'],
+                    ['ifFlag', $foes['needs'], 'ready'],
+                    ['say', $foes['unready']],
+                    ['end'],
+                    ['label', 'ready'],
+                    ['say', $hail],
+                    ['duel', $who, $team],
+                    ['setFlag', $flag],
+                    ['say', $lost],
+                    ['end'],
+                    ['label', 'after'],
+                    ['say', $after],
+                ]];
+                if ($sight > 0) {
+                    $a['watch'][] = [$id, $sight, $flag];
+                }
+            }
+            $map = Map::fromArray($a);
             $maps[$map->id] = $map;
         }
         return $maps;
+    }
+
+    /** @return array{needs: string, unready: string, says: list<array>, at: array<string, list<array>>} data/opponents.php */
+    public static function opponents(): array
+    {
+        return require self::DIR . '/opponents.php';
     }
 
     /** @return array<string, array> element id => its entry */

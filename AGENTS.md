@@ -52,7 +52,7 @@ src/World/         the game outside battle, with no drawing: Dir, Tile (the char
                    Actor, Controls, World (step(): walking, turning, what blocks, warps, triggers, talking; the party,
                    its battles, rest), Menu (what the menu button opens: the party's screen, the bag), PartyMenu (the beasts in
                    order, two change places)
-src/Script/Vm.php  the event script interpreter: say, ask (a line with choices), flags, jumps, face, move, warp, give, battle, trial, rest, load; check()
+src/Script/Vm.php  the event script interpreter: say, ask (a line with choices), flags, jumps, face, move, warp, give, battle, trial, duel, rest, load; check()
 src/Battle/        the battle, with no drawing: Rng (bytes, from a seed or a test's script), Formulas (docs/numbers.md as code,
                    a function a rule), Fighter, Battle (turn(): order, what stops a beast, a move, statuses, weather, switching),
                    Screen (a wild battle as the player goes through it: lines, the menu, its lists, the bag's seal, fleeing),
@@ -72,6 +72,7 @@ src/Play.php       MyPHP's Game: keys and gamepad into Controls, World::step, dr
                    its GameAudio's tones
 data/game.php      where a new game starts, where the player wakes after a battle is lost, what is asked when a game is saved
 data/ranges.php    the ranges of mountains by number: the classic's book and name, the reference's gym they are measured from
+data/opponents.php those met on the roads: where each stands, how far they see, what they send (the reference's numbers)
 data/gods.php      the gods that keep the ranges: what a beast's entry has to fight with, and the classic's line
 data/items.php     the things a bag holds: the seal that binds a wild beast
 data/elements.php  the five elements: what each overcomes and feeds, physical or special, its region
@@ -123,6 +124,8 @@ docs/elements.md   the elements' table and how a beast's elements are settled
   Play passes it once to the Arena and the tones. The drawing never reads the lines' words.
 - **A trial** (`World::trial`, the script's `trial`) is a battle against the beasts of the one who sets it, a god
   among them fighting as a beast does: not fled, none bound, experience at each fall and half as much again.
+- **Those on the road** (`data/opponents.php`, docs/numbers.md 15) stand and watch (`Map::$watch`): a player who comes
+  to stand straight ahead of one within their sight is stopped and fought, by a trial's rules, until that one is beaten.
 - **A range is a gym** (docs/numbers.md 14): its wild beasts' levels and its god's trial are those of the reference's
   gym of the same number and the areas before it; a map says its `range`, and a test holds the trial to the measure.
 - **Water carries** the player who has a beast of the water element that can fight, once the fourth range's trial is

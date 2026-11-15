@@ -64,8 +64,9 @@ final class Screen
      * @param array<string, array> $things data/items.php
      * @param array<string, int> $bag the player's bag: item id => how many
      * @param ?string $trial the name of the one who sets the trial; null for a battle with a wild beast
+     * @param bool $duel the trial is one met on the road, not a god's: it goes by a trial's rules and is told in other words
      */
-    public function __construct(public readonly Battle $battle, private readonly array $moves, private readonly Rng $rng, private readonly array $things, array &$bag, public readonly ?string $trial = null)
+    public function __construct(public readonly Battle $battle, private readonly array $moves, private readonly Rng $rng, private readonly array $things, array &$bag, public readonly ?string $trial = null, public readonly bool $duel = false)
     {
         $this->bag = &$bag;
         $this->cursor = new Cursor();
@@ -75,7 +76,7 @@ final class Screen
         if ($trial === null) {
             $this->say('野生的' . $first . '出现了！');
         } else {
-            $this->say($trial . '要考校你！');
+            $this->say($trial . ($duel ? '向你挑战！' : '要考校你！'));
             $this->say($trial . '派出了' . $first . '！');
         }
         $this->say('去吧，' . $battle->fighter(0)->species['name'] . '！');
@@ -266,7 +267,7 @@ final class Screen
             return;
         }
         if ($this->trial !== null) {
-            $this->say('试炼中的异兽不能结契。');
+            $this->say($this->duel ? '对手的异兽不能结契。' : '试炼中的异兽不能结契。');
             $this->next();
             return;
         }
@@ -303,7 +304,7 @@ final class Screen
     private function flee(): void
     {
         if ($this->trial !== null) {
-            $this->say('试炼不能逃！');
+            $this->say($this->duel ? '这场对战不能逃！' : '试炼不能逃！');
             $this->next();
             return;
         }
@@ -345,7 +346,7 @@ final class Screen
             if ($this->outcome === 'lost') {
                 $this->say('你的异兽全都倒下了……');
             } elseif ($this->trial !== null) {
-                $this->say('通过了' . $this->trial . '的试炼！');
+                $this->say($this->duel ? '打赢了' . $this->trial . '！' : '通过了' . $this->trial . '的试炼！');
             }
         }
         if ($this->shownLast() !== [$this->truth(0), $this->truth(1)]) {
