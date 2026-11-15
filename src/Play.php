@@ -6,7 +6,7 @@ namespace Shanhai;
 use MyPHP\Plugins\Game\{Game, Input};
 use MyPHP\Plugins\Game\Gamepad\{Button, Gamepad, State};
 use MyPHP\UI\{Canvas, Key, Node, Painter};
-use Shanhai\Battle\Screen;
+use Shanhai\Battle\{Formulas, Screen};
 use Shanhai\Render\{Arena, Stage};
 use Shanhai\World\{Controls, Dir, World};
 
@@ -152,7 +152,7 @@ final class Play extends Game
     private function battle(Painter $p, array $r, Screen $s): void
     {
         $this->beastBox($p, $r[0] + 24, $r[1] + 24, $s, 1);
-        $this->beastBox($p, $r[0] + $r[2] - self::BOX_WIDTH - 24, $r[1] + $r[3] - 290, $s, 0);
+        $this->beastBox($p, $r[0] + $r[2] - self::BOX_WIDTH - 24, $r[1] + $r[3] - 302, $s, 0);
         if ($s->line !== null) {
             $this->dialog($p, $r, $s->line);
             return;
@@ -180,16 +180,16 @@ final class Play extends Game
 
     private const BOX_WIDTH = 300.0, BAR_HEIGHT = 10.0;
 
-    /** A beast's box: its name, level, status, and its hp as a bar; the player's with the numbers too. */
+    /** A beast's box: its name, level, status, and its hp as a bar; the player's with the numbers too, and how far it is to its next level. */
     private function beastBox(Painter $p, float $x, float $y, Screen $s, int $side): void
     {
         $shown = $s->shown[$side];
         $f = $s->battle->parties[$side][$shown['which']];
-        $h = $side === 0 ? 92.0 : 70.0;
+        $h = $side === 0 ? 104.0 : 70.0;
         $p->fill([$x, $y, self::BOX_WIDTH, $h], 0x10141a, 10.0, 0.88);
         $p->stroke([$x, $y, self::BOX_WIDTH, $h], 0xe8dcc0, 10.0, 2.0, 0.9);
         $p->text($x + 16, $y + 10, $f->species['name'], Text::SIZE, 0xf4f0e6);
-        $p->text($x + self::BOX_WIDTH - 76, $y + 12, 'Lv' . $f->level, Text::SIZE * 0.85, 0xf4f0e6);
+        $p->text($x + self::BOX_WIDTH - 76, $y + 12, 'Lv' . $shown['level'], Text::SIZE * 0.85, 0xf4f0e6);
         if ($shown['status'] !== null) {
             $p->text($x + self::BOX_WIDTH - 132, $y + 12, Screen::STATUS[$shown['status']], Text::SIZE * 0.85, 0xf0b050);
         }
@@ -202,7 +202,17 @@ final class Play extends Game
             $p->fill([$bar[0], $bar[1], max(self::BAR_HEIGHT, $bar[2] * $part), $bar[3]], $color, self::BAR_HEIGHT / 2);
         }
         if ($side === 0) {
-            $p->text($x + 16, $y + 62, $shown['hp'] . ' / ' . $f->maxHp, Text::SIZE * 0.85, 0xf4f0e6);
+            $p->text($x + 16, $y + 60, $shown['hp'] . ' / ' . $f->maxHp, Text::SIZE * 0.85, 0xf4f0e6);
+            $growth = $f->species['growth'];
+            $level = $shown['level'];
+            $p->fill([$bar[0], $y + 88, $bar[2], 4.0], 0x3a3f48, 2.0);
+            if ($level < Formulas::MAX_LEVEL) {
+                [$from, $to] = [Formulas::expAtLevel($growth, $level), Formulas::expAtLevel($growth, $level + 1)];
+                $part = max(0.0, min(1.0, ($shown['exp'] - $from) / ($to - $from)));
+                if ($part > 0.0) {
+                    $p->fill([$bar[0], $y + 88, $bar[2] * $part, 4.0], 0x50a0e0, 2.0);
+                }
+            }
         }
     }
 

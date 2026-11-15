@@ -134,6 +134,16 @@ final class Formulas
         return max(0, $exp); // 9: as meant, nothing below zero at level 1
     }
 
+    /** 7.3: the level a beast of a growth rate is at with $exp in all: the last whose experience it has. */
+    public static function levelAt(string $growth, int $exp): int
+    {
+        $level = 1;
+        while ($level < self::MAX_LEVEL && self::expAtLevel($growth, $level + 1) <= $exp) {
+            $level++;
+        }
+        return $level;
+    }
+
     /** 7.1: the experience for defeating a beast of $baseExp at $level, shared among $participants; half as much again from a trainer's. */
     public static function expGain(int $baseExp, int $level, int $participants, bool $trainer): int
     {

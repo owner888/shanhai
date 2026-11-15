@@ -12,6 +12,8 @@ use Shanhai\World\{Controls, PartyMenu};
  * Lines are read one at a time, confirm going on; between turns the menu asks what to do. What is shown of each
  * side (which beast, its hp, its status) changes with the line that tells it, not when the turn is worked out.
  * The player is side 0, and chooses the next beast when one falls. The wild beast uses any move it has left.
+ * When it falls, the player's beasts that fought it and still stand gain experience (docs/numbers.md 7.3), and one
+ * that comes to a move knowing four already is asked which to forget.
  */
 final class Screen
 {
@@ -20,11 +22,11 @@ final class Screen
     public const STATS = ['atk' => '攻击', 'def' => '防御', 'spa' => '特攻', 'spd' => '特防', 'spe' => '速度', 'acc' => '命中', 'eva' => '闪避'];
     public const STATUS = ['poison' => '毒', 'burn' => '灼', 'paralyze' => '麻', 'sleep' => '眠'];
 
-    /** text: a line is showing; menu, moves, party: a list is, with $cursor on one of it. */
+    /** text: a line is showing; menu, moves, party, forget: a list is, with $cursor on one of it. */
     public string $phase = 'text';
     public Cursor $cursor;
     public ?string $line = null;
-    /** @var array{0: array{which: int, hp: int, status: ?string}, 1: array{which: int, hp: int, status: ?string}} what is shown of each side */
+    /** @var array{0: array{which: int, hp: int, status: ?string, level: int, exp: int}, 1: array} what is shown of each side: which beast, and its hp, status, level and experience */
     public array $shown;
     /** won, lost or fled, once it is known; $done when its last line has been read. */
     public ?string $outcome = null;
@@ -33,12 +35,19 @@ final class Screen
     /** @var list<array{0: string, 1: array}> the lines still to read, each with what is shown once it is */
     private array $queue = [];
     private int $fleeTries = 0;
+    /** @var array<int, true> the player's beasts that have been out against the wild one, by their place in the party */
+    private array $fought;
+    /** @var list<array{0: int, 1: string}> the moves beasts have come to and have yet to learn: [place in the party, move] */
+    private array $toLearn = [];
+    /** Whether the line asking which move to forget for the first of $toLearn has been said. */
+    private bool $asked = false;
 
     /** @param array<string, array> $moves data/moves.php */
     public function __construct(public readonly Battle $battle, private readonly array $moves, private readonly Rng $rng)
     {
         $this->cursor = new Cursor();
         $this->shown = [$this->truth(0), $this->truth(1)];
+        $this->fought = [$battle->active[0] => true];
         $this->say('野生的' . $battle->fighter(1)->species['name'] . '出现了！');
         $this->say('去吧，' . $battle->fighter(0)->species['name'] . '！');
         $this->next();
@@ -58,13 +67,16 @@ final class Screen
         if ($this->cursor->move($c, count($this->items()))) {
             return;
         }
-        if ($c->cancel && $this->phase !== 'menu' && !$this->battle->awaits(0)) { // a fallen beast's place must be taken
+        if ($c->cancel && $this->phase === 'forget') {
+            $this->forget(Fighter::MOVES); // the last entry: not to learn it
+        } elseif ($c->cancel && $this->phase !== 'menu' && !$this->battle->awaits(0)) { // a fallen beast's place must be taken
             $this->open('menu');
         } elseif ($c->confirm) {
             match ($this->phase) {
                 'menu' => $this->chosen(array_keys(self::MENU)[$this->cursor->at]),
                 'moves' => $this->move($this->cursor->at),
                 'party' => $this->send($this->cursor->at),
+                'forget' => $this->forget($this->cursor->at),
             };
         }
     }
@@ -78,6 +90,10 @@ final class Screen
             'menu' => array_values(self::MENU),
             'moves' => array_map(fn(array $m) => sprintf('%s  %d/%d', $this->moves[$m['id']]['name'], $m['pp'], $this->moves[$m['id']]['pp']), $me->moves),
             'party' => array_map(PartyMenu::line(...), $this->battle->parties[0]),
+            'forget' => [
+                ...array_map(fn(array $m) => $this->moves[$m['id']]['name'], $this->battle->parties[0][$this->toLearn[0][0]]->moves),
+                '不学' . $this->moves[$this->toLearn[0][1]]['name'],
+            ],
         };
     }
 
@@ -130,6 +146,56 @@ final class Screen
     }
 
     /**
+     * The wild beast has fallen: each of the player's that fought it and still stands gains experience, the fallen's
+     * base experience and base stats divided among them first (docs/numbers.md 7.1, 7.3).
+     */
+    private function reward(): void
+    {
+        $foe = $this->battle->fighter(1);
+        $party = $this->battle->parties[0];
+        $who = array_filter(array_keys($this->fought), fn(int $i) => !$party[$i]->fainted());
+        sort($who);
+        $share = array_map(fn(int $base) => intdiv($base, count($who)), $foe->species['stats']);
+        $exp = Formulas::expGain($foe->species['exp'], $foe->level, count($who), false);
+        foreach ($who as $i) {
+            $f = $party[$i];
+            [$from, $to] = $f->gain($exp, $share);
+            $shown = $this->shownLast();
+            $out = $shown[0]['which'] === $i;
+            if ($out) {
+                $shown[0]['exp'] = $f->exp;
+            }
+            $this->say($f->species['name'] . '获得了' . $exp . '点经验！', $shown);
+            if ($to > $from) {
+                if ($out) {
+                    [$shown[0]['hp'], $shown[0]['level']] = [$f->hp, $f->level];
+                }
+                $this->say($f->species['name'] . '升到了' . $to . '级！', $shown);
+                foreach ($f->learnable($from, $to) as $move) {
+                    $this->toLearn[] = [$i, $move];
+                }
+            }
+        }
+    }
+
+    /** The list's answer: the move at $slot is forgotten for the new one, or, with the entry after the four, the new one is not learned. */
+    private function forget(int $slot): void
+    {
+        [$i, $move] = array_shift($this->toLearn);
+        $this->asked = false;
+        $f = $this->battle->parties[0][$i];
+        $name = $this->moves[$move]['name'];
+        if ($slot === Fighter::MOVES) {
+            $this->say($f->species['name'] . '没有学' . $name . '。');
+        } else {
+            $old = $this->moves[$f->moves[$slot]['id']]['name'];
+            $f->learn($move, $this->moves, $slot);
+            $this->say($f->species['name'] . '忘掉了' . $old . '，学会了' . $name . '！');
+        }
+        $this->next();
+    }
+
+    /**
      * Every beast's hp and status, and the stages of the two out, as they are now: tell() applies to these what the battle then writes.
      * @return array{0: array, 1: array, 2: array}
      */
@@ -174,7 +240,11 @@ final class Screen
         $this->tell(array_slice($this->battle->log, $from), $hp, $status, $stages);
         if ($this->battle->winner !== null) {
             $this->outcome = $this->battle->winner === 0 ? 'won' : 'lost';
-            $this->say($this->outcome === 'won' ? '战斗胜利了！' : '你的异兽全都倒下了……');
+            if ($this->outcome === 'won') {
+                $this->reward();
+            } else {
+                $this->say('你的异兽全都倒下了……');
+            }
         }
         if ($this->shownLast() !== [$this->truth(0), $this->truth(1)]) {
             throw new LogicException('what the lines show is not how the battle stands');
@@ -196,8 +266,12 @@ final class Screen
             $line = null;
             switch ($e[0]) {
                 case 'switch':
-                    $shown[$side] = ['which' => $e[2], 'hp' => $hp[$side][$e[2]], 'status' => $status[$side][$e[2]]];
+                    $next = $b->parties[$side][$e[2]];
+                    $shown[$side] = ['which' => $e[2], 'hp' => $hp[$side][$e[2]], 'status' => $status[$side][$e[2]], 'level' => $next->level, 'exp' => $next->exp];
                     $stages[$side] = $b->parties[$side][$e[2]]->stages;
+                    if ($side === 0) {
+                        $this->fought[$e[2]] = true;
+                    }
                     $line = ($side === 0 ? '去吧，' : '对手换上了') . $b->parties[$side][$e[2]]->species['name'] . '！';
                     break;
                 case 'cant':
@@ -269,11 +343,11 @@ final class Screen
         }
     }
 
-    /** @return array{which: int, hp: int, status: ?string} the side as the battle has it */
+    /** @return array{which: int, hp: int, status: ?string, level: int, exp: int} the side as the battle has it */
     private function truth(int $side): array
     {
         $f = $this->battle->fighter($side);
-        return ['which' => $this->battle->active[$side], 'hp' => $f->hp, 'status' => $f->status];
+        return ['which' => $this->battle->active[$side], 'hp' => $f->hp, 'status' => $f->status, 'level' => $f->level, 'exp' => $f->exp];
     }
 
     /** What will be shown when every line queued has been read. */
@@ -293,12 +367,30 @@ final class Screen
         $this->queue[array_key_last($this->queue)][1] = $shown;
     }
 
-    /** The next line; with none left, the end, or the party's list when the player's beast has fallen, or the menu. */
+    /**
+     * The next line. With none left: a move a beast has come to is learned, or, when it knows four, asked about and
+     * then chosen for in the list; then the end, or the party's list when the player's beast has fallen, or the menu.
+     */
     private function next(): void
     {
         if ($this->queue !== []) {
             [$this->line, $this->shown] = array_shift($this->queue);
             $this->phase = 'text';
+        } elseif ($this->toLearn !== []) {
+            [$i, $move] = $this->toLearn[0];
+            $f = $this->battle->parties[0][$i];
+            if (count($f->moves) < Fighter::MOVES) {
+                $f->learn($move, $this->moves);
+                array_shift($this->toLearn);
+                $this->say($f->species['name'] . '学会了' . $this->moves[$move]['name'] . '！');
+                $this->next();
+            } elseif (!$this->asked) {
+                $this->asked = true;
+                $this->say($f->species['name'] . '想学' . $this->moves[$move]['name'] . '，可是已经会四个招式了。要忘掉哪一个？');
+                $this->next();
+            } else {
+                $this->open('forget');
+            }
         } elseif ($this->outcome !== null) {
             $this->done = true;
         } else {

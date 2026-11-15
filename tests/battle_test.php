@@ -28,7 +28,7 @@ $moves = [
 ];
 /** A beast of $element knowing $known, all base stats 100 but its speed. */
 $beast = function (string $element, array $known, int $speed = 100) use ($moves): Fighter {
-    $species = ['elements' => [$element], 'stats' => ['hp' => 100, 'atk' => 100, 'def' => 100, 'spa' => 100, 'spd' => 100, 'spe' => $speed]];
+    $species = ['elements' => [$element], 'growth' => 'mediumFast', 'stats' => ['hp' => 100, 'atk' => 100, 'def' => 100, 'spa' => 100, 'spd' => 100, 'spe' => $speed]];
     return new Fighter($element, $species, 50, array_map(fn(string $m) => [1, $m], $known), $moves);
 };
 $fight = fn(array $a, array $b, array $rolls) => [$rng = Rng::scripted($rolls), new Battle([$a, $b], $elements, $moves, $rng)];

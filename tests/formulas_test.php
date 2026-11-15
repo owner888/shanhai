@@ -75,3 +75,8 @@ same(64, Formulas::fleeValue(40, 80, 1), 'a slower one: 40×32÷(80÷4)');
 same(94, Formulas::fleeValue(40, 80, 2), 'each try before adds 30');
 same(214, Formulas::fleeValue(40, 80, 6), 'and again');
 same(null, Formulas::fleeValue(40, 80, 8), 'until it is sure: 64+210 is over 255');
+
+// 7.3: the level experience makes.
+same([1, 4, 5, 5, 6], array_map(fn(int $exp) => Formulas::levelAt('mediumFast', $exp), [0, 124, 125, 215, 216]), 'a level is reached with its n³, and held until the next');
+same([5, 6], [Formulas::levelAt('mediumSlow', 178), Formulas::levelAt('mediumSlow', 179)], 'by each growth rate\'s own curve: 135 at level 5, 179 at level 6');
+same(100, Formulas::levelAt('slow', 99999999), 'and no level is over 100');

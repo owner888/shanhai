@@ -93,6 +93,8 @@ docs/elements.md   the elements' table and how a beast's elements are settled
   done; the script that began it then goes on. The Screen shows a turn line by line: hp changes with the line that tells it.
 - **The party is its Fighters**: a battle is fought by the party's own beasts, so their hp, status and moves' uses are
   what it left them; stages and confusion end with it. Lost, the player wakes at `data/game.php`'s rest, the party whole.
+- **A beast grows in its Fighter**: experience, each stat's experience, the level they make, the moves it comes to
+  (`gain()`, `learnable()`, `learn()`); the Screen gives them when the wild beast falls and asks which move to forget.
 - **A map change** is counted in `World::$mapChanges`; Play builds a new Stage when it sees one.
 - **Drawing interpolates**: `Actor::place($alpha)` is between two updates' places, so motion is smoother than its steps.
 

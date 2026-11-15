@@ -261,3 +261,90 @@ $w->step($menu);
 $w->step($none);
 $w->step($menu);
 same(null, $w->menu, 'the menu button closes it too');
+
+// Experience (docs/numbers.md 7.1, 7.3). 鹿蜀 at level 5 has 135; a 狌狌 of level 4 (base experience 81) gives 81 × 4 ÷ 7 = 46,
+// which makes 181: level 6 begins at 179. Its hp at most goes from 23 to 26, and at level 6 it learns 歌谣.
+$win = function (Screen $s) use ($confirm, $none): array {
+    $lines = [];
+    for ($i = 0; !$s->done && $s->phase !== 'forget' && $i < 4000; $i++) {
+        if ($s->phase === 'text' && $i % 2 === 0) {
+            $lines[] = [$s->line, $s->shown[0]['hp']];
+        }
+        $s->step($i % 2 === 0 ? $confirm : $none); // every list's first entry: the first move
+    }
+    return $lines;
+};
+$s = $screen([['lushu', 5]], ['xingxing', 4], Rng::seeded(11));
+$f = $s->battle->parties[0][0];
+same([135, 23, 2], [$f->exp, $f->maxHp, count($f->moves)], '鹿蜀 at level 5: 135 experience, 23 hp, two moves');
+$lines = $win($s);
+$texts = array_column($lines, 0);
+same('won', $s->outcome, 'it wins');
+same(['鹿蜀获得了46点经验！', '鹿蜀升到了6级！', '鹿蜀学会了歌谣！'], array_slice($texts, -3), 'the lines after the wild beast falls');
+same([6, 181, 26], [$f->level, $f->exp, $f->maxHp], 'level 6, 181 experience, 26 hp at most');
+same(['hp' => 45, 'atk' => 50, 'def' => 35, 'spe' => 85, 'spc' => 55], $f->statExp, 'each stat\'s experience grows by the fallen\'s base value, the special one by its special attack');
+same(3, $lines[count($lines) - 2][1] - $lines[count($lines) - 3][1], 'the hp rises by as much as its most did, with the line that tells the level');
+same([$f->hp, 'chant', 30], [$s->shown[0]['hp'], $f->moves[2]['id'], $f->moves[2]['pp']], 'what is shown ends true; the move is its third, with all its uses');
+check($s->done, 'and the battle is done');
+
+// A beast that knows four moves is asked which to forget.
+$name = fn(string $id) => $book['moves'][$id]['name'];
+foreach ([1 => 'forgets its second', null => 'does not learn it'] as $slot => $what) {
+    $s = $screen([['lushu', 20]], ['xingxing', 3], Rng::seeded(11));
+    $f = $s->battle->parties[0][0];
+    same(['spark', 'chant', 'redtail', 'stripes'], array_column($f->moves, 'id'), 'at level 20 it knows the last four it came to');
+    $f->exp = \Shanhai\Battle\Formulas::expAtLevel('mediumSlow', 21) - 1;
+    $texts = array_column($win($s), 0);
+    same(['forget', 21, false], [$s->phase, $f->level, $s->done], 'at level 21 it comes to a fifth, and the list asks');
+    same('鹿蜀想学' . $name('flame') . '，可是已经会四个招式了。要忘掉哪一个？', end($texts), 'after the line that says so');
+    same([$name('spark'), $name('chant'), $name('redtail'), $name('stripes'), '不学' . $name('flame')], $s->items(), 'its four moves, and not learning the new one');
+    if ($slot === 1) {
+        $s->step($down);
+        $s->step($confirm);
+        same('鹿蜀忘掉了' . $name('chant') . '，学会了' . $name('flame') . '！', $s->line, "it $what");
+        same(['spark', 'flame', 'redtail', 'stripes'], array_column($f->moves, 'id'), 'the new move in its place');
+        same($book['moves']['flame']['pp'], $f->moves[1]['pp'], 'with all its uses');
+    } else {
+        $s->step($cancel);
+        same('鹿蜀没有学' . $name('flame') . '。', $s->line, "cancel: it $what");
+        same(['spark', 'chant', 'redtail', 'stripes'], array_column($f->moves, 'id'), 'its moves as they were');
+    }
+    check(!$s->done, 'the battle waits for the line');
+    $s->step($confirm);
+    check($s->done, 'and is done');
+}
+
+// Those that fought share: the fallen's base experience and base stats are divided among them first. One that fell gains nothing.
+foreach ([false, true] as $fell) {
+    $s = $screen([['xingxing', 30], ['lushu', 30]], ['xingxing', 3], Rng::seeded(11));
+    foreach ([$confirm, $confirm, $down, $confirm, $none, $down, $confirm] as $c) { // the two lines; the party's list; its second beast
+        $s->step($c);
+    }
+    same(1, $s->battle->active[0], 'the second beast is sent');
+    [$first, $second] = $s->battle->parties[0];
+    $before = [$first->exp, $second->exp];
+    if ($fell) {
+        $first->hp = 0;
+    }
+    $win($s);
+    same('won', $s->outcome, 'it wins');
+    // two share: 81 ÷ 2 = 40, 40 × 3 ÷ 7 = 17, and of the speed's 85 each has 42; one alone: 81 × 3 ÷ 7 = 34, and 85
+    same($fell ? [0, 34, 0, 85] : [17, 17, 42, 42], [$first->exp - $before[0], $second->exp - $before[1], $first->statExp['spe'], $second->statExp['spe']], $fell ? 'the one that fell gains nothing, the other all' : 'both that fought gain, each its share');
+}
+
+// Many levels at once: the level is the one the experience makes, and every move on the way is come to, in order.
+$f = $fighter('lushu', 5);
+[$from, $to] = $f->gain(100000, ['hp' => 0, 'atk' => 0, 'def' => 0, 'spa' => 0, 'spe' => 0]);
+same([5, \Shanhai\Battle\Formulas::levelAt('mediumSlow', 100135)], [$from, $to], 'from level 5 to the level 100135 experience makes');
+same(47, $to, 'which is level 47');
+same(['chant', 'redtail', 'stripes', 'flame', 'dust', 'drywind', 'swift', 'blaze', 'wildfire', 'sleepless'], $f->learnable($from, $to), 'the moves of the levels passed, which it does not know');
+check(throws(fn() => $f->learn('chant', $book['moves'], 3)), 'a move cannot take the place of one that is not there');
+$f->gain(2000000000, ['hp' => 70000, 'atk' => 0, 'def' => 0, 'spa' => 0, 'spe' => 0]);
+same([100, \Shanhai\Battle\Formulas::expAtLevel('mediumSlow', 100), 65535], [$f->level, $f->exp, $f->statExp['hp']], 'level 100, its experience and a stat\'s experience are the most there are');
+
+// The lines about learning fit the box with the longest names there are.
+$longest = fn(array $rows) => array_reduce(array_column($rows, 'name'), fn(string $a, string $b) => mb_strwidth($b) > mb_strwidth($a) ? $b : $a, '');
+[$beastName, $moveName] = [$longest($book['beasts']), $longest($book['moves'])];
+foreach ([$beastName . '想学' . $moveName . '，可是已经会四个招式了。要忘掉哪一个？', $beastName . '忘掉了' . $moveName . '，学会了' . $moveName . '！', '野生的' . $beastName . '的特防大幅提高了！'] as $line) {
+    check(count(Text::wrap($line, Text::columns())) <= Text::LINES, "the line fits the box: $line");
+}
