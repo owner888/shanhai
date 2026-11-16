@@ -6,7 +6,7 @@ namespace Shanhai\Tests;
 
 use Shanhai\{Data, Save};
 use Shanhai\Battle\{Fighter, Rng};
-use Shanhai\World\{Controls, Dir, Map, World};
+use Shanhai\World\{Controls, Dir, Map, Pen, World};
 
 $book = ['beasts' => Data::beasts(), 'learnsets' => Data::learnsets(), 'moves' => Data::moves(), 'elements' => Data::elements(), 'items' => Data::items()];
 $file = sys_get_temp_dir() . '/shanhai-save-test-' . getmypid() . '.json';
@@ -78,8 +78,23 @@ $again->restore($other->state());
 same($other->state()['rest'], $again->restAt, 'and comes back');
 check(throws(fn() => $other->restore(array_replace($state, ['rest' => ['nowhere', 0, 0, 'up']]))), 'a place of rest on a map there is none of is refused');
 // A file of the first format, which had no place of rest, is read as one that rested nowhere.
-file_put_contents($file, json_encode(['version' => 1, 'state' => array_diff_key($state, ['rest' => 0])]));
+file_put_contents($file, json_encode(['version' => 1, 'state' => array_diff_key($state, ['rest' => 0, 'boxes' => 0, 'box' => 0])]));
 same($state, Save::read($file), 'a file of format 1 is read as having rested nowhere');
+// The pen is kept: which box is the current one, and each box's beasts. A file of the second format, which had no pen, is read as one with nothing in it.
+same([array_fill(0, Pen::BOXES, []), 0], [$state['boxes'], $state['box']], 'a game that has left nothing in the pen keeps fourteen empty boxes');
+file_put_contents($file, json_encode(['version' => 2, 'state' => array_diff_key($state, ['boxes' => 0, 'box' => 0])]));
+same($state, Save::read($file), 'a file of format 2 is read as having nothing in the pen');
+$penned = new World($maps, 'hut', 0, 0, Dir::Down, $book, Rng::seeded(2));
+$penned->restore($state);
+$penned->box = 3;
+$penned->boxes[3][] = array_pop($penned->party);
+$kept = json_decode(json_encode($penned->state()), true);
+$again = new World($maps, 'hut', 0, 0, Dir::Down, $book, Rng::seeded(2));
+$again->restore($kept);
+same([3, ['xingxing'], ['xuangui'], $kept], [$again->box, array_map(fn(Fighter $f) => $f->id, $again->boxes[3]), array_map(fn(Fighter $f) => $f->id, $again->party), $again->state()], 'the pen comes back as it was, through JSON');
+check(throws(fn() => $again->restore(array_replace($kept, ['box' => Pen::BOXES]))), 'a current box there is none of is refused');
+check(throws(fn() => $again->restore(array_replace($kept, ['boxes' => array_slice($kept['boxes'], 1)]))), 'a pen of thirteen boxes is refused');
+check(throws(fn() => $again->restore(array_replace($kept, ['boxes' => array_replace($kept['boxes'], [array_fill(0, Pen::BOX + 1, $kept['boxes'][3][0])])]))), 'a box of twenty-one is refused');
 file_put_contents($file, json_encode(['version' => 99, 'state' => $state]));
 check(throws(fn() => Save::read($file)), 'a file of a format not known is refused');
 Save::write($file, $state);

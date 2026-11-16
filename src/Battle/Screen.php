@@ -5,7 +5,7 @@ namespace Shanhai\Battle;
 
 use LogicException;
 use Shanhai\Cursor;
-use Shanhai\World\{Controls, Menu, PartyMenu, World};
+use Shanhai\World\{Controls, Menu, PartyMenu};
 
 /**
  * A battle as the player goes through it, with no drawing: with a wild beast, or, with $trial, a trial, against the
@@ -15,7 +15,8 @@ use Shanhai\World\{Controls, Menu, PartyMenu, World};
  * The player is side 0, and chooses the next beast when one falls. A wild beast uses any move it has left; in a
  * trial the other side uses the move that would do most. When one of theirs falls, the player's beasts that fought it and still stand gain experience (docs/numbers.md 7.3), and one
  * that comes to a move knowing four already is asked which to forget. A seal from the bag tries to bind the wild
- * beast (docs/numbers.md 8): bound, it is $caught and the battle ends; else the turn is the wild beast's.
+ * beast (docs/numbers.md 8): bound, it is $caught and the battle ends; else the turn is the wild beast's. With a full
+ * party the beast bound goes to the pen's current box, and with that full too no seal is used (docs/numbers.md 16).
  */
 final class Screen
 {
@@ -65,8 +66,10 @@ final class Screen
      * @param array<string, int> $bag the player's bag: item id => how many
      * @param ?string $trial the name of the one who sets the trial; null for a battle with a wild beast
      * @param bool $duel the trial is one met on the road, not a god's: it goes by a trial's rules and is told in other words
+     * @param ?string $pen the name of the pen's box a beast bound is sent to, the party being full; null when it joins the party
+     * @param int $penRoom how many more that box holds
      */
-    public function __construct(public readonly Battle $battle, private readonly array $moves, private readonly Rng $rng, private readonly array $things, array &$bag, public readonly ?string $trial = null, public readonly bool $duel = false)
+    public function __construct(public readonly Battle $battle, private readonly array $moves, private readonly Rng $rng, private readonly array $things, array &$bag, public readonly ?string $trial = null, public readonly bool $duel = false, private readonly ?string $pen = null, private readonly int $penRoom = 0)
     {
         $this->bag = &$bag;
         $this->cursor = new Cursor();
@@ -131,13 +134,13 @@ final class Screen
 
     /**
      * The bag's lines; beside what binds, how likely it is to as the wild beast stands (docs/numbers.md 8), when it
-     * can be tried at all: not in a trial, nor with a full party.
+     * can be tried at all: not in a trial, nor with the party and the pen's box both full.
      * @return list<string>
      */
     private function bagLines(): array
     {
         $lines = Menu::bag($this->bag, $this->things);
-        if ($this->trial !== null || count($this->battle->parties[0]) >= World::PARTY) {
+        if ($this->trial !== null || !$this->room()) {
             return $lines;
         }
         $foe = $this->battle->fighter(1);
@@ -278,6 +281,12 @@ final class Screen
         return [$hp, $status, $stages];
     }
 
+    /** Whether a beast bound has somewhere to go: the party, or the pen's box it would be sent to. */
+    private function room(): bool
+    {
+        return $this->pen === null || $this->penRoom > 0;
+    }
+
     /** A thing of the bag is used: a seal is thrown; another is of no use here. */
     private function use(string $id): void
     {
@@ -292,8 +301,8 @@ final class Screen
             $this->next();
             return;
         }
-        if (count($this->battle->parties[0]) >= World::PARTY) {
-            $this->say('队伍已经满了，没法再结契。');
+        if (!$this->room()) {
+            $this->say('队伍和兽栏的' . $this->pen . '都满了，没法再结契。');
             $this->next();
             return;
         }
@@ -308,6 +317,12 @@ final class Screen
         if ($this->rng->byte() <= $needs) {
             [$this->outcome, $this->caught] = ['caught', $foe];
             $this->say('结契成功！' . $name . '成了你的同伴！', null, ['what' => 'caught']);
+            if ($this->pen !== null) {
+                $this->say('队伍满了，' . $name . '被送到了兽栏的' . $this->pen . '。');
+                if ($this->penRoom === 1) {
+                    $this->say($this->pen . '满了。到兽栏换一栏之前，没法再结契。');
+                }
+            }
             $this->next();
             return;
         }

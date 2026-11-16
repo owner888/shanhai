@@ -33,6 +33,12 @@ final class World
     public array $items = [];
     /** @var list<Fighter> the beasts with the player, as their battles have left them; the first begins a battle */
     public array $party = [];
+    /** @var list<list<Fighter>> the pen's boxes: the beasts kept there, whole */
+    public array $boxes;
+    /** Which of the boxes is the current one: a beast bound with the party full goes there. */
+    public int $box = 0;
+    /** The pen's screen, which a script's 'pen' opens; null when it is not open. */
+    public ?Pen $pen = null;
     /** The menu the menu button opens; null when it is not open. */
     public ?Menu $menu = null;
     /** The line the dialog box shows, which confirm closes; null when there is none. */
@@ -69,6 +75,7 @@ final class World
     public function __construct(private readonly array $maps, string $map, int $x, int $y, Dir $dir, private readonly ?array $book = null, private readonly ?Rng $rng = null, private readonly ?string $saveFile = null)
     {
         $this->player = new Actor('player', $x, $y, $dir, 'player');
+        $this->boxes = Pen::emptied();
         $this->enter($map, $x, $y, $dir);
     }
 
@@ -93,8 +100,13 @@ final class World
                 return;
             }
             $this->lastBattle = $this->battle->outcome;
-            if ($this->battle->caught !== null) {
-                $this->party[] = $this->battle->caught;
+            if (($caught = $this->battle->caught) !== null) {
+                if (count($this->party) < self::PARTY) {
+                    $this->party[] = $caught;
+                } else { // to the pen's current box, first in it, whole as all kept there are (docs/numbers.md 16)
+                    $caught->restore($this->book['moves']);
+                    array_unshift($this->boxes[$this->box], $caught);
+                }
             }
             $this->battle = null;
             $this->wildWait = Formulas::WILD_WAIT;
@@ -106,6 +118,13 @@ final class World
                 return;
             }
             $c = new Controls(); // the press that closed the battle's last line does nothing else
+        }
+        if ($this->pen !== null) {
+            $this->pen->step($c, $this->party, $this->boxes, $this->box, $this->book['moves']);
+            if ($this->pen->done) {
+                $this->pen = null;
+            }
+            return;
         }
         if ($this->menu !== null) {
             $this->menu->step($c, $this->party, $this->items);
@@ -306,7 +325,9 @@ final class World
             throw new LogicException('a battle with no beast in the party that can fight');
         }
         $b = $this->book;
-        $this->battle = new Screen(new Battle([$this->party, $theirs], $b['elements'], $b['moves'], $this->rng, [true, false]), $b['moves'], $this->rng, $b['items'], $this->items, $trial, $duel);
+        $full = count($this->party) >= self::PARTY;
+        $this->battle = new Screen(new Battle([$this->party, $theirs], $b['elements'], $b['moves'], $this->rng, [true, false]), $b['moves'], $this->rng, $b['items'], $this->items, $trial, $duel,
+            $full ? Pen::name($this->box) : null, $full ? Pen::BOX - count($this->boxes[$this->box]) : 0);
     }
 
     /**
@@ -352,7 +373,16 @@ final class World
         $this->walk($p, $p->dir);
     }
 
-    /** What a saved game keeps: where the player is, the flags, the bag, the party, where it last rested. Asked for when nothing holds the controls. */
+    /** Opens the pen's screen. */
+    public function pen(): void
+    {
+        if ($this->book === null) {
+            throw new LogicException('this world was made without the tables the pen needs');
+        }
+        $this->pen = new Pen();
+    }
+
+    /** What a saved game keeps: where the player is, the flags, the bag, the party, the pen's boxes, where it last rested. Asked for when nothing holds the controls. */
     public function state(): array
     {
         if ($this->afloat) {
@@ -360,14 +390,20 @@ final class World
         }
         $p = $this->player;
         return ['map' => $this->map->id, 'x' => $p->x, 'y' => $p->y, 'dir' => $p->dir->value, 'flags' => array_keys($this->flags),
-            'items' => $this->items, 'party' => array_map(fn(Fighter $f) => $f->state(), $this->party), 'rest' => $this->restAt];
+            'items' => $this->items, 'party' => array_map(fn(Fighter $f) => $f->state(), $this->party), 'rest' => $this->restAt,
+            'boxes' => array_map(fn(array $box) => array_map(fn(Fighter $f) => $f->state(), $box), $this->boxes), 'box' => $this->box];
     }
 
     /** Puts the world as a saved game kept it (state()). */
     public function restore(array $s): void
     {
         $b = $this->book ?? throw new LogicException('this world was made without the tables a saved game needs');
-        $party = array_map(fn(array $f) => Fighter::fromState($f, $b['beasts'], $b['learnsets'], $b['moves']), $s['party']);
+        $beast = fn(array $f) => Fighter::fromState($f, $b['beasts'], $b['learnsets'], $b['moves']);
+        $party = array_map($beast, $s['party']);
+        $boxes = array_map(fn(array $box) => array_map($beast, $box), $s['boxes']);
+        if (!array_is_list($boxes) || count($boxes) !== Pen::BOXES || !isset($boxes[$s['box']]) || array_filter($boxes, fn(array $box) => !array_is_list($box) || count($box) > Pen::BOX) !== []) {
+            throw new InvalidArgumentException('the saved game\'s pen is not as a pen can be');
+        }
         $map = $this->maps[$s['map']] ?? throw new InvalidArgumentException("the saved game is on a map there is none of: '{$s['map']}'");
         if (count($party) > self::PARTY || !$map->walkable($s['x'], $s['y']) || array_diff_key($s['items'], $b['items']) !== []) {
             throw new InvalidArgumentException('the saved game is not as a game can be');
@@ -376,7 +412,7 @@ final class World
         if ($rest !== null && !(isset($this->maps[$rest[0]]) && $this->maps[$rest[0]]->walkable($rest[1], $rest[2]) && Dir::tryFrom($rest[3]) !== null)) {
             throw new InvalidArgumentException('the saved game\'s place of rest is not one there is');
         }
-        [$this->flags, $this->items, $this->party, $this->restAt] = [array_fill_keys($s['flags'], true), $s['items'], $party, $rest];
+        [$this->flags, $this->items, $this->party, $this->restAt, $this->boxes, $this->box] = [array_fill_keys($s['flags'], true), $s['items'], $party, $rest, $boxes, $s['box']];
         $this->enter($s['map'], $s['x'], $s['y'], Dir::from($s['dir']));
     }
 

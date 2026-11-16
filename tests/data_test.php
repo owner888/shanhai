@@ -470,17 +470,20 @@ same([1 => [12, 25], 2 => [23, 43], 3 => [22, 44], 4 => [9, 20], 5 => [35, 72], 
 foreach ($foes['says'] as $says) {
     check(count($says) === 3 && !in_array('', $says, true), 'what an opponent says is three lines: before, beaten, met again');
 }
-// Each range has somewhere the party is made whole, as the reference has a place to heal in each town.
-$rests = [];
+// Each range has somewhere the party is made whole, as the reference has a place to heal in each town, and the pen
+// there, as the reference has its storage where it heals.
+$rests = $pens = [];
 foreach ($maps as $map) {
     foreach ([...$map->npcs, ...$map->signs] as $who) {
         foreach (end($who) as $cmd) {
             $rests[$map->range] = ($rests[$map->range] ?? false) || $cmd[0] === 'rest';
+            $pens[$map->range] = ($pens[$map->range] ?? false) || $cmd[0] === 'pen';
         }
     }
 }
 foreach (array_keys($ranges) as $n) {
     check($rests[$n] ?? false, "range $n has someone or something that makes the party whole");
+    check($pens[$n] ?? false, "range $n has the pen");
 }
 // A range after the first is come to from the one before it, and gone back from: someone on a map of each sends the
 // player to a map of the other.

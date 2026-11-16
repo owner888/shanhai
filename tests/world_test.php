@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Shanhai\Tests;
 
 use Shanhai\Data;
-use Shanhai\World\{Controls, Dir, World};
+use Shanhai\World\{Controls, Dir, Pen, World};
 
 /** Holds $dir until the player stands on $x,$y of map $map (which may be another), then lets go. */
 $go = function (World $w, Dir $dir, int $x, int $y, ?string $map = null): bool {
@@ -95,6 +95,8 @@ $confirm($w);
 $confirm($w);
 same([['guanguan', 5]], array_map(fn($f) => [$f->id, $f->level], $w->party), 'the third, taken, joins the player');
 check($w->choices === null && $w->dialog !== null, 'and she goes on');
+$confirm($w);
+same('带不走的异兽，可以寄在屋后的兽栏里。各个山系的渡者那里也通着它。', $w->dialog, 'and tells of the pen');
 $confirm($w);
 check(isset($w->flags['metShaman']) && !$w->busy(), 'through her lines');
 same(['seal' => 5], $w->items, 'she gives seals');
@@ -296,3 +298,86 @@ $w->enter('lake', 0, 0, Dir::Down);
 $go(Dir::Up);
 same(['lake', 0, 0], [$w->map->id, $w->player->x, $w->player->y], 'ashore, the player does not cross onto another map\'s water');
 check(throws(fn() => $w->float()), 'nor go onto water that is not faced');
+
+// The pen (docs/numbers.md 16): a script opens it and waits; beasts are left in the current box and taken from it.
+$w = Data::newWorld(1);
+$w->join('lushu', 5);
+$w->join('xuangui', 5);
+$w->party[1]->hp = 0;
+$press = new Controls(confirm: true);
+$back = new Controls(cancel: true);
+/** Moves the cursor $n down and confirms. */
+$pick = function (int $n) use ($w, $press): void {
+    for ($i = 0; $i < $n; $i++) {
+        $w->step(new Controls(Dir::Down));
+        $w->step(new Controls());
+    }
+    $w->step($press);
+};
+$ids = fn(array $beasts) => array_map(fn($f) => $f->id, $beasts);
+$items = fn() => $w->pen->items($w->party, $w->boxes, $w->box);
+$w->run([['pen'], ['say', 'closed']]);
+check($w->pen !== null && $w->dialog === null, 'a script opens the pen, and waits');
+same(['取出', '寄存', '放归', '换栏  第一栏 0/20'], $items(), 'its first list: taking, leaving, setting free, and the current box');
+$pick(1);
+same(['鹿蜀  Lv5  ' . $w->party[0]->hp . '/' . $w->party[0]->maxHp, '旋龟  Lv5  0/' . $w->party[1]->maxHp . '  倒'], $items(), 'leaving shows the party');
+$pick(0);
+same(['队伍里要留一只能战斗的。', 2], [$w->pen->note, count($w->party)], 'the only beast that can fight is not left');
+$w->step($press);
+$pick(1);
+$kept = $w->boxes[0][0];
+same(['把旋龟寄在了第一栏。', ['lushu'], ['xuangui'], $kept->maxHp], [$w->pen->note, $ids($w->party), $ids($w->boxes[0]), $kept->hp], 'another is, and in the box it is whole');
+$w->step($press);
+$pick(0);
+same(['最后一只不能寄存。', 1], [$w->pen->note, count($w->party)], 'the last of the party is not left');
+$w->step($press);
+$w->step($back);
+$pick(3);
+same(Pen::BOXES, count($items()), 'changing box shows the fourteen');
+$pick(2);
+same([2, '换栏  第三栏 0/20'], [$w->box, $items()[3]], 'the one chosen is the current one');
+$pick(0);
+same(['（空）'], $items(), 'taking from an empty box shows it empty');
+$w->step($press);
+same([null, 1], [$w->pen->note, count($w->party)], 'and takes nothing');
+$w->step($back);
+$pick(3);
+$pick(0);
+$pick(0);
+$pick(0);
+same(['把旋龟带回了队伍。', ['lushu', 'xuangui'], []], [$w->pen->note, $ids($w->party), $ids($w->boxes[0])], 'a beast taken joins the party');
+$w->step($press);
+$w->step($back);
+for ($i = 0; $i < 4; $i++) {
+    $w->join('xingxing', 2);
+}
+$w->boxes[0] = [$w->party[5], $w->party[4]];
+$w->party[4] = $w->party[5] = $w->party[0];
+$pick(0);
+$pick(0);
+same(['队伍已经满了。', 2], [$w->pen->note, count($w->boxes[0])], 'none is taken into a full party');
+$w->step($press);
+$w->step($back);
+$pick(2);
+$pick(1);
+same(['留下', '放归狌狌'], $items(), 'setting one free asks first');
+$pick(0);
+same([2, 'free'], [count($w->boxes[0]), $w->pen->phase], 'kept, it stays');
+$pick(1);
+$pick(1);
+same(['狌狌回山里去了。', 1], [$w->pen->note, count($w->boxes[0])], 'set free, it is gone');
+$w->step($press);
+$w->step($back);
+$w->boxes[0] = array_fill(0, Pen::BOX, $w->boxes[0][0]);
+$pick(1);
+$pick(1);
+same(['第一栏满了。', World::PARTY], [$w->pen->note, count($w->party)], 'none is left in a full box');
+$w->step($press);
+$w->step($back);
+$w->step($back);
+same([null, null], [$w->pen, $w->dialog], 'cancel at its first list closes it');
+$w->step(new Controls());
+same('closed', $w->dialog, 'and the script goes on');
+$twenty = array_map(strval(...), range(0, 19));
+same([[['0', '1', '2', '3', '4', '5', '6', '7'], 0], [['6', '7', '8', '9', '10', '11', '12', '13'], 4], [['12', '13', '14', '15', '16', '17', '18', '19'], 7], [['a', 'b'], 1]],
+    [Pen::window($twenty, 0), Pen::window($twenty, 10), Pen::window($twenty, 19), Pen::window(['a', 'b'], 1)], 'a long list shows eight lines about its cursor');

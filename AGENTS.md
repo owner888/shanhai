@@ -54,8 +54,8 @@ src/load.php       the autoloader of Shanhai\ (src/)
 src/World/         the game outside battle, with no drawing: Dir, Tile (the characters maps are written in), Map,
                    Actor, Controls, World (step(): walking, turning, what blocks, warps, triggers, talking; the party,
                    its battles, rest), Menu (what the menu button opens: the party's screen, the bag), PartyMenu (the beasts in
-                   order, two change places)
-src/Script/Vm.php  the event script interpreter: say, ask (a line with choices), flags, jumps, face, move, warp, give, battle, trial, duel, rest, load; check()
+                   order, two change places), Pen (the boxes where beasts not taken along are kept)
+src/Script/Vm.php  the event script interpreter: say, ask (a line with choices), flags, jumps, face, move, warp, give, battle, trial, duel, rest, pen, load; check()
 src/Battle/        the battle, with no drawing: Rng (bytes, from a seed or a test's script), Formulas (docs/numbers.md as code,
                    a function a rule), Fighter, Battle (turn(): order, what stops a beast, a move, statuses, weather, switching),
                    Screen (a wild battle as the player goes through it: lines, the menu, its lists, the bag's seal, fleeing),
@@ -134,7 +134,9 @@ docs/elements.md   the elements' table and how a beast's elements are settled
 - **Water carries** the player who has a beast of the water element that can fight, once the fourth range's trial is
   passed (`World::float`, `data/game.php`'s `float`): afloat, water is
   walked on, the map's `water` holds three wild beasts, and stepping onto land ends it. A game is not saved afloat.
-- **A saved game** is `World::state()`: the map and place, flags, bag, where it last rested, and each beast's `Fighter::state()`. What does not
+- **The pen** (兽栏, `World::$boxes`, docs/numbers.md 16) is fourteen boxes of twenty, one the current: a beast bound with
+  the party full goes there, whole; a script's `pen` opens its screen (`Pen`), where each range's place of rest is.
+- **A saved game** is `World::state()`: the map and place, flags, bag, where it last rested, the pen, and each beast's `Fighter::state()`. What does not
   fit the data it is read with throws; a new field means a new `Save::VERSION`.
 - **A map change** is counted in `World::$mapChanges`; Play builds a new Stage when it sees one.
 - **Drawing interpolates**: `Actor::place($alpha)` is between two updates' places, so motion is smoother than its steps.

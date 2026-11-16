@@ -6,7 +6,7 @@ namespace Shanhai\Tests;
 
 use Shanhai\{Data, Text};
 use Shanhai\Battle\{Battle, Fighter, Rng, Screen};
-use Shanhai\World\{Controls, Dir, Map, World};
+use Shanhai\World\{Controls, Dir, Map, Pen, World};
 
 $book = ['beasts' => Data::beasts(), 'learnsets' => Data::learnsets(), 'moves' => Data::moves(), 'elements' => Data::elements(), 'items' => Data::items(),
     'rest' => ['map' => 'hut', 'x' => 1, 'y' => 0, 'dir' => 'up', 'script' => [['say', 'awake']]]];
@@ -336,14 +336,30 @@ foreach ([...$open, $confirm, $confirm, $confirm] as $c) {
 }
 same([null, 'caught', ['lushu', 'xingxing'], 7, [], 'after'], [$w->battle, $w->lastBattle, array_map(fn($f) => $f->id, $w->party), $w->party[1]->hp, $w->items, $w->dialog], 'it joins the party with the hp it had, the seal is spent, and the script goes on');
 $w->step($confirm);
-for ($i = 0; $i < 4; $i++) {
-    $w->join('xingxing', 2);
+// With six in the party the beast bound goes to the pen's current box, first in it and whole, and the player is told
+// when that fills the box; with the box full too no seal is used (docs/numbers.md 16).
+$w = new World($maps, 'field', 0, 0, Dir::Down, $book, Rng::scripted([0]));
+for ($i = 0; $i < World::PARTY; $i++) {
+    $w->join('lushu', 30);
 }
-$w->run([['give', 'seal', 1], ['battle', 'xingxing', 4]]);
+$w->box = 2;
+$w->boxes[2] = array_map(fn() => $fighter('xingxing', 2), range(2, Pen::BOX));
+$w->run([['give', 'seal', 2], ['battle', 'xingxing', 4]]);
+$w->battle->battle->fighter(1)->hp = 7;
 foreach ([...$open, $confirm] as $c) {
     $w->step($c);
 }
-same(['队伍已经满了，没法再结契。', ['seal' => 1]], [$w->battle->line, $w->items], 'with six in the party a seal is not used');
+for ($lines = []; $w->battle !== null && count($lines) < 9; $w->step($confirm)) {
+    $lines[] = $w->battle->line;
+}
+same(['使用了契印！', '结契成功！狌狌成了你的同伴！', '队伍满了，狌狌被送到了兽栏的第三栏。', '第三栏满了。到兽栏换一栏之前，没法再结契。'], $lines, 'with six in the party the beast bound is sent to the pen, and the box it fills is told of');
+$kept = $w->boxes[2][0];
+same([World::PARTY, Pen::BOX, 4, $kept->maxHp, ['seal' => 1]], [count($w->party), count($w->boxes[2]), $kept->level, $kept->hp, $w->items], 'it is first in the current box, whole, and the seal is spent');
+$w->run([['battle', 'xingxing', 4]]);
+foreach ([...$open, $confirm] as $c) {
+    $w->step($c);
+}
+same(['队伍和兽栏的第三栏都满了，没法再结契。', ['seal' => 1]], [$w->battle->line, $w->items], 'with the party and the box both full a seal is not used');
 
 // Experience (docs/numbers.md 7.1, 7.3). 鹿蜀 at level 5 has 135; a 狌狌 of level 4 (base experience 81) gives 81 × 4 ÷ 7 = 46,
 // which makes 181: level 6 begins at 179. Its hp at most goes from 23 to 26, and at level 6 it learns 歌谣.

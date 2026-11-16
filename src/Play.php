@@ -9,7 +9,7 @@ use MyPHP\Plugins\Game\Gamepad\{Button, Gamepad, State};
 use MyPHP\UI\{Canvas, Key, Node, Painter};
 use Shanhai\Battle\{Formulas, Screen};
 use Shanhai\Render\{Arena, Stage};
-use Shanhai\World\{Controls, Dir, World};
+use Shanhai\World\{Controls, Dir, Pen, World};
 
 /**
  * The game as MyPHP runs it (Plugins\Game): each update reads the keys and the gamepad into Controls and steps
@@ -117,6 +117,7 @@ final class Play extends Game
             $w->battle !== null => $w->battle->phase === 'text' ? null : $w->battle->phase . $w->battle->cursor->at,
             $w->choices !== null => 'ask' . $w->choiceCursor->at,
             $w->menu !== null => $w->menu->phase . $w->menu->at(),
+            $w->pen !== null => $w->pen->note !== null ? null : 'pen' . $w->pen->phase . $w->pen->cursor->at,
             default => null,
         };
         // the same list, its cursor elsewhere: a list just opened makes no sound
@@ -242,6 +243,14 @@ final class Play extends Game
         if ($this->world->menu !== null) {
             $menu = $this->world->menu;
             $this->choices($p, $r, $menu->items($this->world->party, $this->world->items, $this->items), $menu->at(), $menu->phase === 'top' ? 200.0 : 420.0);
+        }
+        if (($pen = $this->world->pen) !== null) {
+            if ($pen->note !== null) {
+                $this->dialog($p, $r, $pen->note);
+            } else {
+                [$lines, $at] = Pen::window($pen->items($this->world->party, $this->world->boxes, $this->world->box), $pen->cursor->at);
+                $this->choices($p, $r, $lines, $at, $pen->phase === 'top' ? 280.0 : 420.0);
+            }
         }
         if ($this->world->dialog !== null) {
             $this->dialog($p, $r, $this->world->dialog);
