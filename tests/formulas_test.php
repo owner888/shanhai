@@ -64,6 +64,7 @@ same(71, Formulas::expGain(100, 10, 2, false), 'shared by two, the base is halve
 same(63, Formulas::catchValue(190, 100, 100, null), 'at full hp: 3M=300 and 2H=200 quartered to 75 and 50; 190×25÷75');
 same(187, Formulas::catchValue(190, 100, 1, null), 'at 1 hp: 190×74÷75');
 same(197, Formulas::catchValue(190, 100, 1, 'sleep'), 'asleep: +10');
+same([25, 73, 100, 0], [Formulas::catchPercent(63), Formulas::catchPercent(187), Formulas::catchPercent(255), Formulas::catchPercent(1)], 'of a hundred, how often it binds: the bytes not over it, of 256');
 same(192, Formulas::catchValue(190, 100, 1, 'poison'), 'as meant: another status, +5');
 same(1, Formulas::catchValue(3, 200, 200, null), 'it is 1 at least');
 same(255, Formulas::catchValue(255, 20, 1, 'sleep'), 'and 255 at most');

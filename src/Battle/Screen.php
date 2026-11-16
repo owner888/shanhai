@@ -121,12 +121,33 @@ final class Screen
             'menu' => array_values(self::MENU),
             'moves' => array_map(fn(array $m) => sprintf('%s  %d/%d', $this->moves[$m['id']]['name'], $m['pp'], $this->moves[$m['id']]['pp']), $me->moves),
             'party' => array_map(PartyMenu::line(...), $this->battle->parties[0]),
-            'bag' => Menu::bag($this->bag, $this->things),
+            'bag' => $this->bagLines(),
             'forget' => [
                 ...array_map(fn(array $m) => $this->moves[$m['id']]['name'], $this->battle->parties[0][$this->toLearn[0][0]]->moves),
                 '不学' . $this->moves[$this->toLearn[0][1]]['name'],
             ],
         };
+    }
+
+    /**
+     * The bag's lines; beside what binds, how likely it is to as the wild beast stands (docs/numbers.md 8), when it
+     * can be tried at all: not in a trial, nor with a full party.
+     * @return list<string>
+     */
+    private function bagLines(): array
+    {
+        $lines = Menu::bag($this->bag, $this->things);
+        if ($this->trial !== null || count($this->battle->parties[0]) >= World::PARTY) {
+            return $lines;
+        }
+        $foe = $this->battle->fighter(1);
+        $percent = Formulas::catchPercent(Formulas::catchValue($foe->species['catch'], $foe->maxHp, $foe->hp, $foe->status));
+        foreach (array_keys($this->bag) as $i => $id) {
+            if (($this->things[$id]['use'] ?? null) === 'catch') {
+                $lines[$i] .= "  成功率 $percent%";
+            }
+        }
+        return $lines;
     }
 
     private function open(string $phase): void

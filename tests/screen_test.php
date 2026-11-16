@@ -299,7 +299,7 @@ $s = new Screen(new Battle([[$fighter('lushu', 5)], [$fighter('xingxing', 4)]], 
 foreach ($open as $c) {
     $s->step($c);
 }
-same(['bag', ['玉  ×1', '契印  ×2']], [$s->phase, $s->items()], 'the bag\'s list');
+same(['bag', ['玉  ×1', '契印  ×2  成功率 25%']], [$s->phase, $s->items()], 'the bag\'s list; beside the seal, how likely it is to bind: 64 bytes of 256');
 $s->step($confirm);
 same(['玉在这里用不上。', ['jade' => 1, 'seal' => 2], 0], [$s->line, $bag, $s->battle->turns], 'a thing of no use in battle is not used');
 foreach ([$confirm, $none, $down, $none, $down, $confirm, $none, $down, $confirm] as $c) { // back to the menu; the bag; its second

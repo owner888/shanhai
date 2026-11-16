@@ -738,5 +738,59 @@ return [
         'gaodi' => [
             [10, 6, 'down', 3, '牧人', [['renmianxiao', 60]]],
         ],
+        'xiuyushan' => [
+            [10, 6, 'down', 3, '采药人', [['danghu', 40]]],
+        ],
+        'guzhong' => [
+            [10, 6, 'down', 1, '行商', [['xianfu', 40], ['guxi', 41]]],
+        ],
+        'guyao' => [
+            [10, 6, 'down', 3, '樵夫', [['shusi', 41], ['yingwu', 42], ['maoniu', 43]]],
+        ],
+        'kushan' => [
+            [10, 6, 'down', 2, '牧人', [['huayub', 43], ['tuotuo', 44]]],
+        ],
+        'dushanqi' => [
+            [10, 6, 'down', 3, '采药人', [['lyu', 45]]],
+        ],
+        'fanggao' => [
+            [10, 6, 'down', 4, '行商', [['ma', 45], ['lyu', 46]]],
+        ],
+        'dakushan' => [
+            [10, 6, 'down', 3, '樵夫', [['hu', 47], ['bao', 48], ['yingzhan', 49]]],
+        ],
+        'banshi' => [
+            [10, 6, 'down', 1, '牧人', [['yaoniao', 48], ['xie', 49]]],
+        ],
+        'shaoshi' => [
+            [10, 6, 'down', 2, '采药人', [['yingzhan', 51]]],
+        ],
+        'taishi' => [
+            [10, 6, 'down', 3, '行商', [['tongtong', 51], ['zhubie', 52]]],
+        ],
+        'jiangshan' => [
+            [10, 6, 'down', 3, '樵夫', [['xie', 52], ['dainiao', 53], ['sanzugui', 54]]],
+        ],
+        'yingliang' => [
+            [10, 6, 'down', 1, '牧人', [['xie', 54], ['dainiao', 55]]],
+        ],
+        'fuxi' => [
+            [10, 6, 'down', 3, '采药人', [['luoyu', 56]]],
+        ],
+        'shaoxing' => [
+            [10, 6, 'down', 2, '行商', [['zhuru', 57], ['lihu', 58]]],
+        ],
+        'taishanqi' => [
+            [10, 6, 'down', 3, '樵夫', [['huanshou', 58], ['qitu', 59], ['shenchi', 60]]],
+        ],
+        'moshan' => [
+            [10, 6, 'down', 4, '牧人', [['yao', 59], ['boma', 60]]],
+        ],
+        'yishanqi' => [
+            [10, 6, 'down', 3, '采药人', [['dongdong', 62]]],
+        ],
+        'minshanqi' => [
+            [10, 6, 'down', 1, '行商', [['chaishou', 62], ['tiaoyong', 63]]],
+        ],
     ],
 ];

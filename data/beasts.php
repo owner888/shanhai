@@ -1,6 +1,6 @@
 <?php
 // The beasts of the Classic of Mountains and Seas: the Southern Mountains (南山经), all three ranges, and the first
-// four ranges of the Western (西山经), which are all it has, the three of the Northern (北山经), the four of the Eastern (东山经), and the first six of the Central (中山经).
+// four ranges of the Western (西山经), which are all it has, the three of the Northern (北山经), the four of the Eastern (东山经), and the first seven of the Central (中山经).
 //
 // Every field here restates what the classic says, checked against its text (zh.wikisource.org/wiki/山海經/南山經 and
 // /西山經, which carry Guo Pu's commentary; the names and wording cross-checked with a second edition where one could
@@ -1930,5 +1930,52 @@ return [
         'looks' => '橐水中的鱼，形如黾而白喙。',
         'sound' => '如鸱。',
         'lore' => '食之已白癣。',
+    ],
+    // 中次七经（苦山）: 休与之山 to 大騩之山
+    'shangao' => [
+        'name' => '山膏', 'kind' => 'strange', 'range' => 21, 'mountain' => '苦山',
+        'elements' => ['fire'], 'why' => '赤若丹火。',
+        'tier' => 3, 'stats' => ['hp' => 80, 'atk' => 70, 'def' => 70, 'spa' => 105, 'spd' => 75, 'spe' => 65],
+        'catch' => 60, 'exp' => 160, 'growth' => 'mediumSlow',
+        'looks' => '形如逐（豚），赤若丹火，善詈。',
+    ],
+    'wenwen' => [
+        'name' => '文文', 'kind' => 'strange', 'range' => 21, 'mountain' => '放皋之山',
+        'elements' => ['earth'], 'why' => '原文没有别的依据，取中山经的本地属性。',
+        'tier' => 2, 'stats' => ['hp' => 55, 'atk' => 85, 'def' => 60, 'spa' => 50, 'spd' => 55, 'spe' => 75],
+        'catch' => 90, 'exp' => 108, 'growth' => 'mediumFast',
+        'looks' => '形如蜂，枝尾而反舌，善呼。',
+    ],
+    'sanzugui' => [
+        'name' => '三足龟', 'kind' => 'strange', 'range' => 21, 'mountain' => '大苦之山',
+        'elements' => ['water'], 'why' => '生于狂水中。',
+        'tier' => 3, 'stats' => ['hp' => 85, 'atk' => 60, 'def' => 105, 'spa' => 70, 'spd' => 80, 'spe' => 40],
+        'catch' => 60, 'exp' => 150, 'growth' => 'mediumSlow',
+        'looks' => '狂水中的龟，三足。',
+        'lore' => '食者无大疾，可以已肿。',
+    ],
+    'lunyu' => [
+        'name' => '鯩鱼', 'kind' => 'strange', 'range' => 21, 'mountain' => '半石之山',
+        'elements' => ['water'], 'why' => '生于来需之水中。',
+        'tier' => 2, 'stats' => ['hp' => 65, 'atk' => 50, 'def' => 60, 'spa' => 80, 'spd' => 60, 'spe' => 55],
+        'catch' => 90, 'exp' => 104, 'growth' => 'mediumFast',
+        'looks' => '来需之水中的鱼，黑文，形如鲋。',
+        'lore' => '食者不睡。',
+    ],
+    'tengyu' => [
+        'name' => '䲢鱼', 'kind' => 'strange', 'range' => 21, 'mountain' => '半石之山',
+        'elements' => ['water'], 'why' => '生于合水中。',
+        'tier' => 2, 'stats' => ['hp' => 75, 'atk' => 60, 'def' => 65, 'spa' => 85, 'spd' => 65, 'spe' => 50],
+        'catch' => 90, 'exp' => 110, 'growth' => 'mediumFast',
+        'looks' => '合水中的鱼，形如鳜，居逵，苍文赤尾。',
+        'lore' => '食者不痈，可以为瘘。',
+    ],
+    'tiyu' => [
+        'name' => '䱱鱼', 'kind' => 'strange', 'range' => 21, 'mountain' => '少室之山',
+        'elements' => ['water'], 'why' => '生于休水中。',
+        'tier' => 3, 'stats' => ['hp' => 80, 'atk' => 75, 'def' => 70, 'spa' => 95, 'spd' => 75, 'spe' => 65],
+        'catch' => 60, 'exp' => 156, 'growth' => 'mediumSlow',
+        'looks' => '休水中的鱼，形如盩蜼而长距，足白而对。',
+        'lore' => '食者无蛊疾，可以御兵。',
     ],
 ];

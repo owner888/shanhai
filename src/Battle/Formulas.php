@@ -140,6 +140,12 @@ final class Formulas
         [60, 177], [80, 191], [100, 201], [120, 211], [140, 220], [160, 227], [180, 234], [200, 240], [220, 246], [240, 251], [254, 253], [255, 255],
     ];
 
+    /** 8: of a hundred, how often a catch that needs $catchValue binds: a byte of the 256 not over it, rounded down. */
+    public static function catchPercent(int $catchValue): int
+    {
+        return intdiv(($catchValue + 1) * 100, 256);
+    }
+
     /** 8: for a catch that failed, what a random byte must be under for each of the three times the binding seems to hold. */
     public static function wobbleLimit(int $catchValue): int
     {

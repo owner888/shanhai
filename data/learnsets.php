@@ -243,4 +243,10 @@ return [
     'jinglu' => [[1, 'ram'], [1, 'pebble'], [7, 'swift'], [12, 'dust'], [17, 'chant'], [23, 'burrow'], [29, 'fearless'], [34, 'trample'], [40, 'hillcharge']],
     'lingyao' => [[1, 'ram'], [1, 'spark'], [9, 'breeze'], [14, 'redtail'], [18, 'feathers'], [23, 'flame'], [27, 'selfcall'], [32, 'backeyes'], [37, 'drywind'], [41, 'gale'], [46, 'blaze'], [50, 'sleepless'], [55, 'scorch']],
     'xiubi' => [[1, 'ram'], [1, 'splash'], [8, 'chant'], [13, 'foam'], [18, 'peck'], [23, 'surge'], [29, 'undeaf'], [34, 'whirl'], [39, 'revive'], [44, 'billow']],
+    'shangao' => [[1, 'bite'], [1, 'spark'], [9, 'rebuke'], [14, 'redtail'], [21, 'fearless'], [26, 'flame'], [31, 'trample'], [36, 'drywind'], [41, 'undeaf'], [48, 'blaze'], [53, 'scorch']],
+    'wenwen' => [[1, 'ram'], [1, 'pebble'], [7, 'sting'], [12, 'dust'], [17, 'swift'], [22, 'burrow'], [28, 'backeyes'], [33, 'hillcharge'], [38, 'venom'], [43, 'rockfall']],
+    'sanzugui' => [[1, 'ram'], [1, 'splash'], [8, 'fearless'], [13, 'foam'], [19, 'undeaf'], [24, 'surge'], [30, 'revive'], [36, 'whirl'], [42, 'chant'], [48, 'billow']],
+    'lunyu' => [[1, 'ram'], [1, 'splash'], [7, 'chant'], [14, 'foam'], [22, 'sleepless'], [29, 'surge'], [36, 'whirl']],
+    'tengyu' => [[1, 'bite'], [1, 'splash'], [8, 'chant'], [15, 'foam'], [22, 'fearless'], [29, 'surge'], [36, 'whirl'], [42, 'billow']],
+    'tiyu' => [[1, 'bite'], [1, 'splash'], [9, 'claw'], [14, 'foam'], [20, 'swift'], [24, 'surge'], [30, 'fearless'], [36, 'whirl'], [41, 'spur'], [48, 'billow'], [52, 'seatide']],
 ];
