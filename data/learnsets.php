@@ -249,4 +249,12 @@ return [
     'lunyu' => [[1, 'ram'], [1, 'splash'], [7, 'chant'], [14, 'foam'], [22, 'sleepless'], [29, 'surge'], [36, 'whirl']],
     'tengyu' => [[1, 'bite'], [1, 'splash'], [8, 'chant'], [15, 'foam'], [22, 'fearless'], [29, 'surge'], [36, 'whirl'], [42, 'billow']],
     'tiyu' => [[1, 'bite'], [1, 'splash'], [9, 'claw'], [14, 'foam'], [20, 'swift'], [24, 'surge'], [30, 'fearless'], [36, 'whirl'], [41, 'spur'], [48, 'billow'], [52, 'seatide']],
+    'wenyu' => [[1, 'ram'], [1, 'splash'], [6, 'chant'], [13, 'foam'], [20, 'swift'], [26, 'surge'], [33, 'whirl']],
+    'jiaoyu' => [[1, 'bite'], [1, 'splash'], [9, 'rebuke'], [15, 'foam'], [21, 'fang'], [27, 'surge'], [33, 'fearless'], [39, 'whirl'], [45, 'billow']],
+    'baijiao' => [[1, 'ram'], [1, 'breeze'], [5, 'chant'], [11, 'feathers'], [18, 'peck'], [24, 'swift'], [31, 'cassia']],
+    'zhenniao' => [[1, 'ram'], [1, 'breeze'], [7, 'venom'], [13, 'feathers'], [19, 'backeyes'], [26, 'cassia'], [32, 'sting'], [38, 'selfcall'], [44, 'gale']],
+    'jilu' => [[1, 'ram'], [1, 'pebble'], [6, 'swift'], [13, 'dust'], [19, 'chant'], [26, 'burrow'], [32, 'backeyes']],
+    'chuotu' => [[1, 'ram'], [1, 'pebble'], [5, 'swift'], [10, 'dust'], [17, 'backeyes'], [23, 'burrow'], [30, 'chant']],
+    'zhulu' => [[1, 'ram'], [1, 'pebble'], [8, 'swift'], [15, 'dust'], [21, 'fearless'], [28, 'burrow'], [34, 'trample'], [41, 'hillcharge']],
+    'yeshi' => [[1, 'ram'], [1, 'pebble'], [7, 'rebuke'], [13, 'dust'], [19, 'fearless'], [26, 'burrow'], [32, 'trample'], [39, 'hillcharge']],
 ];

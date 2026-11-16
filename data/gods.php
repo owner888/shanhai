@@ -221,4 +221,14 @@ return [
         'moves' => ['infantcry', 'rockfall', 'trample', 'landslide'],
         'from' => '凡苦山之首，自休与之山至于大騩之山，凡十有九山，千一百八十四里。其十六神者，皆豕身而人面。苦山、少室、太室皆冢也，其神状皆人面而三首。',
     ],
+    'zhongciba' => [
+        'name' => '中次八经之神', 'range' => 22,
+        'looks' => '鸟身而人面。',
+        'elements' => ['earth', 'wood'],
+        'why' => '中山经属土，人面也是土；鸟身属木，作副属性。',
+        'stats' => ['hp' => 105, 'atk' => 110, 'def' => 95, 'spa' => 70, 'spd' => 85, 'spe' => 75],
+        'exp' => 205, 'growth' => 'slow',
+        'moves' => ['rebuke', 'gale', 'rockfall', 'landslide'],
+        'from' => '凡荆山之首，自景山至琴鼓之山，凡二十三山，二千八百九十里。其神状皆鸟身而人面。其祠：用一雄鸡祈瘞，用一藻圭，糈用稌。骄山，冢也。',
+    ],
 ];

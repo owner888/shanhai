@@ -792,5 +792,71 @@ return [
         'minshanqi' => [
             [10, 6, 'down', 1, '行商', [['chaishou', 62], ['tiaoyong', 63]]],
         ],
+        'jingshanba' => [
+            [10, 6, 'down', 3, '猎户', [['yinmo', 42]]],
+        ],
+        'jingshanjing' => [
+            [10, 6, 'down', 1, '樵夫', [['zhenniao', 42], ['zhulu', 43]]],
+        ],
+        'jiaoshanba' => [
+            [10, 6, 'down', 3, '采药人', [['yuniao', 43], ['ershu', 44], ['baiye', 45]]],
+        ],
+        'nvji' => [
+            [10, 6, 'down', 2, '行商', [['shiyu', 44], ['pijiu', 45]]],
+        ],
+        'yizhu' => [
+            [10, 6, 'down', 3, '猎户', [['huangniao', 46]]],
+        ],
+        'lunshanba' => [
+            [10, 6, 'down', 4, '樵夫', [['na', 46], ['feiyu', 47]]],
+        ],
+        'lugui' => [
+            [10, 6, 'down', 3, '采药人', [['huangniao', 48], ['pijiu', 49], ['jiegou', 50]]],
+        ],
+        'guangshan' => [
+            [10, 6, 'down', 1, '行商', [['bailu', 49], ['bailang', 50]]],
+        ],
+        'qishanba' => [
+            [10, 6, 'down', 2, '猎户', [['mengbao', 51]]],
+        ],
+        'tongshan' => [
+            [10, 6, 'down', 3, '樵夫', [['ciyu', 51], ['yaoniao', 52]]],
+        ],
+        'meishan' => [
+            [10, 6, 'down', 3, '采药人', [['ma', 52], ['yongyong', 53], ['zishu', 54]]],
+        ],
+        'dayao' => [
+            [10, 6, 'down', 1, '行商', [['tongtong', 54], ['zhubie', 55]]],
+        ],
+        'lingshan' => [
+            [10, 6, 'down', 3, '猎户', [['wanhu', 56]]],
+        ],
+        'longshan' => [
+            [10, 6, 'down', 2, '樵夫', [['tuanyu', 56], ['yong', 57]]],
+        ],
+        'hengshan' => [
+            [10, 6, 'down', 3, '采药人', [['youyou', 57], ['wanhu', 58], ['ciyu', 59]]],
+        ],
+        'shishanba' => [
+            [10, 6, 'down', 4, '行商', [['xibian', 58], ['minniu', 59]]],
+        ],
+        'ruoshan' => [
+            [10, 6, 'down', 3, '猎户', [['huanshou', 60]]],
+        ],
+        'zhishan' => [
+            [10, 6, 'down', 1, '樵夫', [['lushu', 61], ['xuangui', 62]]],
+        ],
+        'yushanba' => [
+            [10, 6, 'down', 2, '采药人', [['lingling', 62], ['zhuru', 63], ['youyou', 64]]],
+        ],
+        'huanshanba' => [
+            [10, 6, 'down', 3, '行商', [['qinyuan', 63], ['jiao', 64]]],
+        ],
+        'renju' => [
+            [10, 6, 'down', 3, '猎户', [['renmianxiao', 65]]],
+        ],
+        'shimei' => [
+            [10, 6, 'down', 1, '樵夫', [['shanhui', 65], ['zhuhuai', 66]]],
+        ],
     ],
 ];
