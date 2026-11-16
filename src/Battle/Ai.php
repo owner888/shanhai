@@ -371,6 +371,38 @@ final class Ai
     }
 
     /**
+     * Which of its beasts takes the place of the one that has fallen. The first, in the party's order, with a move
+     * whose element overcomes the player's beast and that none of the player's beast's elements overcomes; with none
+     * such, the first that is not overcome while having no such move; with none of those either, any that stands, by
+     * the bytes' three low bits.
+     */
+    public function next(Battle $b, Rng $rng): int
+    {
+        $you = $b->fighter(0);
+        [$strong, $safe, $stand] = [null, null, []];
+        foreach ($b->parties[1] as $i => $f) {
+            if ($i === $b->active[1] || $f->fainted()) {
+                continue;
+            }
+            $stand[] = $i;
+            $hits = array_filter($f->moves, fn(array $known) => $b->matchup($this->moves[$known['id']]['element'], $you) > 1) !== [];
+            $threatened = array_filter($you->species['elements'], fn(string $e) => $b->matchup($e, $f) > 1) !== [];
+            $strong ??= $hits && !$threatened ? $i : null;
+            $safe ??= $hits || !$threatened ? $i : null;
+        }
+        if ($stand === []) {
+            throw new \LogicException('none of its beasts stands');
+        }
+        if ($safe === null) {
+            do {
+                $which = $rng->byte() & 7;
+            } while (!in_array($which, $stand, true));
+            return $which;
+        }
+        return $strong ?? $safe;
+    }
+
+    /**
      * The thing it uses on its beast now, or null. Only on the highest of its party. One that restores hp: with a
      * quarter of its hp or less, always; with half or less, a time in five. The one that ends any status: on one
      * asleep. The one that does both: for either.

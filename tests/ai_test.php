@@ -137,3 +137,20 @@ same([['move', 0], ['item', 'licao']], [(new Ai([], $moves, $things, ['licao']))
 same([['move', 0], ['move', 0]], [(new Ai([], $moves, $things, ['licao']))->act($hurt(81), Rng::scripted([0])), (new Ai([], $moves, $things, ['licao']))->act($hurt(10, null, 49), Rng::scripted([0]))], 'not with more; and not on one under the highest of its party');
 same([['item', 'yupei'], ['move', 0], ['item', 'dixiu']], [(new Ai([], $moves, $things, ['yupei']))->act($hurt(160, 'sleep'), Rng::scripted([])), (new Ai([], $moves, $things, ['yupei']))->act($hurt(160, 'burn'), Rng::scripted([0])), (new Ai([], $moves, $things, ['yupei', 'dixiu']))->act($hurt(160, 'sleep'), Rng::scripted([]))],
     'what ends any status is for one asleep; what does both comes first');
+
+// Which comes next when one of theirs falls: the first with a move that overcomes the player's beast and that is not
+// overcome itself; else the first that is not overcome with nothing to answer; else any that stands.
+$line = function (string $mine, array $theirs) use ($beast, $battle): Battle {
+    $b = $battle([$beast($mine, ['tap'])], [$beast('water', ['tap']), ...$theirs]);
+    $b->fighter(1)->hp = 0; // the one out has fallen
+    return $b;
+};
+$ai = new Ai([], $moves, $things);
+same(2, $ai->next($line('fire', [$beast('wood', ['tap']), $beast('water', ['wet']), $beast('water', ['wet'])]), Rng::scripted([])), 'against fire, the first of water with a move of water: not the one before it in the line');
+same(1, $ai->next($line('fire', [$beast('wood', ['tap']), $beast('earth', ['tap'])]), Rng::scripted([])), 'with none that overcomes, the first that fire does not overcome');
+same(2, $ai->next($line('fire', [$beast('metal', ['tap']), $beast('earth', ['tap'])]), Rng::scripted([])), 'passing over one fire overcomes that has nothing to answer with');
+same(1, $ai->next($line('fire', [$beast('metal', ['wet']), $beast('earth', ['tap'])]), Rng::scripted([])), 'but not one that, overcome, has a move that overcomes');
+same(2, $ai->next($line('fire', [$beast('metal', ['tap']), $beast('metal', ['tap'])]), Rng::scripted([7, 0, 2])), 'with only such, any that stands: bytes naming none that does are passed over');
+$gone = $beast('metal', ['tap']);
+$gone->hp = 0;
+same(2, $ai->next($line('fire', [$gone, $beast('water', ['wet'])]), Rng::scripted([])), 'one that has fallen is not sent');

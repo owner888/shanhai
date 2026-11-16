@@ -25,6 +25,6 @@ return [
     'signs' => [
     ],
     // The cave's floor: 猾褢.
-    // The frequent places are the common beasts' of the range (docs/numbers.md 28): 蝮虫、蝮虫、蝮虫、蝮虫 come here from its other mountains; the rare places are the mountain's own.
-    'wild' => ['rate' => 6, 'slots' => [[6, 'fuchong'], [6, 'fuchong'], [5, 'fuchong'], [4, 'fuchong'], [7, 'huahuai'], [6, 'huahuai'], [6, 'huahuai']]],
+    // The frequent places are the common beasts' of the range (docs/numbers.md 28): 犀、兕 come here from its other mountains; the rare places are the mountain's own.
+    'wild' => ['rate' => 6, 'slots' => [[6, 'fuchong'], [6, 'xi'], [5, 'si'], [4, 'fuchong'], [7, 'huahuai'], [6, 'huahuai'], [6, 'huahuai']]],
 ];

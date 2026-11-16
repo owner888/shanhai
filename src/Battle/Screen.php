@@ -475,6 +475,9 @@ final class Screen
         $from = count($this->battle->log);
         $this->battle->turn($action, $foe);
         $this->ai?->seen($this->battle, $action, $foe);
+        if ($this->ai !== null && $this->battle->awaits(1)) { // docs/numbers.md 26: the one who sets the trial chooses which of theirs comes next
+            $this->battle->send(1, $this->ai->next($this->battle, $this->rng));
+        }
         $this->coin();
         // docs/numbers.md 25: one of the player's that fell this turn is less close for it, and much less if what felled it was thirty levels or more over it
         foreach ($this->battle->parties[0] as $i => $f) {

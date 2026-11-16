@@ -4,14 +4,14 @@
 //   name   as the classic names it
 //   gym    which of the reference's gyms its levels and its trial are measured from (docs/numbers.md 14)
 //   toward which way the classic walks it, mountain after mountain: its first map is the one with no way back
-//   commons the range whose common beasts walk this one's wild ground too, the classic naming none of its own here (docs/numbers.md 28)
+//   commons the range whose common beasts walk this one's wild ground too, the classic naming none of its own here, or one only (docs/numbers.md 28)
 //   compass what the maps' left and right are called, when the classic does not walk the range west or east:
 //          the Northern Mountains go north, which the maps draw to the right
 declare(strict_types=1);
 
 return [
     1 => ['book' => '南山经', 'name' => '南山经之首（鹊山）', 'gym' => 1, 'toward' => 'right'],
-    2 => ['book' => '南山经', 'name' => '南次二经', 'gym' => 2, 'toward' => 'right'],
+    2 => ['book' => '南山经', 'name' => '南次二经', 'gym' => 2, 'toward' => 'right', 'commons' => 3],
     3 => ['book' => '南山经', 'name' => '南次三经', 'gym' => 3, 'toward' => 'right'],
     4 => ['book' => '西山经', 'name' => '西山经之首（华山）', 'gym' => 4, 'toward' => 'left'],
     5 => ['book' => '西山经', 'name' => '西次二经', 'gym' => 5, 'toward' => 'left'],
@@ -28,12 +28,12 @@ return [
     16 => ['book' => '中山经', 'name' => '中次二经（济山）', 'gym' => 16, 'toward' => 'right', 'compass' => ['left' => '东', 'right' => '西']],
     17 => ['book' => '中山经', 'name' => '中次三经（萯山）', 'gym' => 17, 'toward' => 'right', 'compass' => ['left' => '西', 'right' => '东']],
     18 => ['book' => '中山经', 'name' => '中次四经（釐山）', 'gym' => 18, 'toward' => 'right', 'compass' => ['left' => '东', 'right' => '西']],
-    19 => ['book' => '中山经', 'name' => '中次五经（薄山）', 'gym' => 19, 'toward' => 'right', 'compass' => ['left' => '西', 'right' => '东']],
+    19 => ['book' => '中山经', 'name' => '中次五经（薄山）', 'gym' => 19, 'toward' => 'right', 'compass' => ['left' => '西', 'right' => '东'], 'commons' => 18],
     20 => ['book' => '中山经', 'name' => '中次六经（缟羝山）', 'gym' => 20, 'toward' => 'right', 'compass' => ['left' => '西', 'right' => '东']],
     21 => ['book' => '中山经', 'name' => '中次七经（苦山）', 'gym' => 21, 'toward' => 'right', 'compass' => ['left' => '西', 'right' => '东'], 'commons' => 20],
     22 => ['book' => '中山经', 'name' => '中次八经（荆山）', 'gym' => 22, 'toward' => 'right', 'compass' => ['left' => '西南', 'right' => '东北']],
     23 => ['book' => '中山经', 'name' => '中次九经（岷山）', 'gym' => 23, 'toward' => 'right', 'compass' => ['left' => '西', 'right' => '东']],
-    24 => ['book' => '中山经', 'name' => '中次十经（首阳山）', 'gym' => 24, 'toward' => 'right', 'compass' => ['left' => '东', 'right' => '西']],
+    24 => ['book' => '中山经', 'name' => '中次十经（首阳山）', 'gym' => 24, 'toward' => 'right', 'compass' => ['left' => '东', 'right' => '西'], 'commons' => 23],
     25 => ['book' => '中山经', 'name' => '中次十一经（荆山）', 'gym' => 25, 'toward' => 'right', 'compass' => ['left' => '西', 'right' => '东']],
     26 => ['book' => '中山经', 'name' => '中次十二经（洞庭山）', 'gym' => 26, 'toward' => 'right', 'compass' => ['left' => '西', 'right' => '东']],
 ];

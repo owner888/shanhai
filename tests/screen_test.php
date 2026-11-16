@@ -850,3 +850,13 @@ same(['gone', null, $before], [$w->lastBattle, $w->battle, $w->party[0]->exp], '
 $flee = array_count_values(array_column(array_filter($book['beasts'], fn(array $b) => isset($b['flees'])), 'flees'));
 ksort($flee);
 same(['always' => 1, 'often' => 5, 'sometimes' => 14], $flee, 'twenty kinds flee, each by the classic\'s words of it');
+
+// docs/numbers.md 26: when one of a god's falls, the god chooses which comes next: against 鹿蜀, of fire, the one of water with a move of water, though it is last in the line.
+$w = new World($maps, 'field', 0, 0, Dir::Down, $book + ['gods' => Data::gods()], Rng::seeded(4));
+$w->join('lushu', 60);
+$w->run([['trial', '山神', [['xingxing', 3], ['baiyuan', 3], ['xuangui', 3]]]]);
+$s = $w->battle;
+for ($i = 0; $s->battle->active[1] === 0 && $i < 60; $i++) {
+    $w->step($i % 2 === 0 ? $confirm : $none);
+}
+same(['fire', 2, 'xuangui'], [$w->party[0]->species['elements'][0], $s->battle->active[1], $s->battle->fighter(1)->id], 'the third, not the second');
