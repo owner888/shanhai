@@ -31,4 +31,6 @@ return [
     20 => ['book' => '中山经', 'name' => '中次六经（缟羝山）', 'gym' => 20, 'toward' => 'right', 'compass' => ['left' => '西', 'right' => '东']],
     21 => ['book' => '中山经', 'name' => '中次七经（苦山）', 'gym' => 21, 'toward' => 'right', 'compass' => ['left' => '西', 'right' => '东']],
     22 => ['book' => '中山经', 'name' => '中次八经（荆山）', 'gym' => 22, 'toward' => 'right', 'compass' => ['left' => '西南', 'right' => '东北']],
+    23 => ['book' => '中山经', 'name' => '中次九经（岷山）', 'gym' => 23, 'toward' => 'right', 'compass' => ['left' => '西', 'right' => '东']],
+    24 => ['book' => '中山经', 'name' => '中次十经（首阳山）', 'gym' => 24, 'toward' => 'right', 'compass' => ['left' => '东', 'right' => '西']],
 ];

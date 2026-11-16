@@ -858,5 +858,77 @@ return [
         'shimei' => [
             [10, 6, 'down', 1, '樵夫', [['shanhui', 65], ['zhuhuai', 66]]],
         ],
+        'nvjijiu' => [
+            [10, 6, 'down', 3, '渔人', [['li', 44]]],
+        ],
+        'minshan' => [
+            [10, 6, 'down', 1, '采药人', [['baihao', 44], ['zhuo', 45]]],
+        ],
+        'laishanjiu' => [
+            [10, 6, 'down', 3, '猎户', [['xiong', 46], ['shusi', 47], ['yingwu', 48]]],
+        ],
+        'jushan' => [
+            [10, 6, 'down', 2, '樵夫', [['chibi', 48], ['conglong', 49]]],
+        ],
+        'gaoliang' => [
+            [10, 6, 'down', 3, '渔人', [['yaoniao', 51]]],
+        ],
+        'sheshan' => [
+            [10, 6, 'down', 4, '采药人', [['nafu', 52], ['yiyu', 53]]],
+        ],
+        'lishanjiu' => [
+            [10, 6, 'down', 3, '猎户', [['xie', 54], ['sanzugui', 55], ['jiaoyu', 56]]],
+        ],
+        'yuyang' => [
+            [10, 6, 'down', 1, '樵夫', [['baihu', 56], ['shuima', 57]]],
+        ],
+        'qishanjiu' => [
+            [10, 6, 'down', 2, '渔人', [['sanzugui', 58]]],
+        ],
+        'goumi' => [
+            [10, 6, 'down', 3, '采药人', [['rupi', 59], ['shuyu', 60]]],
+        ],
+        'fengyu' => [
+            [10, 6, 'down', 3, '猎户', [['boyu', 61], ['feifei', 62], ['feiyutun', 63]]],
+        ],
+        'yushanjiu' => [
+            [10, 6, 'down', 1, '樵夫', [['sanqingniao', 63], ['huanshou', 64]]],
+        ],
+        'xiongshan' => [
+            [10, 6, 'down', 3, '渔人', [['yilang', 66]]],
+        ],
+        'guishanjiu' => [
+            [10, 6, 'down', 2, '采药人', [['changshe', 67], ['shanhui', 68]]],
+        ],
+        'geshan' => [
+            [10, 6, 'down', 3, '猎户', [['xiaoque', 69], ['hui', 70], ['tianma', 71]]],
+        ],
+        'shouyang' => [
+            [10, 6, 'down', 3, '采玉人', [['haoyu', 46]]],
+        ],
+        'huwei' => [
+            [10, 6, 'down', 1, '渔人', [['conglong', 48], ['bangyu', 49]]],
+        ],
+        'fanhui' => [
+            [10, 6, 'down', 3, '巫祝弟子', [['ershu', 52], ['youyan', 53], ['baiye', 54]]],
+        ],
+        'yongshi' => [
+            [10, 6, 'down', 2, '猎户', [['pijiu', 55], ['yongyong', 56]]],
+        ],
+        'fuzhou' => [
+            [10, 6, 'down', 3, '采玉人', [['xibian', 60]]],
+        ],
+        'chushan' => [
+            [10, 6, 'down', 4, '渔人', [['congcong', 62], ['zishu', 63]]],
+        ],
+        'youyuan' => [
+            [10, 6, 'down', 3, '巫祝弟子', [['xuangui', 66], ['guanguan', 67], ['lili', 68]]],
+        ],
+        'zhuoshan' => [
+            [10, 6, 'down', 1, '猎户', [['heluo', 69], ['menghuai', 70]]],
+        ],
+        'bingshanshi' => [
+            [10, 6, 'down', 2, '采玉人', [['dashe', 74]]],
+        ],
     ],
 ];
