@@ -51,8 +51,8 @@ $w->join('xingxing', 4);
 $w->party[0]->hp = 5;
 $w->run([['setFlag', 'seen'], ['give', 'seal', 3], ['warp', 'field', 2, 1, 'left']]);
 $w->step(new Controls(menu: true));
-same(['异兽', '背包', '存档'], $w->menu->items($w->party, $w->items, $book['items']), 'a game with a file has saving in its menu');
-foreach ([$down, $none, $down, $confirm] as $c) {
+same(['异兽', '背包', '详情', '图鉴', '存档'], $w->menu->items($w->party, $w->items, $book['items'], $w->dex), 'a game with a file has saving in its menu, last');
+foreach ([$down, $none, $down, $none, $down, $none, $down, $confirm] as $c) {
     $w->step($c);
 }
 same([null, '存档完成。', true], [$w->menu, $w->dialog, is_file($file)], 'choosing it saves, closes the menu and says so');
@@ -78,22 +78,36 @@ $again->restore($other->state());
 same($other->state()['rest'], $again->restAt, 'and comes back');
 check(throws(fn() => $other->restore(array_replace($state, ['rest' => ['nowhere', 0, 0, 'up']]))), 'a place of rest on a map there is none of is refused');
 // A file of the first format, which had no place of rest, is read as one that rested nowhere.
-file_put_contents($file, json_encode(['version' => 1, 'state' => array_diff_key($state, ['rest' => 0, 'boxes' => 0, 'box' => 0, 'money' => 0])]));
+file_put_contents($file, json_encode(['version' => 1, 'state' => array_diff_key($state, ['rest' => 0, 'boxes' => 0, 'box' => 0, 'money' => 0, 'seen' => 0, 'caught' => 0, 'steps' => 0])]));
 same($state, Save::read($file), 'a file of format 1 is read as having rested nowhere');
 // The pen is kept: which box is the current one, and each box's beasts. A file of the second format, which had no pen, is read as one with nothing in it.
 same([array_fill(0, Pen::BOXES, []), 0], [$state['boxes'], $state['box']], 'a game that has left nothing in the pen keeps fourteen empty boxes');
-file_put_contents($file, json_encode(['version' => 2, 'state' => array_diff_key($state, ['boxes' => 0, 'box' => 0, 'money' => 0])]));
+file_put_contents($file, json_encode(['version' => 2, 'state' => array_diff_key($state, ['boxes' => 0, 'box' => 0, 'money' => 0, 'seen' => 0, 'caught' => 0, 'steps' => 0])]));
 same($state, Save::read($file), 'a file of format 2 is read as having nothing in the pen');
 // What a beast holds is kept. A file of the fourth format, in which nothing was held, is read as beasts holding nothing.
-file_put_contents($file, json_encode(['version' => 4, 'state' => array_replace($state, ['party' => array_map(fn(array $f) => array_diff_key($f, ['item' => 0]), $state['party'])])]));
+file_put_contents($file, json_encode(['version' => 4, 'state' => array_replace(array_diff_key($state, ['steps' => 0]), ['party' => array_map(fn(array $f) => array_diff_key($f, ['item' => 0, 'bond' => 0, 'offered' => 0]), $state['party'])])]));
 same($state, Save::read($file), 'a file of format 4 is read as beasts holding nothing');
 $holding = new World($maps, 'hut', 0, 0, Dir::Down, $book, Rng::seeded(2));
 $holding->restore(array_replace($state, ['party' => array_map(fn(array $f) => array_replace($f, ['item' => 'tongxiu']), $state['party'])]));
 same('tongxiu', $holding->party[0]->item, 'what a beast holds comes back');
 check(throws(fn() => $holding->restore(array_replace($state, ['party' => array_map(fn(array $f) => array_replace($f, ['item' => 'seal']), $state['party'])]))), 'a beast holding what cannot be held is refused');
+// The record of beasts is kept. A file of the fifth format, which had none, is read as having seen and bound the kinds it has with it.
+same([['xingxing', 'xuangui'], ['xingxing', 'xuangui']], [$state['seen'], $state['caught']], 'a saved game keeps the kinds seen and bound, in order of their ids');
+file_put_contents($file, json_encode(['version' => 5, 'state' => array_diff_key($state, ['seen' => 0, 'caught' => 0, 'steps' => 0])]));
+same($state, Save::read($file), 'a file of format 5 is read as having seen and bound what it has with it');
+check(throws(fn() => $holding->restore(array_replace($state, ['seen' => ['nothing']]))) && throws(fn() => $holding->restore(array_replace($state, ['caught' => ['lushu']]))), 'a kind there is none of, or one bound and not seen, is refused');
+// A beast's bond is kept. A file of the sixth format, which had none, is read as beasts with the bond one begins with.
+file_put_contents($file, json_encode(['version' => 6, 'state' => array_replace(array_diff_key($state, ['steps' => 0]), ['party' => array_map(fn(array $f) => array_diff_key($f, ['bond' => 0, 'offered' => 0]), $state['party'])])]));
+same([Formulas::BOND_BASE, false], [Save::read($file)['party'][0]['bond'], Save::read($file)['party'][0]['offered']], 'a file of format 6 is read as beasts with the bond one begins with');
+$holding->restore(array_replace($state, ['party' => array_map(fn(array $f) => array_replace($f, ['bond' => 231, 'offered' => true]), $state['party'])]));
+same([231, true], [$holding->party[0]->bond, $holding->party[0]->offered], 'a bond comes back');
+same(0, Save::read($file)['steps'], 'and with no steps walked toward the next');
+$holding->steps = 300;
+same(300, $holding->state()['steps'], 'the steps walked toward the next are kept');
+throws(fn() => $holding->restore(array_replace($state, ['steps' => Formulas::BOND_STEPS])), 'the saved game is not as a game can be', 'steps that would already have counted are refused');
 // The money is kept. A file of the third format, which had none, is read as having what a new game begins with.
 same(Formulas::START_MONEY, $state['money'], 'a game that has spent and won nothing keeps what it began with');
-file_put_contents($file, json_encode(['version' => 3, 'state' => array_diff_key($state, ['money' => 0])]));
+file_put_contents($file, json_encode(['version' => 3, 'state' => array_diff_key($state, ['money' => 0, 'seen' => 0, 'caught' => 0, 'steps' => 0])]));
 same($state, Save::read($file), 'a file of format 3 is read as having what a new game begins with');
 $rich = new World($maps, 'hut', 0, 0, Dir::Down, $book, Rng::seeded(2));
 $rich->restore(array_replace($state, ['money' => 123456]));

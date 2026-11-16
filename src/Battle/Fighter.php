@@ -22,6 +22,10 @@ final class Fighter
     public array $moves = [];
     /** poison, burn, paralyze or sleep; one at a time */
     public ?string $status = null;
+    /** How close it is to the player (docs/numbers.md 25), 0 to Formulas::BOND_MAX. */
+    public int $bond = Formulas::BOND_BASE;
+    /** Whether the move of the bond has been put to it already: it is put once. */
+    public bool $offered = false;
     /** The thing it holds, an id of data/items.php; null with none. */
     public ?string $item = null;
     /** Turns of sleep left, counting the one it wakes on. */
@@ -73,7 +77,7 @@ final class Fighter
     public function state(): array
     {
         return ['id' => $this->id, 'level' => $this->level, 'exp' => $this->exp, 'statExp' => $this->statExp, 'dvs' => $this->dvs,
-            'hp' => $this->hp, 'status' => $this->status, 'sleep' => $this->sleep, 'moves' => $this->moves, 'item' => $this->item];
+            'hp' => $this->hp, 'status' => $this->status, 'sleep' => $this->sleep, 'moves' => $this->moves, 'item' => $this->item, 'bond' => $this->bond, 'offered' => $this->offered];
     }
 
     /**
@@ -96,7 +100,7 @@ final class Fighter
                 throw new \InvalidArgumentException("the saved game's {$s['id']} has a move that cannot be: '{$m['id']}'");
             }
         }
-        [$f->hp, $f->status, $f->sleep, $f->moves, $f->item] = [$s['hp'], $s['status'], $s['sleep'], $s['moves'], $s['item']];
+        [$f->hp, $f->status, $f->sleep, $f->moves, $f->item, $f->bond, $f->offered] = [$s['hp'], $s['status'], $s['sleep'], $s['moves'], $s['item'], $s['bond'], $s['offered']];
         return $f;
     }
 

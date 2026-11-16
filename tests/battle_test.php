@@ -338,3 +338,18 @@ same([true, null, 0, 0], [$use(['use' => 'cure', 'by' => 'any'], $f), $f->status
 [$f->status, $f->confused] = ['burn', 2];
 same([true, 160, null, 0, false], [$use(['use' => 'restore'], $f), $f->hp, $f->status, $f->confused, $use(['use' => 'restore'], $f)], 'what restores makes whole and well; one that is, takes none');
 same(false, $use(['use' => 'catch'], $f), 'a seal is no medicine');
+
+// docs/numbers.md 25: the move of the bond strikes by the user's bond, not by the power written.
+$moves['kin'] = ['name' => 'kin', 'element' => null, 'power' => 100, 'accuracy' => 100, 'pp' => 15, 'bond' => true];
+$near = $beast('water', ['tap']);
+[$near->bond, $near->moves] = [250, [['id' => 'kin', 'pp' => 15]]]; // 250 × 10 ÷ 25 = 100
+$far = $beast('water', ['tap']);
+[$far->bond, $far->moves] = [100, [['id' => 'kin', 'pp' => 15]]];  // 40, as 轻击
+[$rng, $b] = [Rng::scripted([$NO, $MOST, $NO, $MOST]), null];
+$b = new Battle([[$far], [$beast('fire', ['tap'], 50)]], $elements, $moves, $rng);
+$b->turn(['move', 0], ['move', 0]);
+same(160 - 19, $b->fighter(1)->hp, 'at a bond of 100 it strikes as a move of power 40');
+$rng = Rng::scripted([$NO, $MOST, $NO, $MOST]);
+$b = new Battle([[$near], [$beast('fire', ['tap'], 50)]], $elements, $moves, $rng);
+$b->turn(['move', 0], ['move', 0]);
+same(160 - (intdiv(22 * 100 * 113, 113 * 50) + 2), $b->fighter(1)->hp, 'at 250, of power 100: 22 × 100 ÷ 50 = 44, and 2');

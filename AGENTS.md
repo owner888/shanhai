@@ -54,7 +54,7 @@ src/load.php       the autoloader of Shanhai\ (src/)
 src/World/         the game outside battle, with no drawing: Dir, Tile (the characters maps are written in), Map,
                    Actor, Controls, World (step(): walking, turning, what blocks, warps, triggers, talking; the party,
                    its battles, rest), Menu (what the menu button opens: the party's screen, the bag), PartyMenu (the beasts in
-                   order, two change places), Pen (the boxes where beasts not taken along are kept), Shop (buying)
+                   order, two change places), Pen (the boxes where beasts not taken along are kept), Shop (buying), Dex (the kinds seen and bound)
 src/Script/Vm.php  the event script interpreter: say, ask (a line with choices), flags, jumps, face, move, warp, give, battle, trial, duel, rest, pen, shop, load; check()
 src/Battle/        the battle, with no drawing: Rng (bytes, from a seed or a test's script), Formulas (docs/numbers.md as code,
                    a function a rule), Fighter, Battle (turn(): order, what stops a beast, a move, statuses, weather, switching),
@@ -140,9 +140,11 @@ docs/elements.md   the elements' table and how a beast's elements are settled
 - **A beast holds one thing** (`Fighter::$item`, docs/numbers.md 18, 19), given and taken back in the menu: held by one that can
   fight, 同修玉 halves what a fallen beast gives, and its holders divide as much again as those that fought. The rest are
   the classic's herbs, trees and stones (`data/items.php`'s `hold` and `by`; `Battle::holds`): found once by their mountain's sign, or sold; a wild beast may hold what grows on its mountain (20).
+- **A beast's bond** (亲密度, `Fighter::$bond`, docs/numbers.md 25) is the reference's happiness, number for number; it changes no stat, only
+  the power of 同心, which a beast close enough comes to of itself, once (`Fighter::$offered`).
 - **Money** (贝, `World::$money`, docs/numbers.md 17): a trial or one on the road, beaten, pays by the level of their last
   beast; a battle lost takes half; a script's `shop` opens buying (`Shop`), where each range's place of rest is.
-- **A saved game** is `World::state()`: the map and place, flags, bag, money, where it last rested, the pen, and each beast's `Fighter::state()`. What does not
+- **A saved game** is `World::state()`: the map and place, flags, bag, money, where it last rested, the pen, the record of beasts, and each beast's `Fighter::state()`. What does not
   fit the data it is read with throws; a new field means a new `Save::VERSION`.
 - **A map change** is counted in `World::$mapChanges`; Play builds a new Stage when it sees one.
 - **Drawing interpolates**: `Actor::place($alpha)` is between two updates' places, so motion is smoother than its steps.

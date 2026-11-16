@@ -106,3 +106,13 @@ same([45, 67, 90, 255, 255, 190], [Formulas::sealRate(45, 100), Formulas::sealRa
 same([45, 90, 90, 180, 180, 255, 255], array_map(fn(int $theirs) => Formulas::sealRate(45, 'level', 40, $theirs), [40, 39, 20, 19, 10, 9, 1]),
     'the seal that goes by level: nothing at the same level; twice under it; four times under half of it; eight under a quarter, 255 at most');
 same([45, 135, 255], [Formulas::sealRate(45, 'water', 0, 0, false), Formulas::sealRate(45, 'water', 0, 0, true), Formulas::sealRate(120, 'water', 0, 0, true)], 'the seal of the water: three times in a battle begun on it, 255 at most');
+
+// 23: two bytes make a beast's four individual values.
+same([['atk' => 8, 'def' => 8, 'spe' => 8, 'spc' => 8], ['atk' => 15, 'def' => 0, 'spe' => 2, 'spc' => 10]], [Formulas::dvs(136, 136), Formulas::dvs(0xF0, 0x2A)], 'attack and defense are the first byte\'s halves, speed and special the second\'s');
+
+// 25: a bond changes by what happens, less the closer it is, and stays from 0 to 255.
+same([75, 103, 202, 255], [Formulas::bond(70, 'level'), Formulas::bond(100, 'level'), Formulas::bond(200, 'level'), Formulas::bond(254, 'level')], 'a level brings 5 under 100, 3 under 200, 2 after, to 255 at most');
+same([71, 200, 73, 201, 69, 0, 65, 190, 71], [Formulas::bond(70, 'move'), Formulas::bond(200, 'move'), Formulas::bond(70, 'trial'), Formulas::bond(200, 'trial'), Formulas::bond(70, 'fainted'), Formulas::bond(0, 'fainted'), Formulas::bond(70, 'outmatched'), Formulas::bond(200, 'outmatched'), Formulas::bond(70, 'step')],
+    'a move learned, a trial gone into, a fall, a fall to one far stronger, and the steps walked');
+same([28, 88, 102, 1], [Formulas::bondPower(70), Formulas::bondPower(220), Formulas::bondPower(255), Formulas::bondPower(0)], 'the move of the bond: the bond times ten over twenty-five, 1 at least');
+same(['疏远', '还生分', '渐渐熟了', '亲近', '十分亲近', '形影不离'], array_map(Formulas::bondWord(...), [49, 50, 100, 150, 200, 250]), 'the word for a bond, by the grades of 50, 100, 150, 200 and 250');

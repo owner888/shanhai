@@ -22,6 +22,8 @@ use Shanhai\World\{Controls, Menu, PartyMenu};
 final class Screen
 {
     /** The menu between turns, in its order. */
+    /** The move a beast close enough to the player comes to of itself (docs/numbers.md 25). */
+    public const BOND_MOVE = 'tongxin';
     public const MENU = ['fight' => '战斗', 'party' => '异兽', 'bag' => '背包', 'flee' => '逃跑'];
     /** What is said when a seal fails, by how many times it seemed to hold, from none to three. */
     public const BROKE = ['啊，%s挣脱了！', '可惜，还以为结契了！', '啧，就差一点！', '太可惜了，只差最后一下！'];
@@ -263,6 +265,14 @@ final class Screen
                 foreach ($f->learnable($from, $to) as $move) {
                     $this->toLearn[] = [$i, $move];
                 }
+                // docs/numbers.md 25: each level brings it closer; close enough, it comes to the move of the bond, which is put to it once
+                for ($l = $from; $l < $to; $l++) {
+                    $f->bond = Formulas::bond($f->bond, 'level');
+                }
+                if ($f->bond >= Formulas::BOND_MOVE && !$f->offered && !in_array(self::BOND_MOVE, array_column($f->moves, 'id'), true)) {
+                    $f->offered = true;
+                    $this->toLearn[] = [$i, self::BOND_MOVE];
+                }
             }
         }
     }
@@ -279,6 +289,7 @@ final class Screen
         } else {
             $old = $this->moves[$f->moves[$slot]['id']]['name'];
             $f->learn($move, $this->moves, $slot);
+            $f->bond = Formulas::bond($f->bond, 'move');
             $this->say($f->species['name'] . '忘掉了' . $old . '，学会了' . $name . '！');
         }
         $this->next();
@@ -332,6 +343,9 @@ final class Screen
         $rate = Formulas::sealRate($foe->species['catch'], $by, $this->battle->fighter(0)->level, $foe->level, $this->water);
         return Formulas::catchValue($rate, $foe->maxHp, $foe->hp, $foe->status);
     }
+
+    /** Whether the beast bound was bound with the seal of kinship (docs/numbers.md 25). */
+    public bool $kin = false;
 
     /** The medicine of the bag chosen to be used on a beast, an id. */
     private string $dosing = '';
@@ -389,7 +403,7 @@ final class Screen
         // docs/numbers.md 8: a byte not over what the catch needs binds it.
         $needs = $this->needs($thing);
         if ($needs === null || $this->rng->byte() <= $needs) { // 22: the seal that cannot fail asks for no roll
-            [$this->outcome, $this->caught] = ['caught', $foe];
+            [$this->outcome, $this->caught, $this->kin] = ['caught', $foe, ($thing['by'] ?? null) === 'bond'];
             $this->say('结契成功！' . $name . '成了你的同伴！', null, ['what' => 'caught']);
             if ($this->pen !== null) {
                 $this->say('队伍满了，' . $name . '被送到了兽栏的' . $this->pen . '。');
@@ -454,6 +468,12 @@ final class Screen
         $from = count($this->battle->log);
         $this->battle->turn($action, $foe);
         $this->coin();
+        // docs/numbers.md 25: one of the player's that fell this turn is less close for it, and much less if what felled it was thirty levels or more over it
+        foreach ($this->battle->parties[0] as $i => $f) {
+            if ($hp[0][$i] > 0 && $f->fainted()) {
+                $f->bond = Formulas::bond($f->bond, $this->battle->fighter(1)->level >= $f->level + 30 ? 'outmatched' : 'fainted');
+            }
+        }
         $this->tell(array_slice($this->battle->log, $from), $hp, $status, $stages);
         if ($this->battle->winner !== null) {
             $this->outcome = $this->battle->winner === 0 ? 'won' : 'lost';
@@ -627,6 +647,7 @@ final class Screen
             $f = $this->battle->parties[0][$i];
             if (count($f->moves) < Fighter::MOVES) {
                 $f->learn($move, $this->moves);
+                $f->bond = Formulas::bond($f->bond, 'move');
                 array_shift($this->toLearn);
                 $this->say($f->species['name'] . '学会了' . $this->moves[$move]['name'] . '！');
                 $this->next();

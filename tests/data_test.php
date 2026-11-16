@@ -40,7 +40,7 @@ foreach ($items as $id => $item) {
     $by = $item['by'] ?? null;
     if (!isset($item['hold'])) {
         check(match ($item['use'] ?? null) { 'heal' => $by === 'all' || (is_int($by) && $by >= 1), 'cure' => in_array($by, ['poison', 'burn', 'paralyze', 'sleep', 'confuse', 'any'], true),
-            'catch' => $by === null || (is_int($by) && $by > 100) || in_array($by, ['level', 'water', 'sure'], true), default => $by === null }, "the thing $id is used by a number or a kind that fits its use");
+            'catch' => $by === null || (is_int($by) && $by > 100) || in_array($by, ['level', 'water', 'bond', 'sure'], true), default => $by === null }, "the thing $id is used by a number or a kind that fits its use");
     } else {
         check(!isset($item['use']) || $item['use'] === $item['hold'], "the thing $id, used from the bag, does what it does held");
     }
@@ -341,7 +341,7 @@ foreach ($moves as $id => $m) {
     check(preg_match('/^[a-z]+$/', $id) === 1, "the move $id has a plain id");
     check(!isset($names[$m['name']]), "the move $id's name is its alone: {$m['name']}");
     $names[$m['name']] = true;
-    check(array_diff(array_keys($m), ['name', 'element', 'power', 'accuracy', 'pp', 'effect', 'only', 'from']) === [], "the move $id has only the fields there are");
+    check(array_diff(array_keys($m), ['name', 'element', 'power', 'accuracy', 'pp', 'effect', 'only', 'bond', 'from']) === [], "the move $id has only the fields there are");
     check($m['element'] === null || isset($elements[$m['element']]), "the move $id is of an element there is, or of none");
     check(($m['from'] ?? '') !== '', "the move $id says what in the classic it comes from");
     check(in_array($m['accuracy'], [100, 95, 90, 85, 80, 75, 70], true), "the move $id's accuracy is one of those in use");

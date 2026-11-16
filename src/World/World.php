@@ -37,6 +37,8 @@ final class World
     public array $boxes;
     /** Which of the boxes is the current one: a beast bound with the party full goes there. */
     public int $box = 0;
+    /** The record of the kinds of beast seen and bound (docs/numbers.md 24). */
+    public Dex $dex;
     /** The money the player has, in cowries (贝). */
     public int $money = Formulas::START_MONEY;
     /** The one sold by, whom a script's 'shop' opens; null when nothing is being bought. */
@@ -80,6 +82,7 @@ final class World
     {
         $this->player = new Actor('player', $x, $y, $dir, 'player');
         $this->boxes = Pen::emptied();
+        $this->dex = new Dex();
         $this->enter($map, $x, $y, $dir);
     }
 
@@ -108,6 +111,10 @@ final class World
                 $this->money = min(Formulas::MAX_MONEY, $this->money + $this->battle->payout());
             }
             if (($caught = $this->battle->caught) !== null) {
+                $this->dex->bind($caught->id);
+                if ($this->battle->kin) { // docs/numbers.md 25: bound with the seal of kinship, it is close from the first
+                    $caught->bond = Formulas::BOND_SEAL;
+                }
                 if (count($this->party) < self::PARTY) {
                     $this->party[] = $caught;
                 } else { // to the pen's current box, first in it, whole as all kept there are (docs/numbers.md 16)
@@ -141,7 +148,7 @@ final class World
             return;
         }
         if ($this->menu !== null) {
-            $this->menu->step($c, $this->party, $this->items, $this->book['items'] ?? []);
+            $this->menu->step($c, $this->party, $this->items, $this->book['items'] ?? [], $this->dex, $this->book ?? []);
             if ($this->menu->done) {
                 $saves = $this->menu->saves;
                 $this->menu = null;
@@ -288,10 +295,10 @@ final class World
         return null;
     }
 
-    /** A beast of $level as data/ makes it, or a god; holding $item, when one is given. */
-    private function beast(string $id, int $level, ?string $item = null): Fighter
+    /** A beast of $level as data/ makes it, or a god; holding $item, when one is given; with the individual values $dvs, or those in the middle. */
+    private function beast(string $id, int $level, ?string $item = null, ?array $dvs = null): Fighter
     {
-        $f = $this->make($id, $level);
+        $f = $this->make($id, $level, $dvs);
         if ($item !== null && !isset($this->book['items'][$item]['hold'])) {
             throw new InvalidArgumentException("'$item' is not a thing a beast can hold");
         }
@@ -299,13 +306,14 @@ final class World
         return $f;
     }
 
-    private function make(string $id, int $level): Fighter
+    private function make(string $id, int $level, ?array $dvs): Fighter
     {
         $b = $this->book ?? throw new LogicException('this world was made without the tables beasts and battles need');
         if (isset($b['gods'][$id])) { // a god fights as a beast does, knowing its moves from the first
             return new Fighter($id, $b['gods'][$id], $level, array_map(fn(string $move) => [1, $move], $b['gods'][$id]['moves']), $b['moves']);
         }
-        return new Fighter($id, $b['beasts'][$id] ?? throw new InvalidArgumentException("no beast '$id'"), $level, $b['learnsets'][$id], $b['moves']);
+        $species = $b['beasts'][$id] ?? throw new InvalidArgumentException("no beast '$id'");
+        return $dvs === null ? new Fighter($id, $species, $level, $b['learnsets'][$id], $b['moves']) : new Fighter($id, $species, $level, $b['learnsets'][$id], $b['moves'], $dvs);
     }
 
     /** A beast of $level joins the party. */
@@ -314,7 +322,9 @@ final class World
         if (count($this->party) >= self::PARTY) {
             throw new LogicException('the party is full');
         }
-        $this->party[] = $this->beast($beast, $level);
+        // docs/numbers.md 23: one given has individual values of its own, as one met in the wild has; a world made without dice gives the middle ones
+        $this->party[] = $this->beast($beast, $level, null, $this->rng === null ? null : Formulas::dvs($this->rng->byte(), $this->rng->byte()));
+        $this->dex->bind($beast);
     }
 
     /** The party rests: every beast whole again. */
@@ -359,7 +369,9 @@ final class World
         if ($this->rng === null) {
             throw new LogicException('this world was made without the dice a battle needs');
         }
-        $this->begin([$this->beast($beast, $level, $this->wildHolds($beast))], null);
+        // docs/numbers.md 20, 23: what it holds is rolled first, then its individual values
+        $holds = $this->wildHolds($beast);
+        $this->begin([$this->beast($beast, $level, $holds, Formulas::dvs($this->rng->byte(), $this->rng->byte()))], null);
     }
 
     /** @param list<Fighter> $theirs */
@@ -372,6 +384,16 @@ final class World
             throw new LogicException('a battle with no beast in the party that can fight');
         }
         $b = $this->book;
+        foreach ($theirs as $f) { // docs/numbers.md 24: the kinds met in a battle are seen; a god is no kind of beast
+            if (isset($b['beasts'][$f->id])) {
+                $this->dex->see($f->id);
+            }
+        }
+        if ($trial !== null && !$duel) { // docs/numbers.md 25: those that go into a god's trial able to fight grow closer
+            foreach ($this->party as $f) {
+                $f->bond = $f->fainted() ? $f->bond : Formulas::bond($f->bond, 'trial');
+            }
+        }
         $full = count($this->party) >= self::PARTY;
         $reward = $trial === null ? 0 : Formulas::reward($duel ? Formulas::REWARD_ROAD : Formulas::REWARD_GOD, $theirs[count($theirs) - 1]->level);
         $this->battle = new Screen(new Battle([$this->party, $theirs], $b['elements'], $b['moves'], $this->rng, [true, false], $b['items']), $b['moves'], $this->rng, $b['items'], $this->items, $trial, $duel,
@@ -448,9 +470,13 @@ final class World
             throw new LogicException('a game is not saved on water');
         }
         $p = $this->player;
+        [$seen, $caught] = [array_keys($this->dex->seen), array_keys($this->dex->caught)];
+        sort($seen);
+        sort($caught);
         return ['map' => $this->map->id, 'x' => $p->x, 'y' => $p->y, 'dir' => $p->dir->value, 'flags' => array_keys($this->flags),
             'items' => $this->items, 'party' => array_map(fn(Fighter $f) => $f->state(), $this->party), 'rest' => $this->restAt,
-            'boxes' => array_map(fn(array $box) => array_map(fn(Fighter $f) => $f->state(), $box), $this->boxes), 'box' => $this->box, 'money' => $this->money];
+            'boxes' => array_map(fn(array $box) => array_map(fn(Fighter $f) => $f->state(), $box), $this->boxes), 'box' => $this->box, 'money' => $this->money,
+            'seen' => $seen, 'caught' => $caught, 'steps' => $this->steps];
     }
 
     /** Puts the world as a saved game kept it (state()). */
@@ -465,12 +491,21 @@ final class World
                 throw new InvalidArgumentException("the saved game's {$f->id} holds what cannot be held: '{$f->item}'");
             }
         }
+        foreach ([...$s['seen'], ...$s['caught']] as $id) {
+            if (!isset($b['beasts'][$id])) {
+                throw new InvalidArgumentException("the saved game's record has a kind there is none of: '$id'");
+            }
+        }
+        if (array_diff($s['caught'], $s['seen']) !== []) {
+            throw new InvalidArgumentException('the saved game has bound a kind it has not seen');
+        }
         if (!array_is_list($boxes) || count($boxes) !== Pen::BOXES || !isset($boxes[$s['box']]) || array_filter($boxes, fn(array $box) => !array_is_list($box) || count($box) > Pen::BOX) !== []) {
             throw new InvalidArgumentException('the saved game\'s pen is not as a pen can be');
         }
         $map = $this->maps[$s['map']] ?? throw new InvalidArgumentException("the saved game is on a map there is none of: '{$s['map']}'");
         if (count($party) > self::PARTY || !$map->walkable($s['x'], $s['y']) || array_diff_key($s['items'], $b['items']) !== []
-            || !is_int($s['money']) || $s['money'] < 0 || $s['money'] > Formulas::MAX_MONEY) {
+            || !is_int($s['money']) || $s['money'] < 0 || $s['money'] > Formulas::MAX_MONEY
+            || !is_int($s['steps']) || $s['steps'] < 0 || $s['steps'] >= Formulas::BOND_STEPS) {
             throw new InvalidArgumentException('the saved game is not as a game can be');
         }
         $rest = $s['rest'];
@@ -478,6 +513,7 @@ final class World
             throw new InvalidArgumentException('the saved game\'s place of rest is not one there is');
         }
         [$this->flags, $this->items, $this->party, $this->restAt, $this->boxes, $this->box, $this->money] = [array_fill_keys($s['flags'], true), $s['items'], $party, $rest, $boxes, $s['box'], $s['money']];
+        [$this->dex->seen, $this->dex->caught, $this->steps] = [array_fill_keys($s['seen'], true), array_fill_keys($s['caught'], true), $s['steps']];
         $this->enter($s['map'], $s['x'], $s['y'], Dir::from($s['dir']));
     }
 
@@ -511,8 +547,17 @@ final class World
     }
 
     /** The player has stepped onto a tile: its warp, else its trigger, else what its grass may hold. */
+    /** The steps walked since the party last grew closer (docs/numbers.md 25). */
+    public int $steps = 0;
+
     private function arrived(): void
     {
+        if (++$this->steps >= Formulas::BOND_STEPS) {
+            $this->steps = 0;
+            foreach ($this->party as $f) {
+                $f->bond = Formulas::bond($f->bond, 'step');
+            }
+        }
         [$x, $y] = [$this->player->x, $this->player->y];
         $this->afloat = $this->water($this->map, $x, $y); // ashore, when the step was onto land
         if (($w = $this->map->warpAt($x, $y)) !== null) {

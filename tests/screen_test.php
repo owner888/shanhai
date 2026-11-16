@@ -261,7 +261,7 @@ $w->join('guanguan', 9);
 $w->party[1]->status = 'poison';
 $w->run([['give', 'seal', 3]]);
 $w->step($menu);
-same(['异兽', '背包'], $w->menu->items($w->party, $w->items, $book['items']), 'with a party, the party\'s screen comes first');
+same(['异兽', '背包', '详情'], $w->menu->items($w->party, $w->items, $book['items']), 'with a party, the party\'s screen comes first, and the look at one beast after the bag');
 $w->step(new Controls(Dir::Right));
 same([0, false], [$w->player->x, $w->player->moving], 'the player does not walk while the menu is open');
 $w->step($none);
@@ -281,7 +281,7 @@ $holds->join('xuangui', 7);
 $holds->run([['give', 'tongxiu', 1], ['give', 'seal', 2]]);
 $holds->step($menu);
 $list = fn() => $holds->menu->items($holds->party, $holds->items, $book['items']);
-same(['异兽', '携带', '背包'], $list(), 'with a thing to hold, the menu has what the beasts hold');
+same(['异兽', '携带', '背包', '详情'], $list(), 'with a thing to hold, the menu has what the beasts hold');
 foreach ([$down, $none, $confirm] as $c) {
     $holds->step($c);
 }
@@ -360,7 +360,7 @@ foreach ([[[64, 191], 0, '啊，狌狌挣脱了！'], [[64, 190, 191], 1, '可�
 }
 
 // Bound, the wild beast joins the party as the battle left it; a full party cannot bind.
-$w = new World($maps, 'field', 0, 0, Dir::Down, $book, Rng::scripted([0, 0])); // the wild beast holds nothing; the seal binds
+$w = new World($maps, 'field', 0, 0, Dir::Down, $book, Rng::scripted([136, 136, 0, 136, 136, 0])); // the given beast's individual values; the wild beast holds nothing, and its values; the seal binds
 $w->join('lushu', 30);
 $w->run([['give', 'seal', 1], ['battle', 'xingxing', 4], ['say', 'after']]);
 $w->battle->battle->fighter(1)->hp = 7;
@@ -371,7 +371,7 @@ same([null, 'caught', ['lushu', 'xingxing'], 7, [], 'after'], [$w->battle, $w->l
 $w->step($confirm);
 // With six in the party the beast bound goes to the pen's current box, first in it and whole, and the player is told
 // when that fills the box; with the box full too no seal is used (docs/numbers.md 16).
-$w = new World($maps, 'field', 0, 0, Dir::Down, $book, $rolls = Rng::scripted([0, 0]));
+$w = new World($maps, 'field', 0, 0, Dir::Down, $book, $rolls = Rng::scripted([...array_fill(0, 2 * World::PARTY, 136), 0, 136, 136, 0]));
 for ($i = 0; $i < World::PARTY; $i++) {
     $w->join('lushu', 30);
 }
@@ -388,7 +388,7 @@ for ($lines = []; $w->battle !== null && count($lines) < 9; $w->step($confirm)) 
 same(['使用了契印！', '结契成功！狌狌成了你的同伴！', '队伍满了，狌狌被送到了兽栏的第三栏。', '第三栏满了。到兽栏换一栏之前，没法再结契。'], $lines, 'with six in the party the beast bound is sent to the pen, and the box it fills is told of');
 $kept = $w->boxes[2][0];
 same([World::PARTY, Pen::BOX, 4, $kept->maxHp, ['seal' => 1]], [count($w->party), count($w->boxes[2]), $kept->level, $kept->hp, $w->items], 'it is first in the current box, whole, and the seal is spent');
-$rolls->more([0]);
+$rolls->more([0, 136, 136]);
 $w->run([['battle', 'xingxing', 4]]);
 foreach ([...$open, $confirm] as $c) {
     $w->step($c);
@@ -736,3 +736,87 @@ foreach ($open as $c) {
     $s->step($c);
 }
 same(['水契印  ×1  成功率 33%'], $s->items(), 'in a battle begun on the water the rate is three times as much: 190 × 3 is 255 at most, and whole that is 85, not the 63 of the land');
+
+// The look at one beast, and the record of beasts (docs/numbers.md 23, 24).
+$d = Data::newWorld(1);
+$d->join('lushu', 5);
+$f = $d->party[0];
+$d->step($menu);
+$list = fn() => $d->menu->items($d->party, $d->items, $book['items'], $d->dex, $book['beasts']);
+same(['异兽', '背包', '详情', '图鉴'], $list(), 'with a kind seen, the menu has the record');
+foreach ([$down, $none, $down, $none, $confirm, $confirm] as $c) {
+    $d->step($c);
+}
+same(sprintf('鹿蜀  Lv5  %s  体力 %d/%d', $book['elements'][$f->species['elements'][0]]['name'], $f->hp, $f->maxHp), $d->menu->note, 'the look at a beast: what it is and how it stands');
+$shown = [];
+for ($i = 0; $i < 6 && $d->menu->note !== null; $i++) {
+    $shown[] = $d->menu->note;
+    $d->step($confirm);
+}
+same(5, count($shown), 'five screenfuls');
+check(str_starts_with($shown[1], '攻击 ' . $f->stats['atk'] . '  防御 ') && str_contains($shown[2], '到下一级还差 ') && str_ends_with($shown[2], '空手') && str_starts_with($shown[3], '招式：'), 'its stats; its experience and what it holds; its moves');
+same('天分：' . Formulas::talent($f->state()['dvs']) . '  和你：还生分', $shown[4], 'and the words for its individual values and for its bond, which begins at 70');
+same(['万里挑一', '出众', '出众', '寻常', '寻常', '平平'], array_map(fn(int $each) => Formulas::talent(['atk' => $each, 'def' => $each, 'spe' => $each, 'spc' => $each]), [12, 11, 10, 9, 6, 5]), 'the words go by what the four add up to: 48, 38 and 23 and over');
+foreach ([$cancel, $down, $none, $down, $none, $down, $none, $confirm] as $c) { // back to the first list; the record, its fourth
+    $d->step($c);
+}
+same(['dex', count($book['beasts'])], [$d->menu->phase, count($list())], 'the record lists every kind there is');
+$at = array_search('lushu', array_keys($book['beasts']), true);
+same([sprintf('%03d  鹿蜀  已结契', $at + 1), '001  ？？？'], [$list()[$at], $list()[0]], 'one bound is named and marked; one not seen is not named');
+$d->step(new Controls(Dir::Right));
+same(8, $d->menu->at(), 'right turns a page');
+$d->step($none);
+$d->step(new Controls(Dir::Left));
+$d->step($confirm);
+same('还没有见过。', $d->menu->note, 'of a kind not seen nothing is told');
+$dex = new \Shanhai\World\Dex();
+$dex->see('xingxing');
+same(1, count($dex->entry($book['beasts'], $book['elements'], 0)), 'of a kind only seen: its name, what it is and where it lives');
+check(str_contains($dex->entry($book['beasts'], $book['elements'], 0)[0], '出没：招摇之山') && !str_contains($dex->entry($book['beasts'], $book['elements'], 0)[0], '属性'), 'and not its elements');
+$dex->bind('xingxing');
+$told = $dex->entry($book['beasts'], $book['elements'], 0);
+check(count($told) >= 2 && str_contains($told[0], '属性：') && $told[1] === $book['beasts']['xingxing']['looks'], 'of one bound: its elements and how the classic says it looks');
+// Kinds are seen in a battle, the other side's all of them, and bound when one joins.
+$d->run([]);
+$b = Data::newWorld(1);
+$b->join('lushu', 30);
+$b->run([['duel', '猎户', [['xingxing', 2], ['baiyuan', 2]]]]);
+same([['baiyuan', 'lushu', 'xingxing'], ['lushu']], [(function (array $ids) { sort($ids); return $ids; })(array_keys($b->dex->seen)), array_keys($b->dex->caught)], 'those of a battle are seen; the one that joined is bound');
+
+// The bond in a battle (docs/numbers.md 25): a level brings a beast closer; close enough, it comes to the move of the bond, once;
+// one that falls is less close. 鹿蜀 at level 5 with 134 experience needs one more for level 6.
+$close = $grows(5);
+$close->bond = 218;
+$s = $screen([$close], ['xingxing', 4], Rng::seeded(11));
+$texts = array_column($win($s), 0);
+same([true, true, true], [$close->bond >= 220, $close->offered, in_array(Screen::BOND_MOVE, array_column($close->moves, 'id'), true) || in_array('鹿蜀想学同心，可是已经会四个招式了。要忘掉哪一个？', $texts, true)], 'at 220 it comes to the move of the bond');
+$again = $grows(5);
+[$again->bond, $again->offered] = [230, true];
+$s = $screen([$again], ['xingxing', 4], Rng::seeded(11));
+$win($s);
+check(!in_array(Screen::BOND_MOVE, array_column($again->moves, 'id'), true), 'put to it once already, it is not put again');
+$weak = $fighter('xingxing', 2);
+$weak->hp = 1;
+$s = $screen([$weak, $fighter('lushu', 30)], ['lushu', 40], Rng::seeded(3));
+foreach ([$confirm, $confirm, $confirm, $confirm] as $c) { // the two lines; the menu's first; its first move
+    $s->step($c);
+}
+same(Formulas::BOND_BASE - 5, $weak->bond, 'one that falls to a beast thirty levels or more over it is five less close');
+// The seal of kinship binds as a plain one, and what it binds is close from the first.
+$kin = new World($maps, 'field', 0, 0, Dir::Down, $book, Rng::scripted([136, 136, 0, 136, 136, 0]));
+$kin->join('lushu', 30);
+$kin->run([['give', 'sealKin', 1], ['battle', 'xingxing', 4]]);
+foreach ([...$open, $confirm, $confirm, $confirm, $confirm] as $c) {
+    $kin->step($c);
+}
+same([2, Formulas::BOND_SEAL], [count($kin->party), $kin->party[1]->bond ?? null], 'bound with the seal of kinship, a beast begins at a bond of 200');
+// Walking: every 512 steps each of the party is one closer; those that go into a god's trial able to fight, three.
+$walk = Data::newWorld(1);
+$walk->join('lushu', 5);
+$walk->steps = Formulas::BOND_STEPS - 1;
+for ($i = 0; $i < 4 * World::WALK_STEPS && $walk->steps !== 0; $i++) {
+    $walk->step(new Controls($i < 2 * World::WALK_STEPS ? Dir::Down : Dir::Up));
+}
+same([0, Formulas::BOND_BASE + 1], [$walk->steps, $walk->party[0]->bond], 'the step that makes 512 brings each of the party one closer');
+$walk->run([['trial', '山神', [['xingxing', 2]]]]);
+same(Formulas::BOND_BASE + 1 + 3, $walk->party[0]->bond, 'going into a god\'s trial, three');

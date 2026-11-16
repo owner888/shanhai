@@ -93,4 +93,7 @@ return [
     'gore'      => ['name' => '角抵', 'element' => 'metal', 'power' => 80, 'accuracy' => 100, 'pp' => 15, 'from' => '犀、兕、蛊雕，有角。'],
     'onehorn'   => ['name' => '独角', 'element' => 'metal', 'power' => 100, 'accuracy' => 90, 'pp' => 10, 'effect' => ['crit', 100], 'from' => '兕，一角。'],
     'tusk'      => ['name' => '象牙', 'element' => 'metal', 'power' => 110, 'accuracy' => 85, 'pp' => 5, 'from' => '象。'],
+    // docs/numbers.md 25: with `bond`, its power is not the one written but the user's bond with the player times ten over twenty-five, 102 at most;
+    // a beast comes to it of itself, close enough.
+    'tongxin' => ['name' => '同心', 'element' => null, 'power' => 100, 'accuracy' => 100, 'pp' => 15, 'bond' => true, 'from' => '与人同心，其力自倍。游戏自己的设定。'],
 ];

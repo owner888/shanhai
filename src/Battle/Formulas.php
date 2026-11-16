@@ -164,13 +164,14 @@ final class Formulas
     /**
      * 8, 22: a kind's catch rate as a seal makes it, 255 at most. By a number, that many hundredths of it. By 'level', twice
      * with the wild beast's level under that of the player's beast, four times under half of it, eight under a quarter.
-     * By 'water', three times in a battle begun on the water.
+     * By 'water', three times in a battle begun on the water. By 'bond', as it is: that seal changes what is bound, not the binding.
      */
     public static function sealRate(int $rate, int|string $by, int $mine = 0, int $theirs = 0, bool $water = false): int
     {
         $times = match ($by) {
             'level' => $theirs >= $mine ? 1 : ($theirs >= $mine >> 1 ? 2 : ($theirs >= $mine >> 2 ? 4 : 8)),
             'water' => $water ? 3 : 1,
+            'bond' => 1,
             default => null,
         };
         return min(255, $times === null ? intdiv($rate * $by, 100) : $rate * $times);
@@ -185,6 +186,66 @@ final class Formulas
     public static function reward(int $base, int $level): int
     {
         return 4 * $base * $level;
+    }
+
+    /**
+     * 23: a beast's four individual values, 0 to 15 each, from two bytes: attack and defense the first's halves, speed and
+     * special the second's. @return array{atk: int, def: int, spe: int, spc: int}
+     */
+    public static function dvs(int $first, int $second): array
+    {
+        return ['atk' => $first >> 4, 'def' => $first & 15, 'spe' => $second >> 4, 'spc' => $second & 15];
+    }
+
+    /** 23: what is said of a beast's individual values, by what the four add up to (0 to 60): these words are the game's own. */
+    public const TALENT = [48 => '万里挑一', 38 => '出众', 23 => '寻常', 0 => '平平'];
+
+    /** 23: the word for individual values. @param array{atk: int, def: int, spe: int, spc: int} $dvs */
+    public static function talent(array $dvs): string
+    {
+        foreach (self::TALENT as $from => $word) {
+            if (array_sum($dvs) >= $from) {
+                return $word;
+            }
+        }
+    }
+
+    /** 25: the bond a beast begins with, the most there is, what one bound with the seal of kinship begins with, and what it takes to come to the move of the bond. */
+    public const BOND_BASE = 70, BOND_MAX = 255, BOND_SEAL = 200, BOND_MOVE = 220;
+    /** 25: how many steps the player walks for each of the party to grow one closer. */
+    public const BOND_STEPS = 512;
+    /** 25: what a thing that happens changes a bond by: with the bond under 100, under 200, and otherwise. */
+    public const BOND_CHANGES = [
+        'level' => [5, 3, 2],       // it gained a level
+        'move' => [1, 1, 0],        // it learned a move
+        'trial' => [3, 2, 1],       // it went into a god's trial, able to fight
+        'fainted' => [-1, -1, -1],  // it fell in a battle
+        'outmatched' => [-5, -5, -10], // it fell to one thirty levels or more over it
+        'step' => [1, 1, 1],        // the player walked BOND_STEPS with it
+    ];
+    /** 25: what is said of a bond, from what it is and over: the grades are the reference's, the words the game's own. */
+    public const BOND_WORDS = [250 => '形影不离', 200 => '十分亲近', 150 => '亲近', 100 => '渐渐熟了', 50 => '还生分', 0 => '疏远'];
+
+    /** 25: a bond after $why has happened, from 0 to BOND_MAX. */
+    public static function bond(int $now, string $why): int
+    {
+        return max(0, min(self::BOND_MAX, $now + self::BOND_CHANGES[$why][$now < 100 ? 0 : ($now < 200 ? 1 : 2)]));
+    }
+
+    /** 25: the word for a bond. */
+    public static function bondWord(int $bond): string
+    {
+        foreach (self::BOND_WORDS as $from => $word) {
+            if ($bond >= $from) {
+                return $word;
+            }
+        }
+    }
+
+    /** 25: the power of the move of the bond: the bond times ten over twenty-five, and 1 at least. */
+    public static function bondPower(int $bond): int
+    {
+        return max(1, intdiv($bond * 10, 25));
     }
 
     /** 20: a wild beast holds nothing on a byte under the first; else its kind's second thing on a byte under the second, its first on any other. */

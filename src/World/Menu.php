@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Shanhai\World;
 
-use Shanhai\Battle\{Fighter, Medicine};
+use Shanhai\Battle\{Fighter, Formulas, Medicine, Screen};
 use Shanhai\Cursor;
 
 /**
@@ -12,9 +12,9 @@ use Shanhai\Cursor;
  */
 final class Menu
 {
-    public const ENTRIES = ['party' => '异兽', 'hold' => '携带', 'bag' => '背包', 'save' => '存档'];
+    public const ENTRIES = ['party' => '异兽', 'hold' => '携带', 'bag' => '背包', 'detail' => '详情', 'dex' => '图鉴', 'save' => '存档'];
 
-    /** top, party, bag, hold (the party, each with what it holds), give (the things of the bag a beast can hold) or use (the party, to use a thing of the bag on one) */
+    /** top, party, detail (the party, to look at one), dex (the record of beasts), bag, hold (the party, each with what it holds), give (the things of the bag a beast can hold) or use (the party, to use a thing of the bag on one) */
     public string $phase = 'top';
     public Cursor $cursor;
     public ?PartyMenu $party = null;
@@ -27,6 +27,8 @@ final class Menu
     private string $using = '';
     /** What was just done or cannot be, shown until confirm or cancel; null with nothing to say. */
     public ?string $note = null;
+    /** @var list<string> what is shown after the note, a string a screenful */
+    private array $more = [];
 
     /** @param bool $canSave whether the game has a file to save to */
     public function __construct(private readonly bool $canSave)
@@ -38,10 +40,29 @@ final class Menu
      * The first list's entries: the party's only when there is one, what the beasts hold only when there is a thing to
      * hold, saving only when the game can. @param list<Fighter> $party @return list<string> the keys of ENTRIES
      */
-    private function entries(array $party, array $bag, array $things): array
+    private function entries(array $party, array $bag, array $things, ?Dex $dex = null): array
     {
         $held = array_filter($party, fn(Fighter $f) => $f->item !== null) !== [] || self::holdable($bag, $things) !== [];
-        return [...($party === [] ? [] : ['party', ...($held ? ['hold'] : [])]), 'bag', ...($this->canSave ? ['save'] : [])];
+        return [...($party === [] ? [] : ['party', ...($held ? ['hold'] : [])]), 'bag', ...($party === [] ? [] : ['detail']), ...(($dex?->seen ?? []) === [] ? [] : ['dex']), ...($this->canSave ? ['save'] : [])];
+    }
+
+    /**
+     * What is shown of one beast (docs/numbers.md 24), a string a screenful: what it is and how it stands; its stats;
+     * its experience and what it holds; its moves; and the word for its individual values (23).
+     * @param array{moves: array, elements: array, items: array} $book @return list<string>
+     */
+    public static function detail(Fighter $f, array $book): array
+    {
+        $s = $f->species;
+        $next = $f->level >= Formulas::MAX_LEVEL ? '已到顶' : '到下一级还差 ' . (Formulas::expAtLevel($s['growth'], $f->level + 1) - $f->exp);
+        return [
+            sprintf('%s  Lv%d  %s  体力 %d/%d%s', $s['name'], $f->level, implode('、', array_map(fn(string $e) => $book['elements'][$e]['name'], $s['elements'])), $f->hp, $f->maxHp,
+                $f->fainted() ? '  倒' : ($f->status === null ? '' : '  ' . Screen::STATUS[$f->status])),
+            sprintf('攻击 %d  防御 %d  特攻 %d  特防 %d  速度 %d', $f->stats['atk'], $f->stats['def'], $f->stats['spa'], $f->stats['spd'], $f->stats['spe']),
+            '经验 ' . $f->exp . '，' . $next . '  ' . ($f->item === null ? '空手' : '持：' . $book['items'][$f->item]['name']),
+            '招式：' . implode('、', array_map(fn(array $m) => $book['moves'][$m['id']]['name'] . ' ' . $m['pp'] . '/' . $book['moves'][$m['id']]['pp'], $f->moves)),
+            '天分：' . Formulas::talent($f->state()['dvs']) . '  和你：' . Formulas::bondWord($f->bond),
+        ];
     }
 
     /** The things of $bag a beast can hold. @return list<string> ids */
@@ -54,12 +75,14 @@ final class Menu
      * @param list<Fighter> $party which the party's screen may put in another order, and whose beasts may be given things to hold
      * @param array<string, int> $bag which a thing given leaves and one taken back comes to
      * @param array<string, array> $things data/items.php
+     * @param ?Dex $dex the record of beasts, when there is one to look at
+     * @param array $book the tables what is shown of a beast or a kind is read from: beasts, moves, elements, items
      */
-    public function step(Controls $c, array &$party, array &$bag, array $things): void
+    public function step(Controls $c, array &$party, array &$bag, array $things, ?Dex $dex = null, array $book = []): void
     {
         if ($this->note !== null) {
             if ($c->confirm || $c->cancel) {
-                $this->note = null;
+                $this->note = array_shift($this->more);
             }
         } elseif ($c->menu) {
             $this->done = true;
@@ -68,7 +91,9 @@ final class Menu
             if ($this->party->done) {
                 [$this->phase, $this->party] = ['top', null];
             }
-        } elseif ($this->cursor->move($c, max(1, count($this->items($party, $bag, $things))))) {
+        } elseif ($this->cursor->move($c, max(1, count($this->items($party, $bag, $things, $dex, $book['beasts'] ?? []))))) {
+            return;
+        } elseif ($this->phase === 'dex' && $this->paged($c, count($book['beasts']))) {
             return;
         } elseif ($c->cancel) {
             if ($this->phase === 'top') {
@@ -92,6 +117,12 @@ final class Menu
             }
             $party[$this->holder]->item = $id;
             [$this->phase, $this->cursor] = ['hold', new Cursor()];
+        } elseif ($c->confirm && $this->phase === 'detail') {
+            $this->more = self::detail($party[$this->cursor->at], $book);
+            $this->note = array_shift($this->more);
+        } elseif ($c->confirm && $this->phase === 'dex') {
+            $this->more = $dex->entry($book['beasts'], $book['elements'], $this->cursor->at) ?? ['还没有见过。'];
+            $this->note = array_shift($this->more);
         } elseif ($c->confirm && $this->phase === 'bag' && $bag !== []) {
             // docs/numbers.md 21: a thing that is used on a beast opens the party to choose one; another is only looked at
             $id = array_keys($bag)[$this->cursor->at];
@@ -110,7 +141,7 @@ final class Menu
                 [$this->phase, $this->cursor] = ['bag', new Cursor()];
             }
         } elseif ($c->confirm && $this->phase === 'top') {
-            $entry = $this->entries($party, $bag, $things)[$this->cursor->at];
+            $entry = $this->entries($party, $bag, $things, $dex)[$this->cursor->at];
             if ($entry === 'save') {
                 [$this->saves, $this->done] = [true, true];
                 return;
@@ -121,11 +152,32 @@ final class Menu
         }
     }
 
-    /** The list showing. @param list<Fighter> $party @param array<string, int> $bag @param array<string, array> $table data/items.php @return list<string> */
-    public function items(array $party, array $bag, array $table): array
+    /** The left or right the record's list last saw held, a page being turned when one is pressed, not while held. */
+    private ?Dir $turned = null;
+
+    /** In the record's list, left and right go a page (Pen::ROWS) back and on; true when the cursor moved. */
+    private function paged(Controls $c, int $count): bool
+    {
+        $pressed = $c->dir !== $this->turned ? $c->dir : null;
+        $this->turned = $c->dir;
+        if ($pressed !== Dir::Left && $pressed !== Dir::Right) {
+            return false;
+        }
+        $to = max(0, min($count - 1, $this->cursor->at + ($pressed === Dir::Right ? Pen::ROWS : -Pen::ROWS)));
+        [$moved, $this->cursor->at] = [$to !== $this->cursor->at, $to];
+        return $moved;
+    }
+
+    /**
+     * The list showing. @param list<Fighter> $party @param array<string, int> $bag @param array<string, array> $table data/items.php
+     * @param array<string, array> $beasts data/beasts.php, for the record's list @return list<string>
+     */
+    public function items(array $party, array $bag, array $table, ?Dex $dex = null, array $beasts = []): array
     {
         return match ($this->phase) {
-            'top' => array_map(fn(string $key) => self::ENTRIES[$key], $this->entries($party, $bag, $table)),
+            'top' => array_map(fn(string $key) => self::ENTRIES[$key], $this->entries($party, $bag, $table, $dex)),
+            'detail' => array_map(PartyMenu::line(...), $party),
+            'dex' => $dex->lines($beasts),
             'party' => $this->party->items($party),
             'hold' => array_map(fn(Fighter $f) => $f->species['name'] . '  Lv' . $f->level . '  ' . ($f->item === null ? '（空手）' : '持：' . $table[$f->item]['name']), $party),
             'give' => array_map(fn(string $id) => $table[$id]['name'], self::holdable($bag, $table)),

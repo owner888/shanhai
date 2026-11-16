@@ -70,6 +70,9 @@ final class Play extends Game
     private State $lastPad;
 
     /** @param array<string, array> $items data/items.php, for the names a bag shows */
+    /** @var ?array<string, array> data/beasts.php, read when the record of beasts is first shown */
+    private ?array $beasts = null;
+
     public function __construct(public readonly World $world, private readonly array $items)
     {
         $this->viewport = new Canvas(self::VIEW_WIDTH, self::VIEW_HEIGHT);
@@ -246,7 +249,7 @@ final class Play extends Game
             if ($menu->note !== null) {
                 $this->dialog($p, $r, $menu->note);
             } else {
-                [$lines, $at] = Pen::window($menu->items($this->world->party, $this->world->items, $this->items), $menu->at());
+                [$lines, $at] = Pen::window($menu->items($this->world->party, $this->world->items, $this->items, $this->world->dex, $this->beasts ??= Data::beasts()), $menu->at());
                 $this->choices($p, $r, $lines, $at, $menu->phase === 'top' ? 200.0 : 420.0);
             }
         }
