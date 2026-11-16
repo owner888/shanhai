@@ -54,15 +54,15 @@ src/load.php       the autoloader of Shanhai\ (src/)
 src/World/         the game outside battle, with no drawing: Dir, Tile (the characters maps are written in), Map,
                    Actor, Controls, World (step(): walking, turning, what blocks, warps, triggers, talking; the party,
                    its battles, rest), Menu (what the menu button opens: the party's screen, the bag), PartyMenu (the beasts in
-                   order, two change places), Pen (the boxes where beasts not taken along are kept)
-src/Script/Vm.php  the event script interpreter: say, ask (a line with choices), flags, jumps, face, move, warp, give, battle, trial, duel, rest, pen, load; check()
+                   order, two change places), Pen (the boxes where beasts not taken along are kept), Shop (buying)
+src/Script/Vm.php  the event script interpreter: say, ask (a line with choices), flags, jumps, face, move, warp, give, battle, trial, duel, rest, pen, shop, load; check()
 src/Battle/        the battle, with no drawing: Rng (bytes, from a seed or a test's script), Formulas (docs/numbers.md as code,
                    a function a rule), Fighter, Battle (turn(): order, what stops a beast, a move, statuses, weather, switching),
                    Screen (a wild battle as the player goes through it: lines, the menu, its lists, the bag's seal, fleeing),
                    Simulator (battles with no player, to weigh the tables)
 src/Text.php       the dialog box's measures and line breaking
 src/Cursor.php     a list's cursor: moves on a press, not while held
-src/Journey.php    a player with no hands, with a full party as a person keeps one: plays a game through every trial by World::step alone (tools/journey.php, its test)
+src/Journey.php    a player with no hands, with a full party as a person keeps one, changed for better beasts at the pen: plays a game through every trial by World::step alone (tools/journey.php, its test)
 src/Save.php       the one saved game, a file of JSON in the app's own folder: World::state() written and read
 src/Data.php       reads data/
 src/Elements.php   what a move of one element does against a beast of others (double, even, half, in tenths)
@@ -77,7 +77,7 @@ data/game.php      where a new game starts, where the player wakes after a battl
 data/ranges.php    the ranges of mountains by number: the classic's book and name, the reference's gym they are measured from
 data/opponents.php those met on the roads: where each stands, how far they see, what they send (the reference's numbers)
 data/gods.php      the gods that keep the ranges: what a beast's entry has to fight with, and the classic's line
-data/items.php     the things a bag holds: the seal that binds a wild beast
+data/items.php     the things a bag holds: the seal that binds a wild beast, and its price
 data/elements.php  the five elements: what each overcomes and feeds, physical or special, its region
 data/tiers.php     the five tiers a beast's numbers are built in: bands measured from the reference's distribution
 data/moves.php     the moves: element (or none), power, accuracy, uses, effect, and what in the classic each comes from
@@ -136,7 +136,9 @@ docs/elements.md   the elements' table and how a beast's elements are settled
   walked on, the map's `water` holds three wild beasts, and stepping onto land ends it. A game is not saved afloat.
 - **The pen** (兽栏, `World::$boxes`, docs/numbers.md 16) is fourteen boxes of twenty, one the current: a beast bound with
   the party full goes there, whole; a script's `pen` opens its screen (`Pen`), where each range's place of rest is.
-- **A saved game** is `World::state()`: the map and place, flags, bag, where it last rested, the pen, and each beast's `Fighter::state()`. What does not
+- **Money** (贝, `World::$money`, docs/numbers.md 17): a trial or one on the road, beaten, pays by the level of their last
+  beast; a battle lost takes half; a script's `shop` opens buying (`Shop`), where each range's place of rest is.
+- **A saved game** is `World::state()`: the map and place, flags, bag, money, where it last rested, the pen, and each beast's `Fighter::state()`. What does not
   fit the data it is read with throws; a new field means a new `Save::VERSION`.
 - **A map change** is counted in `World::$mapChanges`; Play builds a new Stage when it sees one.
 - **Drawing interpolates**: `Actor::place($alpha)` is between two updates' places, so motion is smoother than its steps.

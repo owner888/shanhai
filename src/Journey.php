@@ -5,7 +5,8 @@ namespace Shanhai;
 
 use RuntimeException;
 use Shanhai\Battle\Formulas;
-use Shanhai\World\{Controls, Dir, Map, Tile, World};
+use Shanhai\Battle\Fighter;
+use Shanhai\World\{Controls, Dir, Map, Pen, Tile, World};
 
 /**
  * A player with no hands: plays a game from its start through every trial there is, by the same World::step and the
@@ -15,11 +16,14 @@ use Shanhai\World\{Controls, Dir, Map, Tile, World};
  * its beasts' mean level is what it wants: 0 at first, so it tries at once, and two more than it had each time it
  * fails. Before a trial it has its beasts made whole at the nearest place that does so.
  *
- * It keeps a party as a person does, of $size beasts (six, all there is room for): with the seals it is given it
- * goes looking for wild beasts of kinds it has not that a seal is likely to hold, and binds them, wearing each down
- * first, and goes back for more seals when it has none; in the wild and on the roads it
+ * It keeps a party as a person does, of $size beasts (six, all there is room for): with the seals it is given and
+ * buys it goes looking for wild beasts of kinds it has not that a seal has one chance in ten or better to hold, and
+ * binds them, wearing each down first, and buys more seals when it has none; in the wild and on the roads it
  * sends its weakest first, and calls it back for its strongest when the other is of a higher level, so that both
  * grow; in a trial its strongest goes first. A party of one is the player it was before.
+ *
+ * With six it goes on looking, for wild beasts worth more than its weakest (worth()): one bound goes to the pen, and
+ * at the nearest way to the pen it leaves its weakest there and takes the new one.
  *
  * It is for knowing that the game can be played through and what that takes (tools/journey.php), not for playing well:
  * it uses no move that does no damage, and never flees.
@@ -32,6 +36,8 @@ final class Journey
     public int $updates = 0;
     public int $wild = 0;
     public int $lost = 0;
+    /** How often it has left a beast in the pen for a better one. */
+    public int $swapped = 0;
     /**
      * A line a trial passed: the mean level its beasts went into it at, the lowest and the highest of them and how many
      * they were, counting from the start how often trials were tried, wild battles, battles lost and updates.
@@ -106,10 +112,19 @@ final class Journey
             $this->talk($w->actor('shaman')->x, $w->actor('shaman')->y, [$this->starter, 0]);
             return true;
         }
-        if (count($w->party) < $this->size && ($w->items['seal'] ?? 0) === 0 && $this->supply()) {
+        if ($this->boxed() !== null) {
+            $this->mend();
+            if (!$this->visit('pen')) {
+                throw new RuntimeException('no way to the pen can be come to');
+            }
             return true;
         }
-        if (count($w->party) < $this->size && $this->seek()) {
+        $near = $this->near();
+        if ($near !== null && ($w->items['seal'] ?? 0) === 0 && $this->supply()) {
+            return true;
+        }
+        if ($near !== null) {
+            $this->seek($near);
             return true;
         }
         $next = null;
@@ -141,7 +156,7 @@ final class Journey
         if (!isset($w->flags[$next['flag']])) {
             throw new RuntimeException("the trial of range $r was talked through and neither passed nor lost");
         }
-        $this->passed[] = ['range' => $r, 'who' => $next['who'], 'tries' => $this->tries[$r], 'level' => $level, 'low' => min($levels), 'high' => max($levels), 'size' => count($levels), 'wild' => $this->wild, 'lost' => $this->lost, 'updates' => $this->updates];
+        $this->passed[] = ['range' => $r, 'who' => $next['who'], 'tries' => $this->tries[$r], 'level' => $level, 'low' => min($levels), 'high' => max($levels), 'size' => count($levels), 'wild' => $this->wild, 'lost' => $this->lost, 'updates' => $this->updates, 'money' => $this->w->money];
         return true;
     }
 
@@ -213,32 +228,125 @@ final class Journey
         $this->pace(fn() => $this->level() < $this->want[$r]);
     }
 
-    /**
-     * Goes looking for a beast to bind while there is room for one: to the nearest map whose wild holds a kind it has
-     * not and has not found a seal unlikely to hold, and through one battle there. A map it has fought on three times
-     * for each of its seven places without filling the party, it leaves. False when there is nowhere to look.
-     */
-    private function seek(): bool
+    /** What a beast of $level is worth beside another: its level times what its kind's base stats add up to, as its stats go by the two. */
+    private function worth(int $level, array $species): int
     {
-        $had = array_map(fn($f) => $f->id, $this->w->party);
+        return $level * array_sum($species['stats']);
+    }
+
+    /** Where in the party its weakest is, by worth. */
+    private function weakest(): int
+    {
+        $worths = array_map(fn(Fighter $f) => $this->worth($f->level, $f->species), $this->w->party);
+        return array_search(min($worths), $worths, true);
+    }
+
+    /**
+     * Whether a wild beast of $level and kind $id is one to bind: of a kind not in the party, and, the party having its
+     * $size already, only with all six there are room for, the pen's box not full, and a worth over its weakest's.
+     */
+    private function wants(int $level, string $id): bool
+    {
+        $w = $this->w;
+        if (in_array($id, array_map(fn(Fighter $f) => $f->id, $w->party), true)) {
+            return false;
+        }
+        if (count($w->party) < $this->size) {
+            return true;
+        }
+        $weak = $w->party[$this->weakest()];
+        return $this->size === World::PARTY && count($w->boxes[$w->box]) < Pen::BOX
+            && $this->worth($level, $this->beasts()[$id]) > $this->worth($weak->level, $weak->species);
+    }
+
+    /** @var ?array<string, array> */
+    private ?array $beasts = null;
+
+    private function beasts(): array
+    {
+        return $this->beasts ??= Data::beasts();
+    }
+
+    /** Where in the pen's current box the beast worth most is, when it is of a kind not in the party and worth more than the party's weakest; else null. */
+    private function boxed(): ?int
+    {
+        $w = $this->w;
+        if (count($w->party) < World::PARTY) {
+            return null;
+        }
+        $best = null;
+        foreach ($w->boxes[$w->box] as $i => $f) {
+            if ($this->wants($f->level, $f->id) && ($best === null || $this->worth($f->level, $f->species) > $this->worth($w->boxes[$w->box][$best]->level, $w->boxes[$w->box][$best]->species))) {
+                $best = $i;
+            }
+        }
+        return $best;
+    }
+
+    /**
+     * The pen is open: while its current box holds a beast to have instead of the party's weakest, the weakest is left
+     * and that one taken; a box nearly full is changed for the next; then it leaves.
+     */
+    private function pen(): void
+    {
+        $w = $this->w;
+        $at = fn() => $w->pen->cursor->at;
+        $pick = function (int $entry, int $which, string $said) use ($w, $at): void {
+            $this->cursorTo($entry, $at);
+            $this->tick(confirm: true);
+            $this->cursorTo($which, $at);
+            $this->tick(confirm: true);
+            if (!str_contains($w->pen->note ?? '', $said)) {
+                throw new RuntimeException('the pen: ' . ($w->pen->note ?? 'nothing was said'));
+            }
+            $this->tick(confirm: true);
+            $this->tick(cancel: true);
+        };
+        $entries = array_keys(Pen::ENTRIES);
+        while (($i = $this->boxed()) !== null) {
+            $pick(array_search('leave', $entries, true), $this->weakest(), '寄在了');
+            $pick(array_search('take', $entries, true), $i, '带回了');
+            $this->swapped++;
+        }
+        if (count($w->boxes[$w->box]) > Pen::BOX - 2) {
+            if ($w->box + 1 >= Pen::BOXES) {
+                throw new RuntimeException('every box of the pen is full');
+            }
+            $this->cursorTo(array_search('box', $entries, true), $at);
+            $this->tick(confirm: true);
+            $this->cursorTo($w->box + 1, $at);
+            $this->tick(confirm: true);
+        }
+        $this->tick(cancel: true);
+    }
+
+    /**
+     * The nearest map to look on for a beast to bind (wants()): one whose wild holds such a kind that it has not found
+     * a seal unlikely to hold, and on which it has not yet fought three times for each of its seven places. Null when
+     * there is nowhere to look.
+     */
+    private function near(): ?string
+    {
         $near = null;
         foreach ($this->maps as $map) {
-            $kinds = array_diff(array_column($map->wild['slots'] ?? [], 1), $had, $this->passedOver);
+            $kinds = array_filter($map->wild['slots'] ?? [], fn(array $slot) => !in_array($slot[1], $this->passedOver, true) && $this->wants($slot[0], $slot[1]));
             if ($kinds !== [] && ($this->sought[$map->id] ?? 0) < 3 * count($map->wild['slots']) && ($route = $this->route($map->id)) !== null && ($near === null || count($route) < $near[1])) {
                 $near = [$map->id, count($route)];
             }
         }
-        if ($near === null) {
-            return false;
-        }
+        return $near[0] ?? null;
+    }
+
+    /** Goes to $map looking for a beast to bind, and through one battle there. */
+    private function seek(string $map): void
+    {
         if ($this->spent()) {
             $this->mend();
         }
-        $this->travel($near[0]);
+        $this->travel($map);
         $fought = $this->wild;
         $this->pace(fn() => $this->wild === $fought);
-        $this->sought[$near[0]] = ($this->sought[$near[0]] ?? 0) + 1;
-        return true;
+        $this->sought[$map] = ($this->sought[$map] ?? 0) + 1;
     }
 
     /** Walks between two tiles of the wild of the map it is on, its weakest first, while $goes says to and the party is not too worn. */
@@ -287,10 +395,37 @@ final class Journey
         }
     }
 
-    /** Goes for seals to the nearest who gives them; false when no one that can be come to does. */
+    /** How many seals it buys at once, when it can pay for them. */
+    private const SEALS = 10;
+
+    /** Goes for seals to the nearest who sells them; false when it cannot pay for one, or no one that can be come to sells. */
     private function supply(): bool
     {
-        return $this->visit('give');
+        return $this->w->money >= $this->price() && $this->visit('shop');
+    }
+
+    private ?int $price = null;
+
+    private function price(): int
+    {
+        return $this->price ??= Data::items()['seal']['price'];
+    }
+
+    /** Buying is open: it buys the seals it can pay for, SEALS at most, and leaves. */
+    private function buy(): void
+    {
+        $shop = $this->w->shop;
+        $n = min(self::SEALS, intdiv($this->w->money, $this->price()));
+        if ($shop->note !== null || $n === 0 || ($this->w->items['seal'] ?? 0) > 0) {
+            $this->tick(confirm: $shop->note !== null, cancel: $shop->note === null);
+            return;
+        }
+        $this->tick(confirm: true);
+        for ($i = 1; $i < $n; $i++) {
+            $this->tick(Dir::Up);
+            $this->tick();
+        }
+        $this->tick(confirm: true);
     }
 
     /** Goes to the nearest person or sign whose script, as the game stands, comes to a command of $kind, and talks it there. */
@@ -342,7 +477,7 @@ final class Journey
                 }
                 return null;
             }
-            $set = isset($this->w->flags[$cmd[1] ?? '']);
+            $set = in_array($cmd[0], ['ifFlag', 'ifNotFlag'], true) && isset($this->w->flags[$cmd[1]]);
             $pc = match (true) {
                 $cmd[0] === 'ifFlag' && $set, $cmd[0] === 'ifNotFlag' && !$set => $labels[$cmd[2]],
                 $cmd[0] === 'goto' => $labels[$cmd[1]],
@@ -549,6 +684,10 @@ final class Journey
                 $this->tick(confirm: true);
             } elseif ($w->dialog !== null) {
                 $this->tick(confirm: true);
+            } elseif ($w->shop !== null) {
+                $this->buy();
+            } elseif ($w->pen !== null) {
+                $this->pen();
             } else {
                 $this->tick();
             }
@@ -568,11 +707,10 @@ final class Journey
                 $relief = $i;
             }
         }
-        // a wild beast to bind: of a kind not had, while there is room and a seal, and one that worn down to a third
-        // a seal would more likely hold than not (docs/numbers.md 8): the seals are few
-        $odds = fn(int $hp) => Formulas::catchValue($foe->species['catch'], $foe->maxHp, $hp, $foe->status) >= 128;
-        $binds = !$trial && count($b->parties[0]) < $this->size && ($this->w->items['seal'] ?? 0) > 0
-            && !in_array($foe->id, array_map(fn($f) => $f->id, $b->parties[0]), true) && $odds(max(1, intdiv($foe->maxHp, 3)));
+        // a wild beast to bind: one it wants (wants()), while it has a seal, and one that worn down to a third a seal
+        // has one chance in ten or better to hold (docs/numbers.md 8): the ten seals it buys at a time are then enough, more often than not
+        $odds = fn(int $hp) => Formulas::catchPercent(Formulas::catchValue($foe->species['catch'], $foe->maxHp, $hp, $foe->status)) >= 10;
+        $binds = !$trial && ($this->w->items['seal'] ?? 0) > 0 && $this->wants($foe->level, $foe->id) && $odds(max(1, intdiv($foe->maxHp, 3)));
         // the hardest blow that would leave it standing, to wear it down
         $gentle = null;
         foreach ($b->usable(0) as $i) {

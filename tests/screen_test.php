@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Shanhai\Tests;
 
 use Shanhai\{Data, Text};
-use Shanhai\Battle\{Battle, Fighter, Rng, Screen};
+use Shanhai\Battle\{Battle, Fighter, Formulas, Rng, Screen};
 use Shanhai\World\{Controls, Dir, Map, Pen, World};
 
 $book = ['beasts' => Data::beasts(), 'learnsets' => Data::learnsets(), 'moves' => Data::moves(), 'elements' => Data::elements(), 'items' => Data::items(),
@@ -226,6 +226,8 @@ for ($steps = 0; $w->battle !== null && $steps < 4000; $steps++) {
 }
 same(['lost', 'field', [0, 0], Dir::Down, 'awake'], [$w->lastBattle, $w->map->id, [$w->player->x, $w->player->y], $w->player->dir, $w->dialog], 'lost: the player wakes where the party last rested, to what data says');
 same([true, true], array_map(fn($f) => $f->hp === $f->maxHp, $w->party), 'the party whole');
+$w->step($confirm);
+same(['慌乱之中丢了1500贝。', 1500], [$w->dialog, $w->money], 'and half the money gone (docs/numbers.md 17)');
 $w->step($confirm);
 check(!$w->busy() && $w->dialog === null, 'the script that began the battle does not go on');
 $w->party[0]->hp = $w->party[1]->hp = 0;
@@ -506,6 +508,8 @@ for ($i = 0; $w->battle !== null && $i < 4000; $i++) {
     }
 }
 check(in_array('通过了山神的试炼！', $lines, true), 'when their last falls the trial is passed');
+// docs/numbers.md 17: a god pays 25 a level of its last beast, four times over: 4 × 25 × 4 = 400.
+check(in_array('得到了400贝。', $lines, true) && $w->money === Formulas::START_MONEY + 400, 'and it pays: a hundred for each level of their last');
 same([null, 'won', 'passed'], [$w->battle, $w->lastBattle, $w->dialog], 'and the script that set it goes on');
 
 // A trial lost is a battle lost.
@@ -546,6 +550,8 @@ for ($i = 0; $w->battle !== null && $i < 400; $i++) {
     $w->step($i % 2 === 0 ? $confirm : $none);
 }
 same(['won', true, 'well'], [$w->lastBattle, isset($w->flags['beat']), $w->dialog], 'won, they are beaten and say so');
+// docs/numbers.md 17: one met on the road pays 8 a level of their last beast, four times over: 4 × 8 × 2 = 64.
+same(Formulas::START_MONEY + 64, $w->money, 'and they pay: thirty-two for each level of their last');
 $w->step($confirm);
 $w->enter('road', 0, 1, Dir::Right);
 $walk();

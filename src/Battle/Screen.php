@@ -68,8 +68,9 @@ final class Screen
      * @param bool $duel the trial is one met on the road, not a god's: it goes by a trial's rules and is told in other words
      * @param ?string $pen the name of the pen's box a beast bound is sent to, the party being full; null when it joins the party
      * @param int $penRoom how many more that box holds
+     * @param int $reward what the one who sets the trial pays when it is won (docs/numbers.md 17)
      */
-    public function __construct(public readonly Battle $battle, private readonly array $moves, private readonly Rng $rng, private readonly array $things, array &$bag, public readonly ?string $trial = null, public readonly bool $duel = false, private readonly ?string $pen = null, private readonly int $penRoom = 0)
+    public function __construct(public readonly Battle $battle, private readonly array $moves, private readonly Rng $rng, private readonly array $things, array &$bag, public readonly ?string $trial = null, public readonly bool $duel = false, private readonly ?string $pen = null, private readonly int $penRoom = 0, public readonly int $reward = 0)
     {
         $this->bag = &$bag;
         $this->cursor = new Cursor();
@@ -383,6 +384,9 @@ final class Screen
                 $this->say('你的异兽全都倒下了……');
             } elseif ($this->trial !== null) {
                 $this->say($this->duel ? '打赢了' . $this->trial . '！' : '通过了' . $this->trial . '的试炼！');
+                if ($this->reward > 0) {
+                    $this->say('得到了' . $this->reward . '贝。');
+                }
             }
         }
         if ($this->shownLast() !== [$this->truth(0), $this->truth(1)]) {

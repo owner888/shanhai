@@ -26,6 +26,7 @@ use Shanhai\World\{Dir, World};
  *     ['duel', who, [[beast, level], ...]]   a battle with one met on the road, by a trial's rules; the script goes on when it is won
  *     ['rest']                   the party's beasts are whole again, and here is where a battle lost wakes the player
  *     ['pen']                    opens the pen, where beasts are left and taken; the script goes on when it is closed
+ *     ['shop', [item, ...]]      opens buying those things; the script goes on when the player leaves
  *     ['float']                  the player goes onto the water faced, carried by a beast of the party
  *     ['load']                   the saved game takes the world's place
  *     ['end']
@@ -35,7 +36,7 @@ final class Vm
     /** command => how many arguments */
     public const ARGS = [
         'say' => 1, 'setFlag' => 1, 'clearFlag' => 1, 'ifFlag' => 2, 'ifNotFlag' => 2, 'goto' => 1, 'label' => 1,
-        'face' => 2, 'move' => 3, 'warp' => 4, 'give' => 2, 'giveBeast' => 2, 'ask' => 2, 'battle' => 2, 'trial' => 2, 'duel' => 2, 'rest' => 0, 'pen' => 0, 'float' => 0, 'load' => 0, 'end' => 0,
+        'face' => 2, 'move' => 3, 'warp' => 4, 'give' => 2, 'giveBeast' => 2, 'ask' => 2, 'battle' => 2, 'trial' => 2, 'duel' => 2, 'rest' => 0, 'pen' => 0, 'shop' => 1, 'float' => 0, 'load' => 0, 'end' => 0,
     ];
 
     public bool $done = false;
@@ -87,6 +88,9 @@ final class Vm
                     $targets[] = $choice[1];
                 }
             }
+            if ($cmd[0] === 'shop' && (!is_array($cmd[1]) || $cmd[1] === [] || !array_is_list($cmd[1]) || array_filter($cmd[1], fn($id) => !is_string($id)) !== [])) {
+                throw new InvalidArgumentException("script line $i: 'shop' takes the things sold");
+            }
             if ($cmd[0] === 'trial' || $cmd[0] === 'duel') {
                 if (!is_string($cmd[1]) || $cmd[1] === '' || !is_array($cmd[2]) || $cmd[2] === []) {
                     throw new InvalidArgumentException("script line $i: 'trial' takes who sets it and their beasts");
@@ -114,7 +118,7 @@ final class Vm
     public function run(World $w): void
     {
         while (!$this->done) {
-            if ($w->dialog !== null || $w->battle !== null || $w->pen !== null) {
+            if ($w->dialog !== null || $w->battle !== null || $w->pen !== null || $w->shop !== null) {
                 return;
             }
             if ($this->asked !== null) {
@@ -155,6 +159,7 @@ final class Vm
                 case 'giveBeast': $w->join($cmd[1], $cmd[2]); break;
                 case 'rest': $w->rest(); break;
                 case 'pen': $w->pen(); break;
+                case 'shop': $w->shop($cmd[1]); break;
                 case 'float': $w->float(); break;
                 case 'load': $w->load(); break;
                 case 'ask': $w->ask($cmd[1], array_column($cmd[2], 0)); $this->asked = array_column($cmd[2], 1); break;

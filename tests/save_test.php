@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Shanhai\Tests;
 
 use Shanhai\{Data, Save};
-use Shanhai\Battle\{Fighter, Rng};
+use Shanhai\Battle\{Fighter, Formulas, Rng};
 use Shanhai\World\{Controls, Dir, Map, Pen, World};
 
 $book = ['beasts' => Data::beasts(), 'learnsets' => Data::learnsets(), 'moves' => Data::moves(), 'elements' => Data::elements(), 'items' => Data::items()];
@@ -78,12 +78,20 @@ $again->restore($other->state());
 same($other->state()['rest'], $again->restAt, 'and comes back');
 check(throws(fn() => $other->restore(array_replace($state, ['rest' => ['nowhere', 0, 0, 'up']]))), 'a place of rest on a map there is none of is refused');
 // A file of the first format, which had no place of rest, is read as one that rested nowhere.
-file_put_contents($file, json_encode(['version' => 1, 'state' => array_diff_key($state, ['rest' => 0, 'boxes' => 0, 'box' => 0])]));
+file_put_contents($file, json_encode(['version' => 1, 'state' => array_diff_key($state, ['rest' => 0, 'boxes' => 0, 'box' => 0, 'money' => 0])]));
 same($state, Save::read($file), 'a file of format 1 is read as having rested nowhere');
 // The pen is kept: which box is the current one, and each box's beasts. A file of the second format, which had no pen, is read as one with nothing in it.
 same([array_fill(0, Pen::BOXES, []), 0], [$state['boxes'], $state['box']], 'a game that has left nothing in the pen keeps fourteen empty boxes');
-file_put_contents($file, json_encode(['version' => 2, 'state' => array_diff_key($state, ['boxes' => 0, 'box' => 0])]));
+file_put_contents($file, json_encode(['version' => 2, 'state' => array_diff_key($state, ['boxes' => 0, 'box' => 0, 'money' => 0])]));
 same($state, Save::read($file), 'a file of format 2 is read as having nothing in the pen');
+// The money is kept. A file of the third format, which had none, is read as having what a new game begins with.
+same(Formulas::START_MONEY, $state['money'], 'a game that has spent and won nothing keeps what it began with');
+file_put_contents($file, json_encode(['version' => 3, 'state' => array_diff_key($state, ['money' => 0])]));
+same($state, Save::read($file), 'a file of format 3 is read as having what a new game begins with');
+$rich = new World($maps, 'hut', 0, 0, Dir::Down, $book, Rng::seeded(2));
+$rich->restore(array_replace($state, ['money' => 123456]));
+same(123456, $rich->money, 'the money comes back');
+check(throws(fn() => $rich->restore(array_replace($state, ['money' => -1]))) && throws(fn() => $rich->restore(array_replace($state, ['money' => Formulas::MAX_MONEY + 1]))), 'money under nothing or over the most there can be is refused');
 $penned = new World($maps, 'hut', 0, 0, Dir::Down, $book, Rng::seeded(2));
 $penned->restore($state);
 $penned->box = 3;

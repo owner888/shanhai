@@ -37,6 +37,10 @@ final class World
     public array $boxes;
     /** Which of the boxes is the current one: a beast bound with the party full goes there. */
     public int $box = 0;
+    /** The money the player has, in cowries (贝). */
+    public int $money = Formulas::START_MONEY;
+    /** The one sold by, whom a script's 'shop' opens; null when nothing is being bought. */
+    public ?Shop $shop = null;
     /** The pen's screen, which a script's 'pen' opens; null when it is not open. */
     public ?Pen $pen = null;
     /** The menu the menu button opens; null when it is not open. */
@@ -100,6 +104,9 @@ final class World
                 return;
             }
             $this->lastBattle = $this->battle->outcome;
+            if ($this->lastBattle === 'won') {
+                $this->money = min(Formulas::MAX_MONEY, $this->money + $this->battle->reward);
+            }
             if (($caught = $this->battle->caught) !== null) {
                 if (count($this->party) < self::PARTY) {
                     $this->party[] = $caught;
@@ -123,6 +130,13 @@ final class World
             $this->pen->step($c, $this->party, $this->boxes, $this->box, $this->book['moves']);
             if ($this->pen->done) {
                 $this->pen = null;
+            }
+            return;
+        }
+        if ($this->shop !== null) {
+            $this->shop->step($c, $this->items, $this->money, $this->book['items']);
+            if ($this->shop->done) {
+                $this->shop = null;
             }
             return;
         }
@@ -326,13 +340,14 @@ final class World
         }
         $b = $this->book;
         $full = count($this->party) >= self::PARTY;
+        $reward = $trial === null ? 0 : Formulas::reward($duel ? Formulas::REWARD_ROAD : Formulas::REWARD_GOD, $theirs[count($theirs) - 1]->level);
         $this->battle = new Screen(new Battle([$this->party, $theirs], $b['elements'], $b['moves'], $this->rng, [true, false]), $b['moves'], $this->rng, $b['items'], $this->items, $trial, $duel,
-            $full ? Pen::name($this->box) : null, $full ? Pen::BOX - count($this->boxes[$this->box]) : 0);
+            $full ? Pen::name($this->box) : null, $full ? Pen::BOX - count($this->boxes[$this->box]) : 0, $reward);
     }
 
     /**
      * The battle was lost: the script that began it is dropped, and the player wakes where the party was last made
-     * whole (before any such place, where data/game.php rests them), the party whole.
+     * whole (before any such place, where data/game.php rests them), the party whole, and half the money gone (docs/numbers.md 17).
      */
     private function wake(): void
     {
@@ -342,7 +357,9 @@ final class World
         $r = $this->book['rest'];
         [$map, $x, $y, $dir] = $this->restAt ?? [$r['map'], $r['x'], $r['y'], $r['dir']];
         $this->enter($map, $x, $y, Dir::from($dir));
-        $this->run($r['script']);
+        $lost = $this->money - intdiv($this->money, 2);
+        $this->money -= $lost;
+        $this->run([...$r['script'], ...($lost > 0 ? [['say', '慌乱之中丢了' . $lost . '贝。']] : [])]);
     }
 
     /** Whether water may be crossed yet: the flag data/game.php names is set. */
@@ -373,6 +390,15 @@ final class World
         $this->walk($p, $p->dir);
     }
 
+    /** Opens buying from one who sells $sells. @param list<string> $sells ids of data/items.php */
+    public function shop(array $sells): void
+    {
+        if ($this->book === null) {
+            throw new LogicException('this world was made without the tables buying needs');
+        }
+        $this->shop = new Shop($sells);
+    }
+
     /** Opens the pen's screen. */
     public function pen(): void
     {
@@ -382,7 +408,7 @@ final class World
         $this->pen = new Pen();
     }
 
-    /** What a saved game keeps: where the player is, the flags, the bag, the party, the pen's boxes, where it last rested. Asked for when nothing holds the controls. */
+    /** What a saved game keeps: where the player is, the flags, the bag, the money, the party, the pen's boxes, where it last rested. Asked for when nothing holds the controls. */
     public function state(): array
     {
         if ($this->afloat) {
@@ -391,7 +417,7 @@ final class World
         $p = $this->player;
         return ['map' => $this->map->id, 'x' => $p->x, 'y' => $p->y, 'dir' => $p->dir->value, 'flags' => array_keys($this->flags),
             'items' => $this->items, 'party' => array_map(fn(Fighter $f) => $f->state(), $this->party), 'rest' => $this->restAt,
-            'boxes' => array_map(fn(array $box) => array_map(fn(Fighter $f) => $f->state(), $box), $this->boxes), 'box' => $this->box];
+            'boxes' => array_map(fn(array $box) => array_map(fn(Fighter $f) => $f->state(), $box), $this->boxes), 'box' => $this->box, 'money' => $this->money];
     }
 
     /** Puts the world as a saved game kept it (state()). */
@@ -405,14 +431,15 @@ final class World
             throw new InvalidArgumentException('the saved game\'s pen is not as a pen can be');
         }
         $map = $this->maps[$s['map']] ?? throw new InvalidArgumentException("the saved game is on a map there is none of: '{$s['map']}'");
-        if (count($party) > self::PARTY || !$map->walkable($s['x'], $s['y']) || array_diff_key($s['items'], $b['items']) !== []) {
+        if (count($party) > self::PARTY || !$map->walkable($s['x'], $s['y']) || array_diff_key($s['items'], $b['items']) !== []
+            || !is_int($s['money']) || $s['money'] < 0 || $s['money'] > Formulas::MAX_MONEY) {
             throw new InvalidArgumentException('the saved game is not as a game can be');
         }
         $rest = $s['rest'];
         if ($rest !== null && !(isset($this->maps[$rest[0]]) && $this->maps[$rest[0]]->walkable($rest[1], $rest[2]) && Dir::tryFrom($rest[3]) !== null)) {
             throw new InvalidArgumentException('the saved game\'s place of rest is not one there is');
         }
-        [$this->flags, $this->items, $this->party, $this->restAt, $this->boxes, $this->box] = [array_fill_keys($s['flags'], true), $s['items'], $party, $rest, $boxes, $s['box']];
+        [$this->flags, $this->items, $this->party, $this->restAt, $this->boxes, $this->box, $this->money] = [array_fill_keys($s['flags'], true), $s['items'], $party, $rest, $boxes, $s['box'], $s['money']];
         $this->enter($s['map'], $s['x'], $s['y'], Dir::from($s['dir']));
     }
 

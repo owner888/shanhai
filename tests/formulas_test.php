@@ -95,3 +95,7 @@ same([63, 63, 75, 191, 191, 201, 253, 255], array_map(Formulas::wobbleLimit(...)
 same([0, 0, 1, 1, 2], array_map(fn(int $b) => Formulas::wildSlot(\Shanhai\Battle\Rng::scripted([$b]), Formulas::WATER_SLOTS), [0, 59, 60, 89, 90]), 'a byte under a hundred, plus one, falls to one of the water\'s three: 60, 30, 10');
 // 35, 65, 85 and 95 in a hundred of 255 are 89, 165, 216 and 242
 same([0, 0, 1, 1, 2, 2, 3, 3, 4, 4], array_map(Formulas::waterLevelBonus(...), [0, 88, 89, 164, 165, 215, 216, 241, 242, 255]), 'a byte adds none to four levels');
+
+// 17: winning pays the base of the one beaten for each level of their last beast, four times over.
+same([900, 4000, 160], [Formulas::reward(Formulas::REWARD_GOD, 9), Formulas::reward(Formulas::REWARD_GOD, 40), Formulas::reward(Formulas::REWARD_ROAD, 5)], 'a god of level 9 pays 900, of 40 pays 4000; one on the road whose last is level 5 pays 160');
+same([3000, 999999, 99], [Formulas::START_MONEY, Formulas::MAX_MONEY, Formulas::MAX_STACK], 'a game begins with 3000; there can be 999999; a bag holds 99 of a thing');

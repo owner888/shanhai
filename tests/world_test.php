@@ -96,7 +96,7 @@ $confirm($w);
 same([['guanguan', 5]], array_map(fn($f) => [$f->id, $f->level], $w->party), 'the third, taken, joins the player');
 check($w->choices === null && $w->dialog !== null, 'and she goes on');
 $confirm($w);
-same('带不走的异兽，可以寄在屋后的兽栏里。各个山系的渡者那里也通着它。', $w->dialog, 'and tells of the pen');
+same('带不走的异兽，可以寄在屋后的兽栏里。各个山系的渡者那里也通着它。契印用完了，拿贝来换。', $w->dialog, 'and tells of the pen, and of buying seals');
 $confirm($w);
 check(isset($w->flags['metShaman']) && !$w->busy(), 'through her lines');
 same(['seal' => 5], $w->items, 'she gives seals');
@@ -381,3 +381,48 @@ same('closed', $w->dialog, 'and the script goes on');
 $twenty = array_map(strval(...), range(0, 19));
 same([[['0', '1', '2', '3', '4', '5', '6', '7'], 0], [['6', '7', '8', '9', '10', '11', '12', '13'], 4], [['12', '13', '14', '15', '16', '17', '18', '19'], 7], [['a', 'b'], 1]],
     [Pen::window($twenty, 0), Pen::window($twenty, 10), Pen::window($twenty, 19), Pen::window(['a', 'b'], 1)], 'a long list shows eight lines about its cursor');
+
+// Buying (docs/numbers.md 17): a script opens it and waits; a thing is chosen, then how many; it is paid for.
+$w = Data::newWorld(1);
+$press = new Controls(confirm: true);
+$back = new Controls(cancel: true);
+$tap = function (Dir $dir, int $times = 1) use ($w): void {
+    for ($i = 0; $i < $times; $i++) {
+        $w->step(new Controls($dir));
+        $w->step(new Controls());
+    }
+};
+$things = Data::items();
+$w->run([['shop', ['seal']], ['say', 'left']]);
+check($w->shop !== null && $w->dialog === null, 'a script opens buying, and waits');
+same([['契印  200贝', '离开'], 3000], [$w->shop->items($things), $w->money], 'the things sold with their prices, and leaving; a new game has 3000');
+$w->step($press);
+same(['契印 ×1  200贝'], $w->shop->items($things), 'one chosen, how many is asked, beginning at one');
+$tap(Dir::Up, 2);
+$tap(Dir::Right);
+$tap(Dir::Down);
+same(['契印 ×12  2400贝'], $w->shop->items($things), 'up and down by one, right and left by ten');
+$tap(Dir::Left, 3);
+same(1, $w->shop->count, 'not under one');
+$tap(Dir::Right, 11);
+same(99, $w->shop->count, 'nor over ninety-nine');
+$w->step($press);
+same(['贝不够。', 3000, []], [$w->shop->note, $w->money, $w->items], 'more than can be paid for is not sold');
+$w->step($press);
+$w->step($press);
+$tap(Dir::Up, 4);
+$w->step($press);
+same(['买了5枚契印，花了1000贝。', 2000, ['seal' => 5]], [$w->shop->note, $w->money, $w->items], 'what can be is: paid for, and in the bag');
+$w->step($press);
+$w->items['seal'] = 98;
+$w->step($press);
+$tap(Dir::Up);
+$w->step($press);
+same(['背包里放不下这么多。', 2000, 98], [$w->shop->note, $w->money, $w->items['seal']], 'a bag holds ninety-nine of a thing at most');
+$w->step($press);
+$tap(Dir::Down);
+$w->step($press);
+same(null, $w->shop, 'leaving closes it');
+$w->step(new Controls());
+same('left', $w->dialog, 'and the script goes on');
+check(throws(fn() => \Shanhai\Script\Vm::check([['shop', []]])) && throws(fn() => \Shanhai\Script\Vm::check([['shop', 'seal']])), 'buying with nothing sold is refused');

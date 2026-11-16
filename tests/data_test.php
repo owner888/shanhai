@@ -18,7 +18,8 @@ $items = Data::items();
 $gods = Data::gods();
 foreach ($items as $id => $item) {
     check(($item['name'] ?? '') !== '' && ($item['from'] ?? '') !== '', "the thing $id has a name and where it comes from");
-    check(array_diff(array_keys($item), ['name', 'use', 'from']) === [] && in_array($item['use'] ?? null, [null, 'catch'], true), "the thing $id has only the fields there are, and a use there is");
+    check(array_diff(array_keys($item), ['name', 'use', 'price', 'from']) === [] && in_array($item['use'] ?? null, [null, 'catch'], true), "the thing $id has only the fields there are, and a use there is");
+    check(!isset($item['price']) || (is_int($item['price']) && $item['price'] >= 1), "the thing $id, if it is sold, has a price of one or more");
 }
 
 $scripts = [];
@@ -165,6 +166,11 @@ foreach ($scripts as $where => $script) {
         }
         if ($cmd[0] === 'warp') {
             check(isset($maps[$cmd[1]]) && $maps[$cmd[1]]->walkable($cmd[2], $cmd[3]), "$where: its warp leads to a walkable tile of a map");
+        }
+        if ($cmd[0] === 'shop') {
+            foreach ($cmd[1] as $id) {
+                check(is_int($items[$id]['price'] ?? null) && $items[$id]['price'] >= 1, "$where: it sells a thing there is, at a price: $id");
+            }
         }
         if ($cmd[0] === 'give') {
             check(isset($items[$cmd[1]]) && is_int($cmd[2]) && $cmd[2] >= 1, "$where: it gives a thing there is, one or more: {$cmd[1]}");
@@ -472,18 +478,20 @@ foreach ($foes['says'] as $says) {
 }
 // Each range has somewhere the party is made whole, as the reference has a place to heal in each town, and the pen
 // there, as the reference has its storage where it heals.
-$rests = $pens = [];
+$rests = $pens = $shops = [];
 foreach ($maps as $map) {
     foreach ([...$map->npcs, ...$map->signs] as $who) {
         foreach (end($who) as $cmd) {
             $rests[$map->range] = ($rests[$map->range] ?? false) || $cmd[0] === 'rest';
             $pens[$map->range] = ($pens[$map->range] ?? false) || $cmd[0] === 'pen';
+            $shops[$map->range] = ($shops[$map->range] ?? false) || $cmd[0] === 'shop';
         }
     }
 }
 foreach (array_keys($ranges) as $n) {
     check($rests[$n] ?? false, "range $n has someone or something that makes the party whole");
     check($pens[$n] ?? false, "range $n has the pen");
+    check($shops[$n] ?? false, "range $n has someone who sells seals");
 }
 // A range after the first is come to from the one before it, and gone back from: someone on a map of each sends the
 // player to a map of the other.

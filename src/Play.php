@@ -118,6 +118,7 @@ final class Play extends Game
             $w->choices !== null => 'ask' . $w->choiceCursor->at,
             $w->menu !== null => $w->menu->phase . $w->menu->at(),
             $w->pen !== null => $w->pen->note !== null ? null : 'pen' . $w->pen->phase . $w->pen->cursor->at,
+            $w->shop !== null => $w->shop->note !== null ? null : 'shop' . $w->shop->phase . ($w->shop->phase === 'count' ? $w->shop->count : $w->shop->at),
             default => null,
         };
         // the same list, its cursor elsewhere: a list just opened makes no sound
@@ -243,6 +244,20 @@ final class Play extends Game
         if ($this->world->menu !== null) {
             $menu = $this->world->menu;
             $this->choices($p, $r, $menu->items($this->world->party, $this->world->items, $this->items), $menu->at(), $menu->phase === 'top' ? 200.0 : 420.0);
+        }
+        if (($shop = $this->world->shop) !== null) {
+            if ($shop->note !== null) {
+                $this->dialog($p, $r, $shop->note);
+            } else {
+                $this->choices($p, $r, $shop->items($this->items), $shop->at(), 280.0);
+            }
+        }
+        if ($shop !== null || $this->world->menu !== null) {
+            // what the player has to spend, at the top right
+            $money = $this->world->money . ' 贝';
+            $w = mb_strwidth($money) * 8 + 24;
+            $p->fill([$r[0] + $r[2] - $w - 16, $r[1] + 16, $w, 34], 0x000000, 8.0, 0.55);
+            $p->text($r[0] + $r[2] - $w - 4, $r[1] + 24, $money, 15, 0xffffff);
         }
         if (($pen = $this->world->pen) !== null) {
             if ($pen->note !== null) {
