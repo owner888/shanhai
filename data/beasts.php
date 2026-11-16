@@ -20,6 +20,7 @@
 //   tier      the game's own: which of data/tiers.php its numbers are built in
 //   stats     hp, attack, defense, special attack, special defense, speed: ours, inside the tier's band
 //   catch, exp, growth   its catch rate, base experience and growth rate (docs/numbers.md 7, 8)
+//   flees    how readily a wild one leaves the battle (docs/numbers.md 30): 'sometimes', 'often', 'always'; by the classic's own words of it
 //   gender   its share of females, a byte of Formulas (docs/numbers.md 29), half when not given; 'none' for the three the classic
 //            calls 自为牝牡, both in one
 declare(strict_types=1);
@@ -1005,7 +1006,7 @@ return [
         'lore' => '食之不䐆，又可以御百毒。',
     ],
     'mengji' => [
-        'name' => '孟极', 'kind' => 'strange', 'range' => 8, 'mountain' => '石者之山',
+        'name' => '孟极', 'kind' => 'strange', 'flees' => 'sometimes', 'range' => 8, 'mountain' => '石者之山',
         'elements' => ['water'], 'why' => '原文没有别的依据，取北山经的本地属性。',
         'tier' => 3, 'stats' => ['hp' => 70, 'atk' => 75, 'def' => 65, 'spa' => 90, 'spd' => 70, 'spe' => 95],
         'catch' => 60, 'exp' => 154, 'growth' => 'mediumSlow',
@@ -1061,7 +1062,7 @@ return [
         'sound' => '如訆。',
     ],
     'songsi' => [
-        'name' => '竦斯', 'kind' => 'strange', 'range' => 8, 'mountain' => '灌题之山',
+        'name' => '竦斯', 'kind' => 'strange', 'flees' => 'often', 'range' => 8, 'mountain' => '灌题之山',
         'elements' => ['wood'], 'why' => '鸟。',
         'tier' => 2, 'stats' => ['hp' => 55, 'atk' => 45, 'def' => 55, 'spa' => 80, 'spd' => 65, 'spe' => 85],
         'catch' => 90, 'exp' => 102, 'growth' => 'mediumFast',
@@ -1110,7 +1111,7 @@ return [
         'unchecked' => '名字的字各本不同（䲃、䱻、抄），所查的几个版本不一致，待核对。',
     ],
     'shanhui' => [
-        'name' => '山晖', 'kind' => 'strange', 'range' => 8, 'mountain' => '狱法之山',
+        'name' => '山晖', 'kind' => 'strange', 'flees' => 'often', 'range' => 8, 'mountain' => '狱法之山',
         'elements' => ['wood'], 'why' => '见则天下大风；风在这里归木（招式里的风都是木）。',
         'tier' => 3, 'stats' => ['hp' => 70, 'atk' => 75, 'def' => 60, 'spa' => 95, 'spd' => 70, 'spe' => 110],
         'catch' => 45, 'exp' => 166, 'growth' => 'mediumSlow',
@@ -1206,7 +1207,7 @@ return [
         'unchecked' => '查到的片段里只见到「马尾彘鬣」；「如虎、白身犬首」和北嚻之山「无石，其阳多碧，其阴多玉」是通行本的文字，待核对。',
     ],
     'banmao' => [
-        'name' => '般鹛', 'kind' => 'strange', 'range' => 9, 'mountain' => '北嚻之山',
+        'name' => '般鹛', 'kind' => 'strange', 'flees' => 'sometimes', 'range' => 9, 'mountain' => '北嚻之山',
         'elements' => ['wood'], 'why' => '鸟。',
         'tier' => 3, 'stats' => ['hp' => 75, 'atk' => 55, 'def' => 65, 'spa' => 100, 'spd' => 85, 'spe' => 90],
         'catch' => 60, 'exp' => 156, 'growth' => 'mediumSlow',
@@ -1246,7 +1247,7 @@ return [
     ],
     // 北次三经: 归山 to 錞于毋逢之山
     'hui' => [
-        'name' => '䮝', 'kind' => 'strange', 'range' => 10, 'mountain' => '归山',
+        'name' => '䮝', 'kind' => 'strange', 'flees' => 'sometimes', 'range' => 10, 'mountain' => '归山',
         'elements' => ['metal'], 'why' => '四角，有距。',
         'tier' => 3, 'stats' => ['hp' => 80, 'atk' => 100, 'def' => 75, 'spa' => 55, 'spd' => 70, 'spe' => 95],
         'catch' => 60, 'exp' => 160, 'growth' => 'mediumSlow',
@@ -1255,7 +1256,7 @@ return [
         'unchecked' => '一个版本作「一角」；名字的字各本写法不一。',
     ],
     'ben' => [
-        'name' => '䴅', 'kind' => 'strange', 'range' => 10, 'mountain' => '归山',
+        'name' => '䴅', 'kind' => 'strange', 'flees' => 'often', 'range' => 10, 'mountain' => '归山',
         'elements' => ['wood'], 'why' => '鸟。',
         'tier' => 2, 'stats' => ['hp' => 55, 'atk' => 45, 'def' => 50, 'spa' => 80, 'spd' => 65, 'spe' => 90],
         'catch' => 120, 'exp' => 100, 'growth' => 'mediumFast',
@@ -1263,7 +1264,7 @@ return [
         'sound' => '叫的就是自己的名字。',
     ],
     'tianma' => [
-        'name' => '天马', 'kind' => 'strange', 'range' => 10, 'mountain' => '马成之山',
+        'name' => '天马', 'kind' => 'strange', 'flees' => 'always', 'range' => 10, 'mountain' => '马成之山',
         'elements' => ['water'], 'why' => '原文没有别的依据，取北山经的本地属性。',
         'tier' => 3, 'stats' => ['hp' => 75, 'atk' => 70, 'def' => 65, 'spa' => 90, 'spd' => 75, 'spe' => 105],
         'catch' => 45, 'exp' => 166, 'growth' => 'mediumSlow',
@@ -1590,7 +1591,7 @@ return [
         'omen' => '见则其国多狡客。',
     ],
     'jiegou' => [
-        'name' => '絜钩', 'kind' => 'strange', 'range' => 12, 'mountain' => '䃌山',
+        'name' => '絜钩', 'kind' => 'strange', 'flees' => 'sometimes', 'range' => 12, 'mountain' => '䃌山',
         'elements' => ['wood'], 'why' => '鸟。',
         'tier' => 2, 'stats' => ['hp' => 60, 'atk' => 50, 'def' => 55, 'spa' => 85, 'spd' => 65, 'spe' => 85],
         'catch' => 90, 'exp' => 112, 'growth' => 'mediumFast',

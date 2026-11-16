@@ -31,6 +31,9 @@ final class Battle
     public int $turns = 0;
     /** 0 or 1, the side that won; -1 when the last of both fell in one turn; null while it goes on. */
     public ?int $winner = null;
+    /** Side 1 is a wild beast, which may flee (docs/numbers.md 30); and whether it has, which ends the battle with no winner. */
+    public bool $wild = false;
+    public bool $gone = false;
     /** @var list<array> what happened, in order: [what, side, ...] */
     public array $log = [];
 
@@ -62,7 +65,7 @@ final class Battle
     public function copy(Rng $rng): self
     {
         $copy = new self(array_map(fn(array $party) => array_map(fn(Fighter $f) => clone $f, $party), $this->parties), $this->elements, $this->moves, $rng, $this->chooses, $this->things);
-        [$copy->active, $copy->weather, $copy->weatherLeft, $copy->turns, $copy->winner] = [$this->active, $this->weather, $this->weatherLeft, $this->turns, $this->winner];
+        [$copy->active, $copy->weather, $copy->weatherLeft, $copy->turns, $copy->winner, $copy->wild, $copy->gone] = [$this->active, $this->weather, $this->weatherLeft, $this->turns, $this->winner, $this->wild, $this->gone];
         return $copy;
     }
 
@@ -169,7 +172,7 @@ final class Battle
      */
     public function turn(array $a, array $b): void
     {
-        if ($this->winner !== null) {
+        if ($this->winner !== null || $this->gone) {
             throw new LogicException('the battle is over');
         }
         if ($this->awaits(0) || $this->awaits(1)) {
@@ -204,6 +207,9 @@ final class Battle
                 continue;
             }
             $this->act($side, $actions[$side][1], $i === 0 && count($movers) === 2);
+            if ($this->gone) {
+                return;
+            }
             $this->mendHeld();
             $this->residual($side);
         }
@@ -250,6 +256,12 @@ final class Battle
     {
         $u = $this->fighter($side);
         $t = $this->fighter(1 - $side);
+        // 30: a wild beast of a kind that flees may, before anything else, unless it is asleep
+        if ($side === 1 && $this->wild && $u->status !== 'sleep' && ($how = $u->species['flees'] ?? null) !== null && ($how === 'always' || $this->rng->byte() < Formulas::FLEES[$how])) {
+            $this->gone = true;
+            $this->log[] = ['gone', $side];
+            return;
+        }
         // 11.2, in this order: sleep, flinch, confusion, paralysis.
         if ($u->status === 'sleep') {
             if (--$u->sleep > 0) {

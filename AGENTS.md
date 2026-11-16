@@ -125,6 +125,8 @@ docs/elements.md   the elements' table and how a beast's elements are settled
   across the view while walking. Blocks on the grid are built as faces; things that stand apart are instanced.
 - **The wild ground puts the common first** (docs/numbers.md 28): a range's common beasts walk all its mountains, in the frequent
   places; a mountain's strange beasts are met only on it, in the last three (one time in ten). A test holds every map to it.
+- **Some wild beasts flee** (docs/numbers.md 30): a kind with `flees`, when its turn to act comes and it is not asleep; the battle
+  then ends with no winner (`Battle::$gone`, the screen's outcome 'gone').
 - **Tall grass holds wild beasts**, and scree on the mountains the classic gives no grass and in caves (`World::grass`, docs/numbers.md 13): a step onto it, after the first four on a map
   or after a battle, rolls against the map's rate, then for one of its seven; each lives on the map's own mountain.
 - **A battle's line has a cue** (`Screen::$cue`: use, hit, hurt, faint, caught, ...): the rules say what happened, and

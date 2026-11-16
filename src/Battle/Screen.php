@@ -80,6 +80,7 @@ final class Screen
     public function __construct(public readonly Battle $battle, private readonly array $moves, private readonly Rng $rng, private readonly array $things, array &$bag, public readonly ?string $trial = null, public readonly bool $duel = false, private readonly ?string $pen = null, private readonly int $penRoom = 0, public readonly int $reward = 0, private readonly bool $water = false, array $uses = [])
     {
         $this->bag = &$bag;
+        $battle->wild = $trial === null;
         $this->ai = $trial === null ? null : new Ai($duel ? Ai::ROAD : Ai::GOD, $moves, $things, $uses);
         $this->cursor = new Cursor();
         $this->shown = [$this->truth(0), $this->truth(1)];
@@ -344,7 +345,7 @@ final class Screen
             return null;
         }
         $foe = $this->battle->fighter(1);
-        $rate = Formulas::sealRate($foe->species['catch'], $by, $this->battle->fighter(0)->level, $foe->level, $this->water);
+        $rate = Formulas::sealRate($foe->species['catch'], $by, $this->battle->fighter(0)->level, $foe->level, $this->water, isset($foe->species['flees']));
         return Formulas::catchValue($rate, $foe->maxHp, $foe->hp, $foe->status);
     }
 
@@ -482,7 +483,9 @@ final class Screen
             }
         }
         $this->tell(array_slice($this->battle->log, $from), $hp, $status, $stages);
-        if ($this->battle->winner !== null) {
+        if ($this->battle->gone) {
+            $this->outcome = 'gone';
+        } elseif ($this->battle->winner !== null) {
             $this->outcome = $this->battle->winner === 0 ? 'won' : 'lost';
             if ($this->outcome === 'lost') {
                 $this->say('你的异兽全都倒下了……');
@@ -567,6 +570,9 @@ final class Screen
                     $shown[$side]['hp'] = $hp[$side][$shown[$side]['which']] += $e[2];
                     $line = $name($side) . '恢复了体力！';
                     $cue = ['what' => 'heal', 'side' => $side];
+                    break;
+                case 'gone': // docs/numbers.md 30
+                    $this->say($name($side) . '逃走了！', $shown);
                     break;
                 case 'faint':
                     $this->say($name($side) . '倒下了！', $shown, ['what' => 'faint', 'side' => $side]);

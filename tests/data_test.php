@@ -40,7 +40,7 @@ foreach ($items as $id => $item) {
     $by = $item['by'] ?? null;
     if (!isset($item['hold'])) {
         check(match ($item['use'] ?? null) { 'heal' => $by === 'all' || (is_int($by) && $by >= 1), 'cure' => in_array($by, ['poison', 'burn', 'paralyze', 'sleep', 'confuse', 'any'], true),
-            'catch' => $by === null || (is_int($by) && $by > 100) || in_array($by, ['level', 'water', 'bond', 'sure'], true),
+            'catch' => $by === null || (is_int($by) && $by > 100) || in_array($by, ['level', 'water', 'bond', 'fast', 'sure'], true),
             'rite' => isset(\Shanhai\Battle\Formulas::RITES[$by]) && \Shanhai\Battle\Formulas::RITES[$by]['thing'] === $id, default => $by === null }, "the thing $id is used by a number or a kind that fits its use");
     } else {
         check(!isset($item['use']) || $item['use'] === $item['hold'], "the thing $id, used from the bag, does what it does held");
@@ -271,8 +271,9 @@ foreach ($beasts as $id => $b) {
     $names[$b['name']] = true;
     check(in_array($b['kind'], ['strange', 'common'], true), "$id is strange or common");
     check($b['mountain'] !== '' && $b['looks'] !== '', "$id has a mountain and its looks");
-    check(array_diff(array_keys($b), ['name', 'kind', 'range', 'mountain', 'elements', 'why', 'tier', 'stats', 'catch', 'exp', 'growth', 'looks', 'note', 'sound', 'omen', 'lore', 'unchecked', 'starter', 'gender']) === [], "$id has only the fields there are");
+    check(array_diff(array_keys($b), ['name', 'kind', 'range', 'mountain', 'elements', 'why', 'tier', 'stats', 'catch', 'exp', 'growth', 'looks', 'note', 'sound', 'omen', 'lore', 'unchecked', 'starter', 'gender', 'flees']) === [], "$id has only the fields there are");
     check(!isset($b['gender']) || $b['gender'] === 'none' || (is_int($b['gender']) && $b['gender'] >= 0 && $b['gender'] <= \Shanhai\Battle\Formulas::GENDER_ALL), "$id's gender is a share of females or none");
+    check(!isset($b['flees']) || $b['flees'] === 'always' || isset(\Shanhai\Battle\Formulas::FLEES[$b['flees']]), "$id flees as a wild beast can");
     check(in_array(count($b['elements']), [1, 2], true) && count(array_unique($b['elements'])) === count($b['elements']), "$id has one element, or two that differ");
     foreach ($b['elements'] as $e) {
         check(isset($elements[$e]), "$id's element is one there is: $e");

@@ -137,3 +137,6 @@ for ($i = 0; $i < 256; $i++) {
     $females += Formulas::gender(Formulas::GENDER_EVEN, $i >> 4, $i & 15) === 'female' ? 1 : 0;
 }
 same(128, $females, 'of the 256 a beast can be, 128 are female');
+
+// 30: the seal for those that flee: four times the catch rate of a kind that does, as it is of one that does not.
+same([180, 45, 255], [Formulas::sealRate(45, 'fast', 0, 0, false, true), Formulas::sealRate(45, 'fast', 0, 0, false, false), Formulas::sealRate(120, 'fast', 0, 0, false, true)], 'four times, 255 at most');

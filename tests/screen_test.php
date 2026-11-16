@@ -167,7 +167,7 @@ for ($seed = 1; $seed <= 150; $seed++) {
     $outcomes[$s->outcome] = true;
 }
 ksort($outcomes);
-same(['caught', 'fled', 'lost', 'won'], array_keys($outcomes), 'they end each way');
+same(['caught', 'fled', 'gone', 'lost', 'won'], array_keys($outcomes), 'they end each way: bound, fled from, left by the wild beast, lost, won');
 foreach (array_keys($lines) as $line) {
     check(count(Text::wrap($line, Text::columns())) <= Text::LINES, "the line fits the box: $line");
 }
@@ -833,3 +833,18 @@ same(['山神给狌狌用了梨。', true, 1], [$s->line, $theirs->hp >= $theirs
 check(!in_array(['use', 1, $theirs->moves[0]['id']], $s->battle->log, true) && $s->battle->log[0][0] === 'use' && $s->battle->log[0][1] === 0, 'their beast used no move in it');
 check(throws(fn() => \Shanhai\Script\Vm::check([['trial', '山神', [['xingxing', 3]], ['seal']]])) && throws(fn() => \Shanhai\Script\Vm::check([['duel', '猎户', [['xingxing', 3]], ['licao']]])),
     'a trial\'s things are those there are rules for, and one on the road has none');
+
+// docs/numbers.md 30: 天马 flies at the sight of one: a wild one leaves on its turn, told so, and the battle ends with nothing gained.
+$w = new World($maps, 'field', 0, 0, Dir::Down, $book, Rng::seeded(2));
+$w->join('lushu', 5);
+$before = $w->party[0]->exp;
+$w->run([['battle', 'tianma', 40]]);
+$s = $w->battle;
+$told = [];
+for ($i = 0; $w->battle !== null && $i < 60; $i++) {
+    $told[] = $s->line;
+    $w->step($i % 2 === 0 ? $confirm : $none);
+}
+check(in_array('野生的天马逃走了！', $told, true), 'a wild 天马 is gone on its turn');
+same(['gone', null, $before], [$w->lastBattle, $w->battle, $w->party[0]->exp], 'the battle ends, with no experience');
+same(8, count(array_filter($book['beasts'], fn(array $b) => isset($b['flees']))), 'eight kinds flee, each by the classic\'s words of it');

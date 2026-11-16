@@ -353,3 +353,38 @@ $rng = Rng::scripted([$NO, $MOST, $NO, $MOST]);
 $b = new Battle([[$near], [$beast('fire', ['tap'], 50)]], $elements, $moves, $rng);
 $b->turn(['move', 0], ['move', 0]);
 same(160 - (intdiv(22 * 100 * 113, 113 * 50) + 2), $b->fighter(1)->hp, 'at 250, of power 100: 22 × 100 ÷ 50 = 44, and 2');
+
+// docs/numbers.md 30: a wild beast of a kind that flees does, when its turn to act comes, unless it is asleep.
+$shy = function (string $how, int $speed = 100) use ($moves): Fighter {
+    $species = ['name' => 'shy', 'elements' => ['water'], 'growth' => 'mediumFast', 'flees' => $how, 'stats' => ['hp' => 100, 'atk' => 100, 'def' => 100, 'spa' => 100, 'spd' => 100, 'spe' => $speed]];
+    return new Fighter('shy', $species, 50, [[1, 'tap']], $moves);
+};
+[$rng, $b] = $fight([$beast('fire', ['tap'], 50)], [$shy('always')], []);
+$b->wild = true;
+$b->turn(['move', 0], ['move', 0]);
+same([true, [['gone', 1]], null, 160], [$b->gone, $b->log, $b->winner, $b->fighter(0)->hp], 'one that always flees, the faster, is gone before anything, on no roll, and no one has won');
+check(throws(fn() => $b->turn(['move', 0], ['move', 0])), 'and the battle is over');
+[$rng, $b] = $fight([$beast('fire', ['tap'])], [$shy('often', 50)], [$NO, $MOST, 127]);
+$b->wild = true;
+$b->turn(['move', 0], ['move', 0]);
+same([true, 141], [$b->gone, $b->fighter(1)->hp], 'the slower is struck first, then flees: often, on a byte under 128');
+[$rng, $b] = $fight([$beast('fire', ['tap'])], [$shy('often', 50)], [$NO, $MOST, 128, $NO, $MOST]);
+$b->wild = true;
+$b->turn(['move', 0], ['move', 0]);
+same([false, 141], [$b->gone, $b->fighter(0)->hp], 'on 128 it stays and uses its move');
+[$rng, $b] = $fight([$beast('fire', ['tap'])], [$shy('sometimes', 50)], [25]);
+$b->wild = true;
+$b->turn(['pass', 0], ['move', 0]);
+[$rng, $c] = $fight([$beast('fire', ['tap'])], [$shy('sometimes', 50)], [26, $NO, $MOST]);
+$c->wild = true;
+$c->turn(['pass', 0], ['move', 0]);
+same([true, false], [$b->gone, $c->gone], 'sometimes: on a byte under 26');
+$asleep = $shy('always');
+[$asleep->status, $asleep->sleep] = ['sleep', 3];
+[$rng, $b] = $fight([$beast('fire', ['tap'], 50)], [$asleep], [$NO, $MOST]);
+$b->wild = true;
+$b->turn(['move', 0], ['move', 0]);
+same(false, $b->gone, 'asleep it does not flee');
+[$rng, $b] = $fight([$beast('fire', ['tap'], 50)], [$shy('always')], [$NO, $MOST, $NO, $MOST]);
+$b->turn(['move', 0], ['move', 0]);
+same(false, $b->gone, 'nor does one that is no wild beast: of one who sets a trial');
