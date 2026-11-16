@@ -219,3 +219,104 @@ same($before, [$b->fighter(0)->hp, $b->fighter(1)->hp, $b->turns], 'a copy playe
 $first = $play(7);
 check($first[0] !== null, 'a battle of the game\'s beasts ends: ' . json_encode($first));
 same($first, $play(7), 'the same seed, the same battle');
+
+// What the beasts hold (docs/numbers.md 19). The things are the test's own; the faster beast is side 0's.
+// 轻击 (power 40, no element) between two of the test's beasts: (50 × 2 ÷ 5 + 2) × 40 × 113 ÷ 113 ÷ 50 = 17, and 2: 19.
+$things = ['bow' => ['hold' => 'boost', 'by' => 'none'], 'lens' => ['hold' => 'crit'], 'dust' => ['hold' => 'evade', 'by' => 20], 'band' => ['hold' => 'endure', 'by' => 30],
+    'rock' => ['hold' => 'flinch', 'by' => 30], 'claw' => ['hold' => 'first', 'by' => 60], 'fruit' => ['hold' => 'heal', 'by' => 10], 'herb' => ['hold' => 'cure', 'by' => 'poison'],
+    'balm' => ['hold' => 'cure', 'by' => 'any'], 'crumbs' => ['hold' => 'leftovers', 'by' => 16], 'dew' => ['hold' => 'pp', 'by' => 5]];
+$with = function (Fighter $f, string $item): Fighter {
+    $f->item = $item;
+    return $f;
+};
+$held = fn(array $a, array $b, array $rolls) => [$rng = Rng::scripted($rolls), new Battle([$a, $b], $elements, $moves, $rng, [false, false], $things)];
+$tap = ['move', 0];
+$kinds = fn(Battle $b) => array_map(fn(array $e) => $e[0] . $e[1], $b->log);
+
+[$rng, $b] = $held([$with($beast('water', ['tap']), 'bow')], [$beast('fire', ['tap'], 50)], [$NO, $MOST, $NO, $MOST]);
+$b->turn($tap, $tap);
+same([160 - 20, 160 - 19], [$b->fighter(1)->hp, $b->fighter(0)->hp], 'what strengthens the moves of no element adds a tenth before the 2: 17 × 110 ÷ 100 = 18, and 2');
+[$rng, $b] = $held([$with($beast('water', ['wet']), 'bow')], [$beast('wood', ['tap'], 50)], [$NO, $MOST, $NO, $MOST]);
+[$rng2, $plain] = $fight([$beast('water', ['wet'])], [$beast('wood', ['tap'], 50)], [$NO, $MOST, $NO, $MOST]);
+$b->turn($tap, $tap);
+$plain->turn($tap, $tap);
+same($plain->fighter(1)->hp, $b->fighter(1)->hp, 'and nothing to a move of another element');
+
+// 4: the first two levels of a critical hit are a byte under 17 and under 32.
+[$rng, $b] = $held([$with($beast('water', ['tap']), 'lens')], [$beast('fire', ['tap'], 50)], [20, $MOST, 20, $MOST]);
+$b->turn($tap, $tap);
+$hits = array_values(array_filter($b->log, fn(array $e) => $e[0] === 'hit'));
+same([true, false], [$hits[0][3], $hits[1][3]], 'what sharpens the eye raises the critical level by one: a byte of 20 strikes true for its holder alone');
+
+// 6: a move of 100 needs 255, which no byte misses; less 20, 235.
+[$rng, $b] = $held([$beast('water', ['tap'])], [$with($beast('fire', ['tap'], 50), 'dust')], [$NO, $MOST, 235, $NO, $MOST]);
+$b->turn($tap, $tap);
+same([160, true], [$b->fighter(1)->hp, in_array(['miss', 0], $b->log, true)], 'what makes its holder hard to hit takes 20 from what the move needs: a byte of 235 misses');
+[$rng, $b] = $held([$beast('water', ['tap'])], [$with($beast('fire', ['tap'], 50), 'dust')], [$NO, $MOST, 234, $NO, $MOST]);
+$b->turn($tap, $tap);
+same(160 - 19, $b->fighter(1)->hp, 'and one of 234 hits');
+
+$low = $with($beast('fire', ['tap'], 50), 'band');
+$low->hp = 5;
+[$rng, $b] = $held([$beast('water', ['tap'])], [$low], [$NO, $MOST, 29, $NO, $MOST]);
+$b->turn($tap, $tap);
+same([1, 'band', true], [$low->hp, $low->item, in_array(['held', 1, 'band'], $b->log, true)], 'what lets its holder bear a blow leaves it 1 hp on a byte under 30, and is kept');
+$low = $with($beast('fire', ['tap'], 50), 'band');
+$low->hp = 5;
+[$rng, $b] = $held([$beast('water', ['tap'])], [$low], [$NO, $MOST, 30]);
+$b->turn($tap, $tap);
+same([0, 0], [$low->hp, $rng->left()], 'and on one of 30 does not');
+
+[$rng, $b] = $held([$with($beast('water', ['tap']), 'rock')], [$beast('fire', ['tap'], 50)], [$NO, $MOST, 29]);
+$b->turn($tap, $tap);
+same([true, 160, 0], [in_array(['cant', 1, 'flinch'], $b->log, true), $b->fighter(0)->hp, $rng->left()], 'a blow from one holding what cows makes the other, yet to act, flinch on a byte under 30');
+[$rng, $b] = $held([$with($beast('water', ['tap']), 'rock')], [$beast('fire', ['tap'], 50)], [$NO, $MOST, 30, $NO, $MOST]);
+$b->turn($tap, $tap);
+same(160 - 19, $b->fighter(0)->hp, 'and on one of 30 does not');
+
+[$rng, $b] = $held([$beast('water', ['tap'])], [$with($beast('fire', ['tap'], 50), 'claw')], [59, $NO, $MOST, $NO, $MOST]);
+$b->turn($tap, $tap);
+same(['held1', 'use1'], array_slice($kinds($b), 0, 2), 'the slower, holding what lets it go first, does on a byte under 60');
+[$rng, $b] = $held([$beast('water', ['tap'])], [$with($beast('fire', ['tap'], 50), 'claw')], [60, $NO, $MOST, $NO, $MOST]);
+$b->turn($tap, $tap);
+same('use0', $kinds($b)[0], 'and on one of 60 the faster goes first as ever');
+[$rng, $b] = $held([$with($beast('water', ['tap'], 50), 'claw')], [$with($beast('fire', ['tap']), 'claw')], [60, 59, $NO, $MOST, $NO, $MOST]);
+$b->turn($tap, $tap);
+same(['held0', 'use0'], array_slice($kinds($b), 0, 2), 'both holding it, the other side\'s is rolled first, then the player\'s');
+
+$hungry = $with($beast('fire', ['tap'], 50), 'fruit');
+$hungry->hp = 98;
+[$rng, $b] = $held([$beast('water', ['tap'])], [$hungry], [$NO, $MOST, $NO, $MOST]);
+$b->turn($tap, $tap);
+same([98 - 19 + 10, null], [$hungry->hp, $hungry->item], 'what restores hp is eaten once its holder is under half: 79 of 160, and 10 more; it is used up');
+$hungry = $with($beast('fire', ['tap'], 50), 'fruit');
+$hungry->hp = 99;
+[$rng, $b] = $held([$beast('water', ['tap'])], [$hungry], [$NO, $MOST, $NO, $MOST]);
+$b->turn($tap, $tap);
+same([80, 'fruit'], [$hungry->hp, $hungry->item], 'at half it is not');
+
+[$rng, $b] = $held([$beast('water', ['bane'])], [$with($beast('fire', ['tap'], 50), 'herb')], [$NO, $MOST]);
+$b->turn($tap, $tap);
+same([null, null, true], [$b->fighter(1)->status, $b->fighter(1)->item, in_array(['cured', 1, 'poison'], $b->log, true)], 'what cures a status does so as soon as its holder has it, and is used up');
+[$rng, $b] = $held([$beast('water', ['numb'])], [$with($beast('fire', ['tap'], 50), 'herb')], [$NO, $NO, $MOST]);
+$b->turn($tap, $tap);
+same(['paralyze', 'herb'], [$b->fighter(1)->status, $b->fighter(1)->item], 'not another status');
+[$rng, $b] = $held([$beast('water', ['daze'])], [$with($beast('fire', ['tap'], 50), 'balm')], [0, $NO, $MOST]);
+$b->turn($tap, $tap);
+same([0, null, 160 - 19], [$b->fighter(1)->confused, $b->fighter(1)->item, $b->fighter(0)->hp], 'what cures any clears confusion too, and its holder acts unconfused');
+
+$worn = $with($beast('water', ['tap']), 'crumbs');
+$worn->hp = 100;
+[$rng, $b] = $held([$worn], [$beast('fire', ['tap'], 50)], []);
+$b->turn(['pass', 0], ['pass', 0]);
+same([110, 'crumbs'], [$worn->hp, $worn->item], 'what restores a little each turn gives a sixteenth of the hp at most at the turn\'s end, and is kept');
+$b->fighter(0)->hp = 160;
+$b->turn(['pass', 0], ['pass', 0]);
+same(false, in_array('held0', array_slice($kinds($b), 2), true), 'not to one that is whole');
+
+$dry = $with($beast('water', ['tap']), 'dew');
+$dry->moves[0]['pp'] = 0;
+[$rng, $b] = $held([$dry], [$beast('fire', ['tap'], 50)], []);
+$b->turn(['pass', 0], ['pass', 0]);
+same([2, null], [$dry->moves[0]['pp'], $dry->item], 'what restores a move\'s uses gives 5, or all the move has, to one that has none, and is used up');
+check($b->copy(Rng::scripted([]))->fighter(0) !== $dry, 'a copy of the battle keeps what is held apart');

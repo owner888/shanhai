@@ -28,6 +28,11 @@ return [
     'signs' => [
         [9, 6, [
             ['say', '钟山 —— 其子曰鼓，其状如人面而龙身'],
+            ['ifFlag', 'found_jinyu', 'had'],
+            ['setFlag', 'found_jinyu'],
+            ['give', 'jinyu', 1],
+            ['say', '牌子脚下有一块瑾瑜之玉。你捡了起来。'],
+            ['label', 'had'],
         ]],
     ],
     // The tall grass: 鵕鸟 and 大鹗.

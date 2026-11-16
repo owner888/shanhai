@@ -27,11 +27,16 @@ return [
     'signs' => [
         [9, 6, [
             ['say', '中山经薄山之首，曰甘枣之山 —— 共水出焉，而西流注于河；其上多杻木'],
+            ['ifFlag', 'found_tuo', 'had'],
+            ['setFlag', 'found_tuo'],
+            ['give', 'tuo', 1],
+            ['say', '牌子旁边长着箨。你采了一份。'],
+            ['label', 'had'],
         ]],
     ],
     'npcs' => [
         ['ferryman', 1, 7, 'right', 'guard', [
-            ['ask', '「要回太山吗？我送你一程。也可以歇一歇、去兽栏，或者买几枚契印。」', [['回太山', 'go'], ['歇一歇', 'rest'], ['去兽栏', 'pen'], ['买契印', 'shop'], ['不用', 'stay']]],
+            ['ask', '「要回太山吗？我送你一程。也可以歇一歇、去兽栏，或者买点东西。」', [['回太山', 'go'], ['歇一歇', 'rest'], ['去兽栏', 'pen'], ['买东西', 'shop'], ['不用', 'stay']]],
             ['label', 'go'],
             ['warp', 'taishandong', 16, 7, 'left'],
             ['end'],
@@ -43,7 +48,7 @@ return [
             ['pen'],
             ['end'],
             ['label', 'shop'],
-            ['shop', ['seal']],
+            ['shop', ['seal', 'baigao', 'jiaguo', 'pincao', 'kangmu', 'huangguan', 'rongcao', 'zhichu', 'mengmu', 'yupei', 'ditai']],
             ['label', 'stay'],
         ]],
     ],

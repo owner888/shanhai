@@ -27,6 +27,11 @@ return [
     'signs' => [
         [11, 6, [
             ['say', '石脆之山 —— 其木多棕枏；灌水出焉，北流注于禺水'],
+            ['ifFlag', 'found_liuzhe', 'had'],
+            ['setFlag', 'found_liuzhe'],
+            ['give', 'liuzhe', 1],
+            ['say', '牌子脚下有一块流赭。你捡了起来。'],
+            ['label', 'had'],
         ]],
     ],
 ];

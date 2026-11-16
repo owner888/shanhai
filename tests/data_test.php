@@ -16,10 +16,28 @@ $elements = Data::elements();
 $tiers = Data::tiers();
 $items = Data::items();
 $gods = Data::gods();
+// docs/numbers.md 18, 19: what a thing does held, and the number or kind it does it by.
+$holds = ['share' => null, 'flee' => null, 'calm' => null, 'crit' => null, 'coin' => null, 'leftovers' => 'int', 'first' => 'int', 'endure' => 'int', 'evade' => 'int', 'flinch' => 'int', 'heal' => 'int', 'pp' => 'int',
+    'boost' => [...array_keys($elements), 'none'], 'cure' => ['poison', 'burn', 'paralyze', 'sleep', 'confuse', 'any']];
+$boosted = [];
 foreach ($items as $id => $item) {
+    if (isset($item['hold'])) {
+        $by = $holds[$item['hold']] ?? null;
+        check(array_key_exists($item['hold'], $holds) && match (true) { $by === null => !isset($item['by']), $by === 'int' => is_int($item['by'] ?? null) && $item['by'] >= 1 && $item['by'] <= 255, default => in_array($item['by'] ?? null, $by, true) },
+            "the thing $id, held, does what a held thing can, by a number or a kind that fits it");
+        $boosted[] = $item['hold'] === 'boost' ? $item['by'] : null;
+        $found = array_filter($maps ?? Data::maps(), fn($map) => str_contains(json_encode([$map->signs, $map->npcs]), "\"give\",\"$id\""));
+        check(isset($item['price']) || $found !== [], "the thing $id, held, is sold or is given somewhere");
+    }
     check(($item['name'] ?? '') !== '' && ($item['from'] ?? '') !== '', "the thing $id has a name and where it comes from");
-    check(array_diff(array_keys($item), ['name', 'use', 'hold', 'price', 'from']) === [] && in_array($item['use'] ?? null, [null, 'catch'], true) && in_array($item['hold'] ?? null, [null, 'share'], true), "the thing $id has only the fields there are, and a use there is");
+    check(array_diff(array_keys($item), ['name', 'use', 'hold', 'by', 'price', 'from']) === [] && in_array($item['use'] ?? null, [null, 'catch'], true), "the thing $id has only the fields there are, and a use there is");
     check(!isset($item['price']) || (is_int($item['price']) && $item['price'] >= 1), "the thing $id, if it is sold, has a price of one or more");
+}
+sort($boosted);
+$every = [...array_keys($elements), 'none'];
+sort($every);
+same($every, array_values(array_filter($boosted)), 'each element, and the moves of none, has one thing that strengthens it');
+if (true) {
 }
 
 $scripts = [];

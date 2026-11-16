@@ -28,6 +28,11 @@ return [
     'signs' => [
         [9, 6, [
             ['say', '半石之山 —— 其上有草焉，名曰嘉荣；来需之水出于其阳，而西流注于伊水'],
+            ['ifFlag', 'found_jiarong', 'had'],
+            ['setFlag', 'found_jiarong'],
+            ['give', 'jiarong', 1],
+            ['say', '牌子旁边长着嘉荣。你采了一份。'],
+            ['label', 'had'],
         ]],
     ],
     // Its water.

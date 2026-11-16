@@ -32,7 +32,7 @@ return [
     ],
     'npcs' => [
         ['ferryman', 1, 7, 'right', 'guard', [
-            ['ask', '「要回琴鼓之山吗？我送你一程。也可以歇一歇、去兽栏，或者买几枚契印。」', [['回琴鼓之山', 'go'], ['歇一歇', 'rest'], ['去兽栏', 'pen'], ['买契印', 'shop'], ['不用', 'stay']]],
+            ['ask', '「要回琴鼓之山吗？我送你一程。也可以歇一歇、去兽栏，或者买点东西。」', [['回琴鼓之山', 'go'], ['歇一歇', 'rest'], ['去兽栏', 'pen'], ['买东西', 'shop'], ['不用', 'stay']]],
             ['label', 'go'],
             ['warp', 'qingu', 16, 7, 'left'],
             ['end'],
@@ -44,7 +44,7 @@ return [
             ['pen'],
             ['end'],
             ['label', 'shop'],
-            ['shop', ['seal']],
+            ['shop', ['seal', 'baigao', 'jiaguo', 'pincao', 'kangmu', 'huangguan', 'rongcao', 'zhichu', 'mengmu', 'yupei', 'ditai']],
             ['label', 'stay'],
         ]],
     ],

@@ -27,6 +27,11 @@ return [
     'signs' => [
         [9, 6, [
             ['say', '兔床之山 —— 其阳多铁，其木多槠芧，其草多鸡谷'],
+            ['ifFlag', 'found_jigu', 'had'],
+            ['setFlag', 'found_jigu'],
+            ['give', 'jigu', 1],
+            ['say', '牌子旁边长着鸡谷。你采了一份。'],
+            ['label', 'had'],
         ]],
     ],
 ];

@@ -29,6 +29,11 @@ return [
     'signs' => [
         [9, 6, [
             ['say', '昆仑之丘 —— 神陆吾司之，其神状虎身而九尾，人面而虎爪'],
+            ['ifFlag', 'found_shatang', 'had'],
+            ['setFlag', 'found_shatang'],
+            ['give', 'shatang', 1],
+            ['say', '牌子旁边长着沙棠。你采了一份。'],
+            ['label', 'had'],
         ]],
     ],
     // The tall grass: 土蝼, 钦原 and 鹑鸟.

@@ -27,6 +27,11 @@ return [
     'signs' => [
         [9, 6, [
             ['say', '姑媱之山 —— 帝女死焉，其名曰女尸，化为䔄草'],
+            ['ifFlag', 'found_yaocao', 'had'],
+            ['setFlag', 'found_yaocao'],
+            ['give', 'yaocao', 1],
+            ['say', '牌子旁边长着䔄草。你采了一份。'],
+            ['label', 'had'],
         ]],
     ],
 ];

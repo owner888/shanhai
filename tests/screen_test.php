@@ -116,6 +116,14 @@ foreach ([$confirm, $confirm, $down, $none, $down, $none, $down, $confirm] as $c
     $s->step($c);
 }
 same([null, '逃不掉！', 1], [$s->outcome, $s->line, $s->battle->turns], 'a roll over the limit fails, and the turn is the wild beast\'s');
+// docs/numbers.md 19: the slower, holding what is never lost, flees with no roll.
+$sure = $fighter('lu', 5);
+$sure->item = 'mihu';
+$away = $screen([$sure], ['xingxing', 20], Rng::scripted([]));
+foreach ([$confirm, $confirm, $down, $none, $down, $none, $down, $confirm] as $c) {
+    $away->step($c);
+}
+same('fled', $away->outcome, 'one holding what is never lost flees with no roll');
 $s->step($confirm);
 same('野生的狌狌使出了善走！', $s->line, 'which uses a move');
 $s->step($confirm);
@@ -597,6 +605,15 @@ for ($i = 0; $w->battle !== null && $i < 400; $i++) {
 same(['won', true, 'well'], [$w->lastBattle, isset($w->flags['beat']), $w->dialog], 'won, they are beaten and say so');
 // docs/numbers.md 17: one met on the road pays 8 a level of their last beast, four times over: 4 × 8 × 2 = 64.
 same(Formulas::START_MONEY + 64, $w->money, 'and they pay: thirty-two for each level of their last');
+// docs/numbers.md 19: with what doubles the pay held by a beast that was out, twice as much.
+$paid = new World($maps, 'field', 0, 0, Dir::Down, $book, Rng::seeded(5));
+$paid->join('lushu', 30);
+$paid->party[0]->item = 'jigu';
+$paid->run([['duel', '猎户', [['xingxing', 2]]]]);
+for ($i = 0; $paid->battle !== null && $i < 400; $i++) {
+    $paid->step($i % 2 === 0 ? $confirm : $none);
+}
+same(['won', Formulas::START_MONEY + 128], [$paid->lastBattle, $paid->money], 'held by one that was out, what doubles the pay does');
 $w->step($confirm);
 $w->enter('road', 0, 1, Dir::Right);
 $walk();

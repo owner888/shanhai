@@ -27,6 +27,11 @@ return [
     'signs' => [
         [12, 6, [
             ['say', '大苦之山 —— 多㻬琈之玉，多麋玉；其阳狂水出焉，西南流注于伊水'],
+            ['ifFlag', 'found_niushang', 'had'],
+            ['setFlag', 'found_niushang'],
+            ['give', 'niushang', 1],
+            ['say', '牌子旁边长着牛伤。你采了一份。'],
+            ['label', 'had'],
         ]],
     ],
     // Its water.

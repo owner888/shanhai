@@ -29,6 +29,11 @@ return [
     'signs' => [
         [11, 6, [
             ['say', '皋涂之山 —— 涂水出焉，南流注于集获之水；其上多桂木'],
+            ['ifFlag', 'found_yushi', 'had'],
+            ['setFlag', 'found_yushi'],
+            ['give', 'yushi', 1],
+            ['say', '牌子脚下有一块礜。你捡了起来。'],
+            ['label', 'had'],
         ]],
     ],
     // The tall grass: 玃如 and the bird 数斯.

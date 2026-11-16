@@ -32,6 +32,11 @@ return [
     'signs' => [
         [12, 7, [
             ['say', '招摇之山 —— 西海之滨'],
+            ['ifFlag', 'found_mihu', 'had'],
+            ['setFlag', 'found_mihu'],
+            ['give', 'mihu', 1],
+            ['say', '牌子旁边长着迷榖。你采了一份。'],
+            ['label', 'had'],
         ]],
     ],
     'npcs' => [

@@ -28,6 +28,11 @@ return [
     'signs' => [
         [9, 6, [
             ['say', '中曲之山 —— 其阳多玉，其阴多雄黄、白玉及金'],
+            ['ifFlag', 'found_huaimu', 'had'],
+            ['setFlag', 'found_huaimu'],
+            ['give', 'huaimu', 1],
+            ['say', '牌子旁边长着櫰木。你采了一份。'],
+            ['label', 'had'],
         ]],
     ],
     // The tall grass: 駮.

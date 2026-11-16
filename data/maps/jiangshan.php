@@ -26,6 +26,11 @@ return [
     'signs' => [
         [9, 6, [
             ['say', '讲山 —— 其上多玉，多柘，多柏'],
+            ['ifFlag', 'found_diwu', 'had'],
+            ['setFlag', 'found_diwu'],
+            ['give', 'diwu', 1],
+            ['say', '牌子旁边长着帝屋。你采了一份。'],
+            ['label', 'had'],
         ]],
     ],
 ];

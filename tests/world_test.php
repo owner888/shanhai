@@ -96,7 +96,7 @@ $confirm($w);
 same([['guanguan', 5]], array_map(fn($f) => [$f->id, $f->level], $w->party), 'the third, taken, joins the player');
 check($w->choices === null && $w->dialog !== null, 'and she goes on');
 $confirm($w);
-same('带不走的异兽，可以寄在屋后的兽栏里。各个山系的渡者那里也通着它。契印用完了，拿贝来换。', $w->dialog, 'and tells of the pen, and of buying seals');
+same('带不走的异兽，可以寄在屋后的兽栏里。各个山系的渡者那里也通着它。契印用完了，拿贝来换；我这里还有些给异兽带着的草木。', $w->dialog, 'and tells of the pen, and of buying seals');
 $confirm($w);
 check(isset($w->flags['metShaman']) && !$w->busy(), 'through her lines');
 same(['seal' => 5], $w->items, 'she gives seals');
@@ -116,6 +116,13 @@ $w->step(new Controls());
 $confirm($w);
 check(str_contains((string)$w->dialog, '西海之滨'), 'the sign reads');
 $confirm($w);
+// docs/numbers.md 19: what the classic says grows on a mountain is found by its sign, once.
+same(['牌子旁边长着迷榖。你采了一份。', ['seal' => 5, 'mihu' => 1]], [$w->dialog, $w->items], 'by the sign grows what the classic says, and it is taken');
+$confirm($w);
+$confirm($w);
+check(str_contains((string)$w->dialog, '西海之滨'), 'read again');
+$confirm($w);
+same([false, 1], [$w->busy(), $w->items['mihu']], 'the sign has no more to give');
 
 // The trigger by the sea runs once.
 check($go($w, Dir::Down, 11, 10), 'down the path');
@@ -148,6 +155,14 @@ for ($i = 0; $i < 4; $i++) {
     $step();
 }
 same([4, null], [$w->player->x, $w->battle], 'the first four steps on a map meet nothing, and ask for no roll');
+// docs/numbers.md 19: a rate of 10 is a byte under 25; with what wards wild beasts off held in the party, under 12.
+$calm = new World(['field' => $field], 'field', 0, 0, Dir::Right, $book, $warded = \Shanhai\Battle\Rng::scripted([12]));
+$calm->join('xingxing', 20);
+$calm->party[0]->item = 'diwu';
+for ($i = 0; $i < 5 * World::WALK_STEPS; $i++) {
+    $calm->step(new Controls(Dir::Right));
+}
+same([5, null, 0], [$calm->player->x, $calm->battle, $warded->left()], 'with what wards them off held, a byte of 12 meets no wild beast');
 $rng->more([25]);
 $step();
 same([5, null, 0], [$w->player->x, $w->battle, $rng->left()], 'the fifth asks for a roll: 25, not under the rate\'s 25, meets nothing');

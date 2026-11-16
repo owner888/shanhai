@@ -105,7 +105,7 @@ final class World
             }
             $this->lastBattle = $this->battle->outcome;
             if ($this->lastBattle === 'won') {
-                $this->money = min(Formulas::MAX_MONEY, $this->money + $this->battle->reward);
+                $this->money = min(Formulas::MAX_MONEY, $this->money + $this->battle->payout());
             }
             if (($caught = $this->battle->caught) !== null) {
                 if (count($this->party) < self::PARTY) {
@@ -341,7 +341,7 @@ final class World
         $b = $this->book;
         $full = count($this->party) >= self::PARTY;
         $reward = $trial === null ? 0 : Formulas::reward($duel ? Formulas::REWARD_ROAD : Formulas::REWARD_GOD, $theirs[count($theirs) - 1]->level);
-        $this->battle = new Screen(new Battle([$this->party, $theirs], $b['elements'], $b['moves'], $this->rng, [true, false]), $b['moves'], $this->rng, $b['items'], $this->items, $trial, $duel,
+        $this->battle = new Screen(new Battle([$this->party, $theirs], $b['elements'], $b['moves'], $this->rng, [true, false], $b['items']), $b['moves'], $this->rng, $b['items'], $this->items, $trial, $duel,
             $full ? Pen::name($this->box) : null, $full ? Pen::BOX - count($this->boxes[$this->box]) : 0, $reward);
     }
 
@@ -548,7 +548,9 @@ final class World
             return;
         }
         $rng = $this->rng ?? throw new LogicException('this world was made without the dice wild beasts need');
-        if ($rng->byte() >= Formulas::wildLimit($wild['rate'])) {
+        // docs/numbers.md 19: with a beast of the party holding what wards them off, wild beasts are met half as often
+        $calm = array_filter($this->party, fn(Fighter $f) => ($this->book['items'][$f->item ?? '']['hold'] ?? null) === 'calm') !== [];
+        if ($rng->byte() >= Formulas::wildLimit($wild['rate']) >> ($calm ? 1 : 0)) {
             return;
         }
         [$level, $beast] = $wild['slots'][Formulas::wildSlot($rng, $this->afloat ? Formulas::WATER_SLOTS : Formulas::WILD_SLOTS)];

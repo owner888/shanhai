@@ -27,6 +27,11 @@ return [
     'signs' => [
         [10, 6, [
             ['say', '天帝之山 —— 上多棕枏，下多菅蕙'],
+            ['ifFlag', 'found_duheng', 'had'],
+            ['setFlag', 'found_duheng'],
+            ['give', 'duheng', 1],
+            ['say', '牌子旁边长着杜衡。你采了一份。'],
+            ['label', 'had'],
         ]],
     ],
     // The tall grass: 谿边 and the bird 栎.

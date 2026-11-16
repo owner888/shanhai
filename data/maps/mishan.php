@@ -28,6 +28,11 @@ return [
     'signs' => [
         [10, 6, [
             ['say', '峚山 —— 其上多丹木；丹水出焉，西流注于稷泽，其中多白玉，是有玉膏'],
+            ['ifFlag', 'found_danmu', 'had'],
+            ['setFlag', 'found_danmu'],
+            ['give', 'danmu', 1],
+            ['say', '牌子旁边长着丹木。你采了一份。'],
+            ['label', 'had'],
         ]],
     ],
 ];

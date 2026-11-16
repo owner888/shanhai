@@ -35,14 +35,17 @@ final class Battle
     public array $log = [];
 
     private Elements $chart;
+    /** 19: what a held thing that strengthens an element's moves adds to their damage, in hundredths. */
+    public const BOOST = 10;
 
     /**
      * @param array{0: list<Fighter>, 1: list<Fighter>} $parties
      * @param array<string, array> $elements data/elements.php
      * @param array<string, array> $moves data/moves.php
      * @param array{0: bool, 1: bool} $chooses whether each side chooses its next beast when one falls (send()), or its first that can fight comes out
+     * @param array<string, array> $things data/items.php, for what the beasts hold (docs/numbers.md 19); with none, nothing held does anything
      */
-    public function __construct(public readonly array $parties, private readonly array $elements, private readonly array $moves, private readonly Rng $rng, private readonly array $chooses = [false, false])
+    public function __construct(public readonly array $parties, private readonly array $elements, private readonly array $moves, private readonly Rng $rng, private readonly array $chooses = [false, false], private readonly array $things = [])
     {
         $this->chart = new Elements($elements);
         foreach ([0, 1] as $side) { // each side begins with its first that can fight
@@ -58,7 +61,7 @@ final class Battle
     /** The battle as it stands, to play on from apart: its beasts copied, its log empty, its rolls from $rng. */
     public function copy(Rng $rng): self
     {
-        $copy = new self(array_map(fn(array $party) => array_map(fn(Fighter $f) => clone $f, $party), $this->parties), $this->elements, $this->moves, $rng, $this->chooses);
+        $copy = new self(array_map(fn(array $party) => array_map(fn(Fighter $f) => clone $f, $party), $this->parties), $this->elements, $this->moves, $rng, $this->chooses, $this->things);
         [$copy->active, $copy->weather, $copy->weatherLeft, $copy->turns, $copy->winner] = [$this->active, $this->weather, $this->weatherLeft, $this->turns, $this->winner];
         return $copy;
     }
@@ -69,6 +72,80 @@ final class Battle
     public function fighter(int $side): Fighter
     {
         return $this->parties[$side][$this->active[$side]];
+    }
+
+    /** The thing $f holds, when what it does held is $kind; else null. */
+    private function holds(Fighter $f, string $kind): ?array
+    {
+        $thing = $f->item === null ? null : ($this->things[$f->item] ?? null);
+        return ($thing['hold'] ?? null) === $kind ? $thing : null;
+    }
+
+    /** The side's beast's held thing does its work, and, of those that are used up, is gone. */
+    private function used(int $side, bool $spent): void
+    {
+        $f = $this->fighter($side);
+        $this->log[] = ['held', $side, $f->item];
+        if ($spent) {
+            $f->item = null;
+        }
+    }
+
+    /**
+     * 19: what is held to mend does so, the player's beast first: a thing that restores hp, under half of it; one
+     * that cures a status, with that status; one that clears confusion, confused. Each is used up.
+     */
+    private function mendHeld(): void
+    {
+        foreach ([0, 1] as $side) {
+            $f = $this->fighter($side);
+            if ($f->fainted()) {
+                continue;
+            }
+            if (($thing = $this->holds($f, 'heal')) !== null && 2 * $f->hp < $f->maxHp) {
+                $this->used($side, true);
+                $this->heal($f, $thing['by'], $side);
+            }
+            $thing = $this->holds($f, 'cure');
+            if ($thing !== null && $f->status !== null && in_array($thing['by'], [$f->status, 'any'], true)) {
+                $this->used($side, true);
+                $this->log[] = ['cured', $side, $f->status];
+                [$f->status, $f->sleep] = [null, 0];
+            }
+            $thing = $this->holds($f, 'cure');
+            if ($thing !== null && $f->confused > 0 && in_array($thing['by'], ['confuse', 'any'], true)) {
+                $this->used($side, true);
+                $this->log[] = ['cured', $side, 'confuse'];
+                $f->confused = 0;
+            }
+        }
+    }
+
+    /**
+     * 19: at the turn's end, the player's beast first: what is held to restore a little hp each turn does, when the
+     * beast is not whole; what restores a move's uses does so for the first of its moves that has none, and is used up.
+     */
+    private function endHeld(): void
+    {
+        foreach ([0, 1] as $side) {
+            $f = $this->fighter($side);
+            if ($f->fainted()) {
+                continue;
+            }
+            if (($thing = $this->holds($f, 'leftovers')) !== null && $f->hp < $f->maxHp) {
+                $this->used($side, false);
+                $this->heal($f, max(1, intdiv($f->maxHp, $thing['by'])), $side);
+            }
+            if (($thing = $this->holds($f, 'pp')) !== null) {
+                foreach ($f->moves as $i => $m) {
+                    if ($m['pp'] === 0) {
+                        $this->used($side, true);
+                        $f->moves[$i]['pp'] = min($thing['by'], $this->moves[$m['id']]['pp']);
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     /** The moves the side's beast can still use, by their place among its four. @return list<int> */
@@ -110,8 +187,16 @@ final class Battle
         }
         $movers = array_keys(array_filter($actions, fn(array $x) => $x[0] === 'move'));
         if (count($movers) === 2) {
+            // 19: one holding what lets it go first does, on a byte under the thing's number: the other side's is rolled before the player's
+            $first = null;
+            foreach ([1, 0] as $side) {
+                if ($first === null && ($thing = $this->holds($this->fighter($side), 'first')) !== null && $this->rng->byte() < $thing['by']) {
+                    $first = $side;
+                    $this->used($side, false);
+                }
+            }
             [$s0, $s1] = [$this->fighter(0)->stat('spe'), $this->fighter(1)->stat('spe')];
-            $first = $s0 === $s1 ? ($this->rng->byte() < self::TIE_FIRST ? 0 : 1) : ($s0 > $s1 ? 0 : 1);
+            $first ??= $s0 === $s1 ? ($this->rng->byte() < self::TIE_FIRST ? 0 : 1) : ($s0 > $s1 ? 0 : 1);
             $movers = [$first, 1 - $first];
         }
         foreach ($movers as $i => $side) {
@@ -119,6 +204,7 @@ final class Battle
                 continue;
             }
             $this->act($side, $actions[$side][1], $i === 0 && count($movers) === 2);
+            $this->mendHeld();
             $this->residual($side);
         }
         foreach ([0, 1] as $side) {
@@ -127,6 +213,8 @@ final class Battle
             }
             $this->fighter($side)->flinched = false;
         }
+        $this->endHeld();
+        $this->mendHeld();
         $this->endWeather();
         $this->replaceFallen();
     }
@@ -209,7 +297,8 @@ final class Battle
         $critical = false;
         $tenths = [];
         if ($m['power'] > 0) {
-            $critical = $this->rng->byte() < Formulas::CRITICAL[$effect === 'crit' ? 2 : 0];
+            // 4, 19: a move that strikes true is two levels up; a held thing that sharpens the eye, one more
+            $critical = $this->rng->byte() < Formulas::CRITICAL[($effect === 'crit' ? 2 : 0) + ($this->holds($u, 'crit') !== null ? 1 : 0)];
             [$damage, $tenths] = $this->damage($u, $t, $m, $critical);
             if ($damage >= 2) {
                 $damage = Formulas::vary($damage, Formulas::varyRoll($this->rng));
@@ -220,12 +309,20 @@ final class Battle
         $onFoe = $m['power'] > 0 || !in_array($effect, ['rain', 'sun', 'sandstorm', 'heal'], true) && !str_starts_with((string)$effect, 'up:');
         if ($onFoe) {
             $accuracy = Formulas::accuracy($m['accuracy'], $u->stages['acc'], $t->stages['eva']);
+            if (($thing = $this->holds($t, 'evade')) !== null) { // 19: taken from what the move needs, before a move that cannot miss is known for one
+                $accuracy = max(0, $accuracy - $thing['by']);
+            }
             if ($accuracy < 255 && $this->rng->byte() >= $accuracy) {
                 $this->log[] = ['miss', $side];
                 return;
             }
         }
         if ($m['power'] > 0) {
+            // 19: one holding what lets it bear a blow is left with 1 hp by one that would fell it, on a byte under the thing's number, rolled at every blow
+            if (($thing = $this->holds($t, 'endure')) !== null && $this->rng->byte() < $thing['by'] && $damage >= $t->hp) {
+                $damage = $t->hp - 1;
+                $this->used(1 - $side, false);
+            }
             $dealt = $this->hurt($t, $damage);
             $this->log[] = ['hit', 1 - $side, $dealt, $critical, $tenths];
             if ($effect === 'drain') {
@@ -240,6 +337,10 @@ final class Battle
                     $this->log[] = ['faint', $side];
                 }
             }
+        }
+        // 19: a move of power with no effect of its own, from one holding what cows, makes the other flinch on a byte under the thing's number
+        if ($effect === null && $m['power'] > 0 && !$struggles && ($thing = $this->holds($u, 'flinch')) !== null && $this->rng->byte() < $thing['by']) {
+            $t->flinched = $foeYetToAct && !$t->fainted();
         }
         if ($effect === null || $effect === 'crit' || $effect === 'drain') {
             return;
@@ -260,7 +361,9 @@ final class Battle
         [$atk, $def] = $physical ? ['atk', 'def'] : ['spa', 'spd'];
         // 3.1: a critical hit takes both stats as they are without stages, when the defender's stage is not below the attacker's.
         $raw = $critical && $t->stages[$def] >= $u->stages[$atk];
-        $damage = Formulas::damage($u->level, $m['power'], $raw ? $u->stats[$atk] : $u->stat($atk), $raw ? $t->stats[$def] : $t->stat($def), $critical);
+        // 19: a held thing that strengthens the move's element, or the moves of none, adds a tenth
+        $boost = ($this->holds($u, 'boost')['by'] ?? null) === ($m['element'] ?? 'none') ? self::BOOST : 0;
+        $damage = Formulas::damage($u->level, $m['power'], $raw ? $u->stats[$atk] : $u->stat($atk), $raw ? $t->stats[$def] : $t->stat($def), $critical, $boost);
         $tenths = [];
         if ($m['element'] !== null) {
             $weather = self::WEATHER[$this->weather ?? ''][$m['element']] ?? null;

@@ -249,7 +249,8 @@ final class Play extends Game
             if ($shop->note !== null) {
                 $this->dialog($p, $r, $shop->note);
             } else {
-                $this->choices($p, $r, $shop->items($this->items), $shop->at(), 280.0);
+                [$lines, $at] = Pen::window($shop->items($this->items), $shop->at());
+                $this->choices($p, $r, $lines, $at, 280.0);
             }
         }
         if ($shop !== null || $this->world->menu !== null) {

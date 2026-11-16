@@ -297,6 +297,21 @@ final class Screen
         return [$hp, $status, $stages];
     }
 
+    /** Whether one of the player's beasts that has been out in this battle held what doubles what winning pays (docs/numbers.md 19). */
+    private bool $doubled = false;
+
+    /** What winning this battle pays. */
+    public function payout(): int
+    {
+        return $this->reward * ($this->doubled ? 2 : 1);
+    }
+
+    /** Notes whether the player's beast now out holds what doubles the pay. */
+    private function coin(): void
+    {
+        $this->doubled = $this->doubled || ($this->things[$this->battle->fighter(0)->item ?? '']['hold'] ?? null) === 'coin';
+    }
+
     /** Whether a beast bound has somewhere to go: the party, or the pen's box it would be sent to. */
     private function room(): bool
     {
@@ -361,7 +376,9 @@ final class Screen
             return;
         }
         $limit = Formulas::fleeValue($this->battle->fighter(0)->stat('spe'), $this->battle->fighter(1)->stat('spe'), ++$this->fleeTries);
-        if ($limit === null || $this->rng->byte() <= $limit) {
+        // docs/numbers.md 19: one holding what is never lost gets away with no roll
+        $sure = $limit === null || ($this->things[$this->battle->fighter(0)->item ?? '']['hold'] ?? null) === 'flee';
+        if ($sure || $this->rng->byte() <= $limit) {
             $this->outcome = 'fled';
             $this->say('顺利逃走了！');
             $this->next();
@@ -374,6 +391,7 @@ final class Screen
     /** A turn: the player's action, and the other side's: any move a wild beast has left, each as likely; in a trial, the one that would do most. */
     private function turn(array $action): void
     {
+        $this->coin();
         $foe = ['move', 0];
         $usable = $this->battle->usable(1);
         if ($usable !== [] && $this->trial !== null) {
@@ -392,6 +410,7 @@ final class Screen
         [$hp, $status, $stages] = $this->before();
         $from = count($this->battle->log);
         $this->battle->turn($action, $foe);
+        $this->coin();
         $this->tell(array_slice($this->battle->log, $from), $hp, $status, $stages);
         if ($this->battle->winner !== null) {
             $this->outcome = $this->battle->winner === 0 ? 'won' : 'lost';
@@ -400,7 +419,7 @@ final class Screen
             } elseif ($this->trial !== null) {
                 $this->say($this->duel ? '打赢了' . $this->trial . '！' : '通过了' . $this->trial . '的试炼！');
                 if ($this->reward > 0) {
-                    $this->say('得到了' . $this->reward . '贝。');
+                    $this->say('得到了' . $this->payout() . '贝。');
                 }
             }
         }
@@ -503,6 +522,15 @@ final class Screen
                     break;
                 case 'fail':
                     $line = '但是没有效果。';
+                    break;
+                case 'held':
+                    $line = $name($side) . '的' . $this->things[$e[2]]['name'] . '起了作用！';
+                    break;
+                case 'cured':
+                    if ($e[2] !== 'confuse') {
+                        $shown[$side]['status'] = $status[$side][$shown[$side]['which']] = null;
+                    }
+                    $line = $name($side) . ($e[2] === 'confuse' ? '不再混乱了！' : '恢复了正常！');
                     break;
                 default:
                     throw new LogicException("the battle wrote '{$e[0]}', which has no line");

@@ -27,6 +27,11 @@ return [
     'signs' => [
         [10, 6, [
             ['say', '浮山 —— 多盼木，枳叶而无伤，木虫居之'],
+            ['ifFlag', 'found_xuncao', 'had'],
+            ['setFlag', 'found_xuncao'],
+            ['give', 'xuncao', 1],
+            ['say', '牌子旁边长着薰草。你采了一份。'],
+            ['label', 'had'],
         ]],
     ],
 ];
