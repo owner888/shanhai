@@ -261,4 +261,14 @@ return [
         'moves' => ['infantcry', 'hillcharge', 'cliffbreak', 'landslide'],
         'from' => '凡荆山之首，自翼望之山至于几山，凡四十八山，三千七百三十二里。其神状皆彘身人首。其祠：毛用一雄鸡祈瘞，用一珪，糈用五种之精。禾山，帝也。堵山、玉山，冢也。',
     ],
+    'zhongcishier' => [
+        'name' => '中次十二经之神', 'range' => 26,
+        'looks' => '鸟身而龙首。',
+        'elements' => ['earth', 'wood'],
+        'why' => '中山经属土；鸟身、龙首都属木，作副属性。',
+        'stats' => ['hp' => 110, 'atk' => 110, 'def' => 95, 'spa' => 75, 'spd' => 90, 'spe' => 75],
+        'exp' => 205, 'growth' => 'slow',
+        'moves' => ['backeyes', 'tempest', 'cliffbreak', 'landslide'],
+        'from' => '凡洞庭山之首，自篇遇之山至于荣余之山，凡十五山，二千八百里。其神状皆鸟身而龙首。其祠：毛用一雄鸡、一牝豚刏，糈用稌。凡夫夫之山、即公之山、尧山、阳帝之山，皆冢也。洞庭、荣余山，神也。',
+    ],
 ];

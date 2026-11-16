@@ -1,6 +1,6 @@
 <?php
 // The beasts of the Classic of Mountains and Seas: the Southern Mountains (南山经), all three ranges, and the first
-// four ranges of the Western (西山经), which are all it has, the three of the Northern (北山经), the four of the Eastern (东山经), and the first eleven of the Central (中山经).
+// four ranges of the Western (西山经), which are all it has, the three of the Northern (北山经), the four of the Eastern (东山经), and the twelve of the Central (中山经), which are all it has.
 //
 // Every field here restates what the classic says, checked against its text (zh.wikisource.org/wiki/山海經/南山經 and
 // /西山經, which carry Guo Pu's commentary; the names and wording cross-checked with a second edition where one could
@@ -468,14 +468,14 @@ return [
         'looks' => '旄牛。',
     ],
     'ling' => [
-        'name' => '麢', 'kind' => 'common', 'range' => 4, 'mountain' => '翠山、大次之山、涿光之山、纶山、大尧之山、崌山、玉山、葛山、朝歌之山、即谷之山',
+        'name' => '麢', 'kind' => 'common', 'range' => 4, 'mountain' => '翠山、大次之山、涿光之山、纶山、大尧之山、崌山、玉山、葛山、朝歌之山、即谷之山、阳帝之山',
         'elements' => ['metal'], 'why' => '大角。',
         'tier' => 1, 'stats' => ['hp' => 50, 'atk' => 60, 'def' => 45, 'spa' => 35, 'spd' => 45, 'spe' => 90],
         'catch' => 190, 'exp' => 72, 'growth' => 'fast',
         'looks' => '似羊而大角，好在山崖间。', 'note' => '形貌据郭璞注。',
     ],
     'she' => [
-        'name' => '麝', 'kind' => 'common', 'range' => 4, 'mountain' => '翠山',
+        'name' => '麝', 'kind' => 'common', 'range' => 4, 'mountain' => '翠山、阳帝之山',
         'elements' => ['metal'], 'why' => '原文没有别的依据，取西山经的本地属性。',
         'tier' => 1, 'stats' => ['hp' => 45, 'atk' => 50, 'def' => 40, 'spa' => 40, 'spd' => 50, 'spe' => 85],
         'catch' => 255, 'exp' => 64, 'growth' => 'fast',
@@ -491,7 +491,7 @@ return [
     ],
     // 西次二经: 钤山 to 莱山
     'baishe' => [
-        'name' => '白蛇', 'kind' => 'common', 'range' => 5, 'mountain' => '泰冒之山、神囷之山',
+        'name' => '白蛇', 'kind' => 'common', 'range' => 5, 'mountain' => '泰冒之山、神囷之山、柴桑之山',
         'elements' => ['water'], 'why' => '生于浴水中。',
         'tier' => 2, 'stats' => ['hp' => 60, 'atk' => 50, 'def' => 55, 'spa' => 75, 'spd' => 65, 'spe' => 70],
         'catch' => 120, 'exp' => 95, 'growth' => 'mediumFast',
@@ -553,14 +553,14 @@ return [
         'unchecked' => '原文只有名字；「豹一类」是通行的解释，所查版本这一节没有注，待查注本。',
     ],
     'mi' => [
-        'name' => '麋', 'kind' => 'common', 'range' => 5, 'mountain' => '西皇之山、县雍之山、孟子之山、煇诸之山、荆山、女几之山、崃山、风雨之山、朝歌之山',
+        'name' => '麋', 'kind' => 'common', 'range' => 5, 'mountain' => '西皇之山、县雍之山、孟子之山、煇诸之山、荆山、女几之山、崃山、风雨之山、朝歌之山、暴山、柴桑之山',
         'elements' => ['metal'], 'why' => '原文没有别的依据，取西山经的本地属性。',
         'tier' => 2, 'stats' => ['hp' => 90, 'atk' => 70, 'def' => 75, 'spa' => 40, 'spd' => 60, 'spe' => 55],
         'catch' => 120, 'exp' => 96, 'growth' => 'mediumFast',
         'looks' => '麋。',
     ],
     'yelu' => [
-        'name' => '鹿', 'kind' => 'common', 'range' => 5, 'mountain' => '西皇之山、孟子之山、美山、琴鼓之山、玉山',
+        'name' => '鹿', 'kind' => 'common', 'range' => 5, 'mountain' => '西皇之山、孟子之山、美山、琴鼓之山、玉山、暴山、江浮之山、柴桑之山',
         'elements' => ['metal'], 'why' => '原文没有别的依据，取西山经的本地属性。',
         'tier' => 1, 'stats' => ['hp' => 55, 'atk' => 55, 'def' => 45, 'spa' => 40, 'spd' => 50, 'spe' => 80],
         'catch' => 190, 'exp' => 70, 'growth' => 'fast',
@@ -1236,7 +1236,7 @@ return [
         'looks' => '湖灌之水中的鱼。',
     ],
     'guaishe' => [
-        'name' => '怪蛇', 'kind' => 'common', 'range' => 9, 'mountain' => '洹山、崌山',
+        'name' => '怪蛇', 'kind' => 'common', 'range' => 9, 'mountain' => '洹山、崌山、荣余之山',
         'elements' => ['earth'], 'why' => '蛇虫，穴居。',
         'tier' => 2, 'stats' => ['hp' => 65, 'atk' => 85, 'def' => 65, 'spa' => 40, 'spd' => 55, 'spe' => 80],
         'catch' => 120, 'exp' => 100, 'growth' => 'mediumFast',
@@ -2010,7 +2010,7 @@ return [
         'unchecked' => '形貌和毒出自郭璞注，原文没有写。',
     ],
     'jilu' => [
-        'name' => '麂', 'kind' => 'common', 'range' => 22, 'mountain' => '女几之山',
+        'name' => '麂', 'kind' => 'common', 'range' => 22, 'mountain' => '女几之山、暴山',
         'elements' => ['earth'], 'why' => '原文没有别的依据，取中山经的本地属性。',
         'tier' => 1, 'stats' => ['hp' => 50, 'atk' => 60, 'def' => 45, 'spa' => 40, 'spd' => 45, 'spe' => 70],
         'catch' => 255, 'exp' => 58, 'growth' => 'fast',
@@ -2032,7 +2032,7 @@ return [
         'looks' => '大鹿。原文只有名字。',
     ],
     'yeshi' => [
-        'name' => '豕', 'kind' => 'common', 'range' => 22, 'mountain' => '美山、琴鼓之山、玉山',
+        'name' => '豕', 'kind' => 'common', 'range' => 22, 'mountain' => '美山、琴鼓之山、玉山、江浮之山',
         'elements' => ['earth'], 'why' => '原文没有别的依据，取中山经的本地属性。',
         'tier' => 2, 'stats' => ['hp' => 75, 'atk' => 75, 'def' => 60, 'spa' => 40, 'spd' => 50, 'spe' => 50],
         'catch' => 120, 'exp' => 80, 'growth' => 'mediumFast',
@@ -2223,5 +2223,44 @@ return [
         'looks' => '形如彘，黄身、白头、白尾。',
         'omen' => '见则天下大风。',
         'unchecked' => '第二个字原文生僻，「粦」是它的声旁。',
+    ],
+    // 中次十二经（洞庭山）: 篇遇之山 to 荣余之山
+    'guainiao' => [
+        'name' => '怪鸟', 'kind' => 'common', 'range' => 26, 'mountain' => '洞庭之山',
+        'elements' => ['wood'], 'why' => '鸟。',
+        'tier' => 2, 'stats' => ['hp' => 65, 'atk' => 50, 'def' => 55, 'spa' => 90, 'spd' => 65, 'spe' => 85],
+        'catch' => 90, 'exp' => 120, 'growth' => 'mediumFast',
+        'looks' => '洞庭之山的怪鸟。原文只有名字。',
+    ],
+    'jiuniao' => [
+        'name' => '就', 'kind' => 'common', 'range' => 26, 'mountain' => '暴山',
+        'elements' => ['wood'], 'why' => '旧注以为是鹫，鸟。',
+        'tier' => 2, 'stats' => ['hp' => 70, 'atk' => 60, 'def' => 60, 'spa' => 95, 'spd' => 65, 'spe' => 65],
+        'catch' => 75, 'exp' => 124, 'growth' => 'mediumFast',
+        'looks' => '暴山的「就」。原文只有名字。',
+        'unchecked' => '原文把它列在「其兽」里；注家说「就」通「鹫」，是鹰一类的大鸟。照注归作鸟。',
+    ],
+    'guigui' => [
+        'name' => '蛫', 'kind' => 'strange', 'range' => 26, 'mountain' => '即公之山',
+        'elements' => ['fire'], 'why' => '赤首。',
+        'tier' => 3, 'stats' => ['hp' => 90, 'atk' => 55, 'def' => 110, 'spa' => 90, 'spd' => 85, 'spe' => 45],
+        'catch' => 45, 'exp' => 170, 'growth' => 'mediumSlow',
+        'looks' => '形如龟，白身赤首。',
+        'lore' => '可以御火。',
+    ],
+    'feishe' => [
+        'name' => '飞蛇', 'kind' => 'common', 'range' => 26, 'mountain' => '柴桑之山',
+        'elements' => ['wood'], 'why' => '能飞的蛇，随飞鸟归木。',
+        'tier' => 2, 'stats' => ['hp' => 65, 'atk' => 55, 'def' => 60, 'spa' => 95, 'spd' => 65, 'spe' => 75],
+        'catch' => 75, 'exp' => 122, 'growth' => 'mediumFast',
+        'looks' => '柴桑之山的飞蛇。原文只有名字。',
+        'unchecked' => '注家说就是螣蛇。原文没有写。',
+    ],
+    'guaichong' => [
+        'name' => '怪虫', 'kind' => 'common', 'range' => 26, 'mountain' => '荣余之山',
+        'elements' => ['earth'], 'why' => '原文没有别的依据，取中山经的本地属性。',
+        'tier' => 2, 'stats' => ['hp' => 60, 'atk' => 75, 'def' => 70, 'spa' => 45, 'spd' => 55, 'spe' => 50],
+        'catch' => 120, 'exp' => 98, 'growth' => 'mediumFast',
+        'looks' => '荣余之山的怪虫。原文只有名字。',
     ],
 ];

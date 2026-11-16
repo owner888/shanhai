@@ -280,4 +280,9 @@ return [
     'liangqushou' => [[1, 'bite'], [1, 'claw'], [11, 'rebuke'], [17, 'peck'], [23, 'stripes'], [29, 'spur'], [34, 'fearless'], [40, 'fang'], [46, 'gore'], [52, 'onehorn'], [58, 'pounce']],
     'zhitu' => [[1, 'ram'], [1, 'breeze'], [8, 'splash'], [13, 'feathers'], [19, 'backeyes'], [24, 'cassia'], [30, 'revive'], [36, 'gale'], [42, 'sleepless'], [49, 'southwind']],
     'wenlin' => [[1, 'ram'], [1, 'breeze'], [10, 'lowing'], [16, 'feathers'], [22, 'fearless'], [28, 'cassia'], [34, 'duststorm'], [39, 'gale'], [45, 'undeaf'], [51, 'southwind'], [57, 'tempest']],
+    'guainiao' => [[1, 'ram'], [1, 'breeze'], [8, 'swift'], [15, 'feathers'], [22, 'backeyes'], [28, 'cassia'], [35, 'bewilder'], [42, 'gale']],
+    'jiuniao' => [[1, 'ram'], [1, 'breeze'], [9, 'fearless'], [15, 'feathers'], [22, 'swift'], [28, 'cassia'], [34, 'rebuke'], [41, 'gale'], [48, 'southwind']],
+    'guigui' => [[1, 'ram'], [1, 'spark'], [10, 'fearless'], [16, 'redtail'], [22, 'undeaf'], [28, 'flame'], [34, 'revive'], [40, 'drywind'], [46, 'blaze'], [52, 'scorch']],
+    'feishe' => [[1, 'bite'], [1, 'breeze'], [8, 'sting'], [14, 'feathers'], [20, 'swift'], [26, 'cassia'], [33, 'venom'], [39, 'gale'], [46, 'southwind']],
+    'guaichong' => [[1, 'bite'], [1, 'pebble'], [6, 'sting'], [13, 'dust'], [20, 'slumber'], [26, 'burrow'], [33, 'venom'], [40, 'hillcharge']],
 ];
