@@ -22,6 +22,8 @@ final class Fighter
     public array $moves = [];
     /** poison, burn, paralyze or sleep; one at a time */
     public ?string $status = null;
+    /** The thing it holds, an id of data/items.php; null with none. */
+    public ?string $item = null;
     /** Turns of sleep left, counting the one it wakes on. */
     public int $sleep = 0;
     /** Turns of confusion left, counting the one it ends on. */
@@ -71,7 +73,7 @@ final class Fighter
     public function state(): array
     {
         return ['id' => $this->id, 'level' => $this->level, 'exp' => $this->exp, 'statExp' => $this->statExp, 'dvs' => $this->dvs,
-            'hp' => $this->hp, 'status' => $this->status, 'sleep' => $this->sleep, 'moves' => $this->moves];
+            'hp' => $this->hp, 'status' => $this->status, 'sleep' => $this->sleep, 'moves' => $this->moves, 'item' => $this->item];
     }
 
     /**
@@ -94,7 +96,7 @@ final class Fighter
                 throw new \InvalidArgumentException("the saved game's {$s['id']} has a move that cannot be: '{$m['id']}'");
             }
         }
-        [$f->hp, $f->status, $f->sleep, $f->moves] = [$s['hp'], $s['status'], $s['sleep'], $s['moves']];
+        [$f->hp, $f->status, $f->sleep, $f->moves, $f->item] = [$s['hp'], $s['status'], $s['sleep'], $s['moves'], $s['item']];
         return $f;
     }
 

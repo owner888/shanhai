@@ -39,6 +39,8 @@ return [
             ['trial', '羭山之神', [['ling', 21], ['mengbao', 21], ['xiong', 23], ['xishan', 25]]],
             ['setFlag', 'passedRange4'],
             ['say', '「好。从今往后，水属的异兽可以载你渡水。」'],
+            ['give', 'tongxiu', 1],
+            ['say', '「这块同修玉也拿去。佩着它的异兽，不上场也分得一半修行。」'],
             ['end'],
             ['label', 'wait'],
             ['say', '「准备好了再来。」'],

@@ -141,7 +141,7 @@ final class World
             return;
         }
         if ($this->menu !== null) {
-            $this->menu->step($c, $this->party, $this->items);
+            $this->menu->step($c, $this->party, $this->items, $this->book['items'] ?? []);
             if ($this->menu->done) {
                 $saves = $this->menu->saves;
                 $this->menu = null;
@@ -427,6 +427,11 @@ final class World
         $beast = fn(array $f) => Fighter::fromState($f, $b['beasts'], $b['learnsets'], $b['moves']);
         $party = array_map($beast, $s['party']);
         $boxes = array_map(fn(array $box) => array_map($beast, $box), $s['boxes']);
+        foreach ([...$party, ...array_merge(...$boxes)] as $f) {
+            if ($f->item !== null && !isset($b['items'][$f->item]['hold'])) {
+                throw new InvalidArgumentException("the saved game's {$f->id} holds what cannot be held: '{$f->item}'");
+            }
+        }
         if (!array_is_list($boxes) || count($boxes) !== Pen::BOXES || !isset($boxes[$s['box']]) || array_filter($boxes, fn(array $box) => !array_is_list($box) || count($box) > Pen::BOX) !== []) {
             throw new InvalidArgumentException('the saved game\'s pen is not as a pen can be');
         }

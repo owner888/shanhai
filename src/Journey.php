@@ -23,7 +23,9 @@ use Shanhai\World\{Controls, Dir, Map, Pen, Tile, World};
  * grow; in a trial its strongest goes first. A party of one is the player it was before.
  *
  * With six it goes on looking, for wild beasts worth more than its weakest (worth()): one bound goes to the pen, and
- * at the nearest way to the pen it leaves its weakest there and takes the new one.
+ * at the nearest way to the pen it leaves its weakest there and takes the new one. Once it has the thing that shares
+ * what a fallen beast gives, a beast's worth is its kind's alone, for its level will come: it has the lowest of its
+ * party hold the thing, and looks for a kind better than its least only when the party's levels are close again.
  *
  * It is for knowing that the game can be played through and what that takes (tools/journey.php), not for playing well:
  * it uses no move that does no damage, and never flees.
@@ -114,11 +116,15 @@ final class Journey
         }
         if ($this->boxed() !== null) {
             $this->mend();
+            if ($w->party[$this->weakest()]->item !== null) {
+                $this->hold(none: true); // the one to be left does not take the thing with it
+            }
             if (!$this->visit('pen')) {
                 throw new RuntimeException('no way to the pen can be come to');
             }
             return true;
         }
+        $this->hold();
         $near = $this->near();
         if ($near !== null && ($w->items['seal'] ?? 0) === 0 && $this->supply()) {
             return true;
@@ -228,10 +234,69 @@ final class Journey
         $this->pace(fn() => $this->level() < $this->want[$r]);
     }
 
-    /** What a beast of $level is worth beside another: its level times what its kind's base stats add up to, as its stats go by the two. */
+    /** Levels its party's lowest may be under its highest for the party to count as level: a new beast is not looked for while one is still catching up. */
+    private const CLOSE = 5;
+
+    /**
+     * What a beast of $level is worth beside another: its level times what its kind's base stats add up to, as its
+     * stats go by the two; with the thing that shares, what its kind's base stats add up to alone.
+     */
     private function worth(int $level, array $species): int
     {
-        return $level * array_sum($species['stats']);
+        return ($this->shares() ? 1 : $level) * array_sum($species['stats']);
+    }
+
+    /** The id of the thing that, held, shares what a fallen beast gives. */
+    private function share(): string
+    {
+        return $this->share ??= array_keys(array_filter(Data::items(), fn(array $thing) => ($thing['hold'] ?? null) === 'share'))[0];
+    }
+
+    private ?string $share = null;
+
+    /** Whether it has the thing that shares: in the bag, or held by one of the party. */
+    private function shares(): bool
+    {
+        return isset($this->w->items[$this->share()]) || array_filter($this->w->party, fn(Fighter $f) => $f->item === $this->share()) !== [];
+    }
+
+    /**
+     * Has the lowest of the party hold the thing that shares, by the menu as a person would: when none holds it, or
+     * the one that does is CLOSE levels or more over the lowest. With $none, has none hold it.
+     */
+    private function hold(bool $none = false): void
+    {
+        $w = $this->w;
+        if (!$this->shares()) {
+            return;
+        }
+        $levels = array_map(fn(Fighter $f) => $f->level, $w->party);
+        $low = array_search(min($levels), $levels, true);
+        $holder = null;
+        foreach ($w->party as $i => $f) {
+            $holder = $f->item === $this->share() ? $i : $holder;
+        }
+        if ($none ? $holder === null : ($holder !== null && $levels[$holder] - $levels[$low] < self::CLOSE)) {
+            return;
+        }
+        $at = fn() => $w->menu->at();
+        $this->tick(menu: true);
+        $this->cursorTo(array_search(\Shanhai\World\Menu::ENTRIES['hold'], $w->menu->items($w->party, $w->items, Data::items()), true), $at);
+        $this->tick(confirm: true);
+        if ($holder !== null) {
+            $this->cursorTo($holder, $at);
+            $this->tick(confirm: true);
+        }
+        if (!$none) {
+            $this->cursorTo($low, $at);
+            $this->tick(confirm: true);
+            $this->cursorTo(array_search($this->share(), array_values(array_filter(array_keys($w->items), fn(string $id) => isset(Data::items()[$id]['hold']))), true), $at);
+            $this->tick(confirm: true);
+        }
+        $this->tick(menu: true);
+        if ($w->menu !== null || ($none ? isset($w->party[$holder]->item) : $w->party[$low]->item !== $this->share())) {
+            throw new RuntimeException('the thing that shares was to change hands and has not');
+        }
     }
 
     /** Where in the party its weakest is, by worth. */
@@ -255,8 +320,11 @@ final class Journey
             return true;
         }
         $weak = $w->party[$this->weakest()];
+        $levels = array_map(fn(Fighter $f) => $f->level, $w->party);
+        // with the thing that shares: only a beast at half the party's highest level or over, and only with none of the party still catching up
         return $this->size === World::PARTY && count($w->boxes[$w->box]) < Pen::BOX
-            && $this->worth($level, $this->beasts()[$id]) > $this->worth($weak->level, $weak->species);
+            && $this->worth($level, $this->beasts()[$id]) > $this->worth($weak->level, $weak->species)
+            && (!$this->shares() || (2 * $level >= max($levels) && max($levels) - min($levels) <= self::CLOSE));
     }
 
     /** @var ?array<string, array> */

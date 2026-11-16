@@ -266,6 +266,29 @@ same('party', $w->menu->phase, 'the first entry is the party\'s screen');
 same(['鹿蜀  Lv5  ' . $w->party[0]->hp . '/' . $w->party[0]->maxHp, '旋龟  Lv7  ' . $w->party[1]->hp . '/' . $w->party[1]->maxHp . '  毒'], array_slice($w->menu->items($w->party, $w->items, $book['items']), 0, 2), 'a line a beast: name, level, hp, status');
 $w->step($confirm);
 check(str_starts_with($w->menu->items($w->party, $w->items, $book['items'])[0], '◆ '), 'confirm picks a beast, which is marked');
+// What the beasts hold: an entry of the menu once there is a thing to hold; a thing of the bag is given, and taken back.
+$holds = Data::newWorld(1);
+$holds->join('lushu', 5);
+$holds->join('xuangui', 7);
+$holds->run([['give', 'tongxiu', 1], ['give', 'seal', 2]]);
+$holds->step($menu);
+$list = fn() => $holds->menu->items($holds->party, $holds->items, $book['items']);
+same(['异兽', '携带', '背包'], $list(), 'with a thing to hold, the menu has what the beasts hold');
+foreach ([$down, $none, $confirm] as $c) {
+    $holds->step($c);
+}
+same(['鹿蜀  Lv5  （空手）', '旋龟  Lv7  （空手）'], $list(), 'the party, each with what it holds');
+foreach ([$down, $none, $confirm] as $c) {
+    $holds->step($c);
+}
+same(['give', ['同修玉']], [$holds->menu->phase, $list()], 'confirm on one that holds nothing shows what of the bag can be held: not the seal');
+$holds->step($confirm);
+same(['tongxiu', ['seal' => 2], '旋龟  Lv7  持：同修玉'], [$holds->party[1]->item, $holds->items, $list()[1]], 'given, it leaves the bag and the beast holds it');
+foreach ([$down, $none, $confirm] as $c) {
+    $holds->step($c);
+}
+same([null, 1, 'hold'], [$holds->party[1]->item, $holds->items['tongxiu'], $holds->menu->phase], 'confirm on one that holds a thing takes it back to the bag');
+
 $w->step($down);
 $w->step($none);
 $w->step($down);
@@ -389,6 +412,28 @@ same(['hp' => 45, 'atk' => 50, 'def' => 35, 'spe' => 85, 'spc' => 55], $f->statE
 same(3, $lines[count($lines) - 2][1] - $lines[count($lines) - 3][1], 'the hp rises by as much as its most did, with the line that tells the level');
 same([$f->hp, 'chant', 30], [$s->shown[0]['hp'], $f->moves[2]['id'], $f->moves[2]['pp']], 'what is shown ends true; the move is its third, with all its uses');
 check($s->done, 'and the battle is done');
+
+// docs/numbers.md 18: with a beast holding what shares, the fallen's base values are halved: 81 ÷ 2 = 40, and 40 × 4 ÷ 7 = 22 to
+// the one that fought and 22 to the one that holds it, though it did not fight; its base stats (45, 50, 35, 55, 85) the same way.
+$held = $fighter('xuangui', 5);
+$held->item = 'tongxiu';
+$s = $screen([$grows(5), $held], ['xingxing', 4], Rng::seeded(11));
+[$f, $before] = [$s->battle->parties[0][0], $held->exp];
+$texts = array_column($win($s), 0);
+check(in_array('鹿蜀获得了22点经验！', $texts, true) && in_array('旋龟获得了22点经验！', $texts, true), 'each takes half: the one that fought, and the one that holds it');
+same([135 + 22, $before + 22], [$f->exp, $held->exp], 'twenty-two each');
+same([['hp' => 22, 'atk' => 25, 'def' => 17, 'spe' => 42, 'spc' => 27], ['hp' => 22, 'atk' => 25, 'def' => 17, 'spe' => 42, 'spc' => 27]], [$f->statExp, $held->statExp], 'and half of each base stat, rounded down');
+// The one that fought holding it itself takes both halves; one that has fallen holding it shares nothing.
+$own = $grows(5);
+$own->item = 'tongxiu';
+$s = $screen([$own], ['xingxing', 4], Rng::seeded(11));
+$win($s);
+same(135 + 22 + 22, $own->exp, 'holding it and fighting, a beast takes both halves');
+$held = $fighter('xuangui', 5);
+[$held->item, $held->hp] = ['tongxiu', 0];
+$s = $screen([$grows(5), $held], ['xingxing', 4], Rng::seeded(11));
+$win($s);
+same([135 + 46, 0], [$s->battle->parties[0][0]->exp, $held->statExp['hp']], 'held by one that has fallen, nothing is halved');
 
 // A beast that knows four moves is asked which to forget.
 $name = fn(string $id) => $book['moves'][$id]['name'];

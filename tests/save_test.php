@@ -84,6 +84,13 @@ same($state, Save::read($file), 'a file of format 1 is read as having rested now
 same([array_fill(0, Pen::BOXES, []), 0], [$state['boxes'], $state['box']], 'a game that has left nothing in the pen keeps fourteen empty boxes');
 file_put_contents($file, json_encode(['version' => 2, 'state' => array_diff_key($state, ['boxes' => 0, 'box' => 0, 'money' => 0])]));
 same($state, Save::read($file), 'a file of format 2 is read as having nothing in the pen');
+// What a beast holds is kept. A file of the fourth format, in which nothing was held, is read as beasts holding nothing.
+file_put_contents($file, json_encode(['version' => 4, 'state' => array_replace($state, ['party' => array_map(fn(array $f) => array_diff_key($f, ['item' => 0]), $state['party'])])]));
+same($state, Save::read($file), 'a file of format 4 is read as beasts holding nothing');
+$holding = new World($maps, 'hut', 0, 0, Dir::Down, $book, Rng::seeded(2));
+$holding->restore(array_replace($state, ['party' => array_map(fn(array $f) => array_replace($f, ['item' => 'tongxiu']), $state['party'])]));
+same('tongxiu', $holding->party[0]->item, 'what a beast holds comes back');
+check(throws(fn() => $holding->restore(array_replace($state, ['party' => array_map(fn(array $f) => array_replace($f, ['item' => 'seal']), $state['party'])]))), 'a beast holding what cannot be held is refused');
 // The money is kept. A file of the third format, which had none, is read as having what a new game begins with.
 same(Formulas::START_MONEY, $state['money'], 'a game that has spent and won nothing keeps what it began with');
 file_put_contents($file, json_encode(['version' => 3, 'state' => array_diff_key($state, ['money' => 0])]));

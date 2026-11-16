@@ -11,7 +11,7 @@ use Shanhai\World\Pen;
 final class Save
 {
     /** The file's format: one written by another is refused, not guessed at; an older one is read by what is known to have changed. */
-    public const VERSION = 4;
+    public const VERSION = 5;
 
     /** Writes $state to $file, whole or not at all: to a file beside it first, which then takes its place. */
     public static function write(string $file, array $state): void
@@ -34,13 +34,18 @@ final class Save
             throw new RuntimeException("the saved game $file could not be read");
         }
         $data = json_decode($json, true, 64, JSON_THROW_ON_ERROR);
-        if (!is_array($data) || !in_array($data['version'] ?? null, [1, 2, 3, self::VERSION], true) || !is_array($data['state'] ?? null)) {
+        if (!is_array($data) || !in_array($data['version'] ?? null, [1, 2, 3, 4, self::VERSION], true) || !is_array($data['state'] ?? null)) {
             throw new RuntimeException("$file is not a saved game of format " . self::VERSION);
         }
         // Format 1 had no place of rest: a game saved in it had rested nowhere the world would wake it but the game's own.
         // Formats 1 and 2 had no pen: a game saved in them had nothing in it.
         // Formats 1 to 3 had no money: a game saved in them has what a new game begins with.
-        return $data['state'] + ($data['version'] === 1 ? ['rest' => null] : []) + ($data['version'] < 3 ? ['boxes' => Pen::emptied(), 'box' => 0] : [])
+        $state = $data['state'] + ($data['version'] === 1 ? ['rest' => null] : []) + ($data['version'] < 3 ? ['boxes' => Pen::emptied(), 'box' => 0] : [])
             + ($data['version'] < 4 ? ['money' => Formulas::START_MONEY] : []);
+        if ($data['version'] < 5) { // formats 1 to 4 had nothing held: their beasts hold nothing
+            $empty = fn(array $beasts) => array_map(fn(array $f) => $f + ['item' => null], $beasts);
+            [$state['party'], $state['boxes']] = [$empty($state['party']), array_map($empty, $state['boxes'])];
+        }
+        return $state;
     }
 }

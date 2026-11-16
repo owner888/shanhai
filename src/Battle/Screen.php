@@ -212,7 +212,7 @@ final class Screen
     /**
      * One of the other side's has fallen: each of the player's that fought it and still stands gains experience, the
      * fallen's base experience and base stats divided among them first, half as much again in a trial
-     * (docs/numbers.md 7.1, 7.3). Then those that fight the next are counted anew.
+     * (docs/numbers.md 7.1, 7.3); and those that hold what shares (18). Then those that fight the next are counted anew.
      * @param array $hp every beast's hp at this point of the turn, which a level gained raises
      * @param array $shown what is shown at this point of the turn
      */
@@ -222,11 +222,26 @@ final class Screen
         $who = array_filter(array_keys($this->fought), fn(int $i) => !$party[$i]->fainted());
         sort($who);
         $this->fought = [$shown[0]['which'] => true];
-        if ($who === []) {
-            return;
+        // docs/numbers.md 18: with a beast that can fight holding what shares, the fallen's base experience and base stats are
+        // halved; those that fought divide the half, and those that hold it divide as much again, fought or not
+        $holders = array_keys(array_filter($party, fn(Fighter $f) => !$f->fainted() && $f->item !== null && ($this->things[$f->item]['hold'] ?? null) === 'share'));
+        $half = fn(int $base) => $holders === [] ? $base : intdiv($base, 2);
+        foreach ([$who, $holders] as $those) {
+            if ($those !== []) {
+                $this->give($foe, $those, $half, $hp, $shown);
+            }
         }
-        $share = array_map(fn(int $base) => intdiv($base, count($who)), $foe->species['stats']);
-        $exp = Formulas::expGain($foe->species['exp'], $foe->level, count($who), $this->trial !== null);
+    }
+
+    /**
+     * Those of the party at $who take what $foe, fallen, gives, divided among them.
+     * @param list<int> $who @param callable(int): int $of what of a base value is theirs to divide
+     */
+    private function give(Fighter $foe, array $who, callable $of, array &$hp, array &$shown): void
+    {
+        $party = $this->battle->parties[0];
+        $share = array_map(fn(int $base) => intdiv($of($base), count($who)), $foe->species['stats']);
+        $exp = Formulas::expGain($of($foe->species['exp']), $foe->level, count($who), $this->trial !== null);
         foreach ($who as $i) {
             $f = $party[$i];
             $most = $f->maxHp;

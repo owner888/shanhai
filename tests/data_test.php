@@ -18,7 +18,7 @@ $items = Data::items();
 $gods = Data::gods();
 foreach ($items as $id => $item) {
     check(($item['name'] ?? '') !== '' && ($item['from'] ?? '') !== '', "the thing $id has a name and where it comes from");
-    check(array_diff(array_keys($item), ['name', 'use', 'price', 'from']) === [] && in_array($item['use'] ?? null, [null, 'catch'], true), "the thing $id has only the fields there are, and a use there is");
+    check(array_diff(array_keys($item), ['name', 'use', 'hold', 'price', 'from']) === [] && in_array($item['use'] ?? null, [null, 'catch'], true) && in_array($item['hold'] ?? null, [null, 'share'], true), "the thing $id has only the fields there are, and a use there is");
     check(!isset($item['price']) || (is_int($item['price']) && $item['price'] >= 1), "the thing $id, if it is sold, has a price of one or more");
 }
 

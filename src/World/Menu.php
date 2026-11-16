@@ -8,19 +8,21 @@ use Shanhai\Cursor;
 
 /**
  * The menu the menu button opens outside battle, with no drawing: the party's screen (PartyMenu), when there is a
- * party, the bag, which is only looked at, and saving, which closes the menu with $saves set for the World to do. Cancel goes back, and from the first list closes it; the menu button closes it from anywhere.
+ * party, what its beasts hold (a thing of the bag given to one, or taken back), the bag, which is only looked at, and saving, which closes the menu with $saves set for the World to do. Cancel goes back, and from the first list closes it; the menu button closes it from anywhere.
  */
 final class Menu
 {
-    public const ENTRIES = ['party' => '异兽', 'bag' => '背包', 'save' => '存档'];
+    public const ENTRIES = ['party' => '异兽', 'hold' => '携带', 'bag' => '背包', 'save' => '存档'];
 
-    /** top, party or bag */
+    /** top, party, bag, hold (the party, each with what it holds) or give (the things of the bag a beast can hold) */
     public string $phase = 'top';
     public Cursor $cursor;
     public ?PartyMenu $party = null;
     public bool $done = false;
     /** The player chose to save. */
     public bool $saves = false;
+    /** The beast of the party a thing is being chosen for. */
+    private int $holder = 0;
 
     /** @param bool $canSave whether the game has a file to save to */
     public function __construct(private readonly bool $canSave)
@@ -28,17 +30,28 @@ final class Menu
         $this->cursor = new Cursor();
     }
 
-    /** The first list's entries: the party's only when there is one, saving only when the game can. @param list<Fighter> $party @return list<string> the keys of ENTRIES */
-    private function entries(array $party): array
+    /**
+     * The first list's entries: the party's only when there is one, what the beasts hold only when there is a thing to
+     * hold, saving only when the game can. @param list<Fighter> $party @return list<string> the keys of ENTRIES
+     */
+    private function entries(array $party, array $bag, array $things): array
     {
-        return [...($party === [] ? [] : ['party']), 'bag', ...($this->canSave ? ['save'] : [])];
+        $held = array_filter($party, fn(Fighter $f) => $f->item !== null) !== [] || self::holdable($bag, $things) !== [];
+        return [...($party === [] ? [] : ['party', ...($held ? ['hold'] : [])]), 'bag', ...($this->canSave ? ['save'] : [])];
+    }
+
+    /** The things of $bag a beast can hold. @return list<string> ids */
+    private static function holdable(array $bag, array $things): array
+    {
+        return array_values(array_filter(array_keys($bag), fn(string $id) => isset($things[$id]['hold'])));
     }
 
     /**
-     * @param list<Fighter> $party which the party's screen may put in another order
-     * @param array<string, int> $bag
+     * @param list<Fighter> $party which the party's screen may put in another order, and whose beasts may be given things to hold
+     * @param array<string, int> $bag which a thing given leaves and one taken back comes to
+     * @param array<string, array> $things data/items.php
      */
-    public function step(Controls $c, array &$party, array $bag): void
+    public function step(Controls $c, array &$party, array &$bag, array $things): void
     {
         if ($c->menu) {
             $this->done = true;
@@ -47,16 +60,32 @@ final class Menu
             if ($this->party->done) {
                 [$this->phase, $this->party] = ['top', null];
             }
-        } elseif ($this->cursor->move($c, $this->phase === 'top' ? count($this->entries($party)) : max(1, count($bag)))) {
+        } elseif ($this->cursor->move($c, max(1, count($this->items($party, $bag, $things))))) {
             return;
         } elseif ($c->cancel) {
             if ($this->phase === 'top') {
                 $this->done = true;
             } else {
-                [$this->phase, $this->cursor] = ['top', new Cursor()];
+                [$this->phase, $this->cursor] = [$this->phase === 'give' ? 'hold' : 'top', new Cursor()];
             }
+        } elseif ($c->confirm && $this->phase === 'hold') {
+            // confirm on a beast that holds a thing takes it back to the bag; on one that holds none, opens what it could be given
+            $f = $party[$this->cursor->at];
+            if ($f->item !== null) {
+                $bag[$f->item] = ($bag[$f->item] ?? 0) + 1;
+                $f->item = null;
+            } elseif (self::holdable($bag, $things) !== []) {
+                [$this->phase, $this->holder, $this->cursor] = ['give', $this->cursor->at, new Cursor()];
+            }
+        } elseif ($c->confirm && $this->phase === 'give') {
+            $id = self::holdable($bag, $things)[$this->cursor->at];
+            if (--$bag[$id] === 0) {
+                unset($bag[$id]);
+            }
+            $party[$this->holder]->item = $id;
+            [$this->phase, $this->cursor] = ['hold', new Cursor()];
         } elseif ($c->confirm && $this->phase === 'top') {
-            $entry = $this->entries($party)[$this->cursor->at];
+            $entry = $this->entries($party, $bag, $things)[$this->cursor->at];
             if ($entry === 'save') {
                 [$this->saves, $this->done] = [true, true];
                 return;
@@ -71,8 +100,10 @@ final class Menu
     public function items(array $party, array $bag, array $table): array
     {
         return match ($this->phase) {
-            'top' => array_map(fn(string $key) => self::ENTRIES[$key], $this->entries($party)),
+            'top' => array_map(fn(string $key) => self::ENTRIES[$key], $this->entries($party, $bag, $table)),
             'party' => $this->party->items($party),
+            'hold' => array_map(fn(Fighter $f) => $f->species['name'] . '  Lv' . $f->level . '  ' . ($f->item === null ? '（空手）' : '持：' . $table[$f->item]['name']), $party),
+            'give' => array_map(fn(string $id) => $table[$id]['name'], self::holdable($bag, $table)),
             'bag' => $bag === [] ? ['（空）'] : self::bag($bag, $table),
         };
     }
