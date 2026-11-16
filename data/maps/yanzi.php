@@ -38,7 +38,7 @@ return [
             ['say', '西山尽头的神立在丹木之下。你看不清祂的样子。'],
             ['ask', '「自阴山至崦嵫，十九山，西山到此为止。要受我的试炼吗？」', [['接受试炼', 'go'], ['再等等', 'wait']]],
             ['label', 'go'],
-            ['trial', '西次四经之神', [['zhongshe', 27], ['shuhu', 29], ['xicisi', 31]]],
+            ['trial', '西次四经之神', [['zhongshe', 27], ['shuhu', 29], ['xicisi', 31]], ['licao']],
             ['setFlag', 'passedXicisi'],
             ['say', '「好。西山经四个山系，七十七山，你都走过了。想去北山时再来找我。」'],
             ['give', 'sealLevel', 1],

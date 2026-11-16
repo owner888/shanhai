@@ -35,7 +35,7 @@ return [
             ['say', '鸟身人面的神立在路的尽头，山上的榖柞椒柘长得很密。'],
             ['ask', '「自景山至琴鼓，二十三山。要受我的试炼吗？」', [['接受试炼', 'go'], ['再等等', 'wait']]],
             ['label', 'go'],
-            ['trial', '中次八经之神', [['zhulu', 79], ['jiaoyu', 81], ['zhenniao', 81], ['bao', 83], ['zhongciba', 83]]],
+            ['trial', '中次八经之神', [['zhulu', 79], ['jiaoyu', 81], ['zhenniao', 81], ['bao', 83], ['zhongciba', 83]], ['dixiu', 'dixiu']],
             ['setFlag', 'passedZhongciba'],
             ['say', '「好。往西是岷山，江水从那里出来。想去时再来找我。」'],
             ['give', 'sealLevel', 1],

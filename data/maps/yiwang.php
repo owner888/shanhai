@@ -36,7 +36,7 @@ return [
             ['say', '羊身人面的神卧在路的尽头，抬头看着你。'],
             ['ask', '「自崇吾至翼望，二十三山，昆仑也在其中。要受我的试炼吗？」', [['接受试炼', 'go'], ['再等等', 'wait']]],
             ['label', 'go'],
-            ['trial', '西次三经之神', [['luomu', 30], ['jishe', 30], ['xicisan', 35]]],
+            ['trial', '西次三经之神', [['luomu', 30], ['jishe', 30], ['xicisan', 35]], ['licao']],
             ['setFlag', 'passedXicisan'],
             ['say', '「好。西山经还有最后一个山系。想去时再来找我。」'],
             ['give', 'sealLevel', 1],

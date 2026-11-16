@@ -36,7 +36,7 @@ return [
             ['say', '蛇身人面的神盘在北海边上。'],
             ['ask', '「自管涔至敦题，北海就在我身后。要受我的试炼吗？」', [['接受试炼', 'go'], ['再等等', 'wait']]],
             ['label', 'go'],
-            ['trial', '北次二经之神', [['boma', 44], ['duyu', 40], ['banmao', 40], ['xiaoque', 40], ['beici', 46]]],
+            ['trial', '北次二经之神', [['boma', 44], ['duyu', 40], ['banmao', 40], ['xiaoque', 40], ['beici', 46]], ['licao']],
             ['setFlag', 'passedBeici'],
             ['say', '「好。北山经还有最后一个山系，也是最长的。想去时再来找我。」'],
             ['give', 'sealLevel', 1],

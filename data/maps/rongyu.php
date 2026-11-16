@@ -35,7 +35,7 @@ return [
             ['say', '鸟身龙首的神立在路的尽头，山下的铜与银在暮色里发着光。'],
             ['ask', '「自篇遇至荣余，十五山。这是山经里最后一段路。要受我的试炼吗？」', [['接受试炼', 'go'], ['再等等', 'wait']]],
             ['label', 'go'],
-            ['trial', '中次十二经之神', [['jiuniao', 96], ['feishe', 98], ['guainiao', 98], ['jilu', 100], ['guigui', 100], ['zhongcishier', 100]]],
+            ['trial', '中次十二经之神', [['jiuniao', 96], ['feishe', 98], ['guainiao', 98], ['jilu', 100], ['guigui', 100], ['zhongcishier', 100]], ['dixiu', 'dixiu']],
             ['setFlag', 'passedZhongcishier'],
             ['say', '「好。南西北东中，二十六个山系，你都走过了。」'],
             ['give', 'sealLevel', 1],

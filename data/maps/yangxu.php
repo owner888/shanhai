@@ -34,7 +34,7 @@ return [
             ['say', '路的尽头立着这一段薄山的神，身后是玄扈之水。书上没有写它的样子。'],
             ['ask', '「自苟林至阳虚，都是薄山。要受我的试炼吗？」', [['接受试炼', 'go'], ['再等等', 'wait']]],
             ['label', 'go'],
-            ['trial', '中次五经之神', [['jinglu', 66], ['xie', 68], ['dainiao', 68], ['zhongciwu', 70]]],
+            ['trial', '中次五经之神', [['jinglu', 66], ['xie', 68], ['dainiao', 68], ['zhongciwu', 70]], ['dixiu', 'dixiu']],
             ['setFlag', 'passedZhongciwu'],
             ['say', '「好。缟羝山在西边，骄虫守着它的东头。想去时再来找我。」'],
             ['give', 'sealLevel', 1],

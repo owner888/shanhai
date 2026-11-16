@@ -59,7 +59,8 @@ src/Script/Vm.php  the event script interpreter: say, ask (a line with choices),
 src/Battle/        the battle, with no drawing: Rng (bytes, from a seed or a test's script), Formulas (docs/numbers.md as code,
                    a function a rule), Fighter, Battle (turn(): order, what stops a beast, a move, statuses, weather, switching),
                    Screen (a wild battle as the player goes through it: lines, the menu, its lists, the bag's seals and medicines,
-                   fleeing), Medicine (what a thing of the bag does used on a beast),
+                   fleeing), Medicine (what a thing of the bag does used on a beast), Ai (what the one who sets a trial does with
+                   a turn: the reference's scoring layers, switching and things, docs/numbers.md 26),
                    Simulator (battles with no player, to weigh the tables)
 src/Text.php       the dialog box's measures and line breaking
 src/Cursor.php     a list's cursor: moves on a press, not while held

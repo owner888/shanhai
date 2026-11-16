@@ -37,7 +37,7 @@ return [
             ['say', '路的尽头立着这一山系的神。书上没有写它的样子；你只看见桢木的影子里有什么在等着。'],
             ['ask', '「自北号至太山，八山，东山到此为止。要受我的试炼吗？」', [['接受试炼', 'go'], ['再等等', 'wait']]],
             ['label', 'go'],
-            ['trial', '东次四经之神', [['dangkang', 41], ['boyu', 41], ['qique', 42], ['heyu', 42], ['dongcisi', 44]]],
+            ['trial', '东次四经之神', [['dangkang', 41], ['boyu', 41], ['qique', 42], ['heyu', 42], ['dongcisi', 44]], ['licao']],
             ['setFlag', 'passedDongcisi'],
             ['say', '「好。东山经四个山系，四十六山，你都走过了。想去中山经时再来找我。」'],
             ['give', 'sealLevel', 1],

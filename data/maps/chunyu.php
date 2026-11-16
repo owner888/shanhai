@@ -36,7 +36,7 @@ return [
             ['say', '彘身八足、拖着蛇尾的神立在路的尽头，北边吹来的风很大。'],
             ['ask', '「自太行至毋逢，四十六山，北山到此为止。要受我的试炼吗？」', [['接受试炼', 'go'], ['再等等', 'wait']]],
             ['label', 'go'],
-            ['trial', '北次三经之神', [['jingwei', 46], ['tianma', 46], ['beicisan', 48]]],
+            ['trial', '北次三经之神', [['jingwei', 46], ['tianma', 46], ['beicisan', 48]], ['licao']],
             ['setFlag', 'passedBeicisan'],
             ['say', '「好。北山经三个山系，八十七山，你都走过了。想去东山经时再来找我。」'],
             ['give', 'sealLevel', 1],

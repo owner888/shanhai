@@ -36,7 +36,7 @@ return [
             ['say', '沙石地上站着一个人，长着两个头。四周嗡嗡的，全是蜂。'],
             ['ask', '「我是骄虫。自阳华至平逢，十四山，你是倒着走过来的。要受我的试炼吗？」', [['接受试炼', 'go'], ['再等等', 'wait']]],
             ['label', 'go'],
-            ['trial', '骄虫', [['qianyang', 71], ['xiubi', 73], ['lingyao', 73], ['jiaochong', 75]]],
+            ['trial', '骄虫', [['qianyang', 71], ['xiubi', 73], ['lingyao', 73], ['jiaochong', 75]], ['dixiu', 'dixiu']],
             ['setFlag', 'passedZhongciliu'],
             ['say', '「好。往下是苦山。想去时再来找我。」'],
             ['give', 'sealLevel', 1],

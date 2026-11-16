@@ -35,7 +35,7 @@ return [
             ['say', '路的尽头立着薄山的神。书上只写了怎么祭它，没有写它的样子。'],
             ['ask', '「自甘枣至鼓镫，十五山。要受我的试炼吗？」', [['接受试炼', 'go'], ['再等等', 'wait']]],
             ['label', 'go'],
-            ['trial', '中山经之首之神', [['na', 45], ['feifei', 45], ['zhongshan', 50]]],
+            ['trial', '中山经之首之神', [['na', 45], ['feifei', 45], ['zhongshan', 50]], ['youmu', 'yupei']],
             ['setFlag', 'passedZhongshan'],
             ['say', '「好。中山经一共十二个山系，这是头一个。想往下走时再来找我。」'],
             ['give', 'sealLevel', 1],

@@ -35,7 +35,7 @@ return [
             ['say', '彘身人首的神立在路的尽头，山上的香草被风吹得伏下去。'],
             ['ask', '「自翼望至几山，四十八山，是山经里最长的一段。要受我的试炼吗？」', [['接受试炼', 'go'], ['再等等', 'wait']]],
             ['label', 'go'],
-            ['trial', '中次十一经之神', [['qinggeng', 92], ['yonghe', 94], ['yiji', 94], ['wenlin', 96], ['liangqushou', 96], ['zhongcishiyi', 96]]],
+            ['trial', '中次十一经之神', [['qinggeng', 92], ['yonghe', 94], ['yiji', 94], ['wenlin', 96], ['liangqushou', 96], ['zhongcishiyi', 96]], ['dixiu', 'dixiu']],
             ['setFlag', 'passedZhongcishiyi'],
             ['say', '「好。只剩洞庭山了。想去时再来找我。」'],
             ['give', 'sealLevel', 1],

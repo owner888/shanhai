@@ -35,7 +35,7 @@ return [
             ['say', '人面兽身的神立在路的尽头，雒水从这里流出去。'],
             ['ask', '「自鹿蹄至讙举，九山。要受我的试炼吗？」', [['接受试炼', 'go'], ['再等等', 'wait']]],
             ['label', 'go'],
-            ['trial', '中次四经之神', [['yinmo', 62], ['xie', 64], ['xiqu', 64], ['zhongcisi', 66]]],
+            ['trial', '中次四经之神', [['yinmo', 62], ['xie', 64], ['xiqu', 64], ['zhongcisi', 66]], ['dixiu', 'dixiu']],
             ['setFlag', 'passedZhongcisi'],
             ['say', '「好。薄山还有一段，在东边。想去时再来找我。」'],
             ['give', 'sealLevel', 1],

@@ -382,6 +382,24 @@ final class Battle
         return [$damage, $tenths];
     }
 
+    /** How many times over a move of $element does its damage to $t: 2 overcoming its element, a half feeding it, 1 else and for a move of no element. */
+    public function matchup(?string $element, Fighter $t): float
+    {
+        return $element === null ? 1.0 : array_product(array_map(fn(int $tenths) => $tenths / 10, $this->chart->factors($element, $t->species['elements'])));
+    }
+
+    /** Whether an element's moves go by the special stats. */
+    public function special(string $element): bool
+    {
+        return $this->elements[$element]['category'] === 'special';
+    }
+
+    /** What a move of $u's would do to $t now if it hit, with no critical hit and before the random spread, whether or not it has uses left. */
+    public function would(Fighter $u, Fighter $t, int $which): int
+    {
+        return $this->damage($u, $t, $this->moves[$u->moves[$which]['id']], false)[0];
+    }
+
     /**
      * What a move of $u's would do to $t now, with no critical hit and before the random spread, times its chance to
      * hit: what a side that only weighs damage goes by. 0 for a move that does none. $u and $t need not be out.
@@ -392,7 +410,7 @@ final class Battle
         if ($m['power'] === 0 || $u->moves[$which]['pp'] === 0) {
             return 0.0;
         }
-        return $this->damage($u, $t, $m, false)[0] * Formulas::accuracy($m['accuracy'], $u->stages['acc'], $t->stages['eva']) / 255;
+        return $this->would($u, $t, $which) * Formulas::accuracy($m['accuracy'], $u->stages['acc'], $t->stages['eva']) / 255;
     }
 
     /** What a move does besides damage. $told: the effect is the whole move, so its failing is said. */
@@ -442,7 +460,7 @@ final class Battle
             default:
                 [$way, $stat, $by] = explode(':', $effect);
                 $who = $way === 'up' ? $u : $t;
-                $to = max(-6, min(6, $who->stages[$stat] + ($way === 'up' ? (int)$by : -(int)$by)));
+                $to = max(-Formulas::MAX_STAGE, min(Formulas::MAX_STAGE, $who->stages[$stat] + ($way === 'up' ? (int)$by : -(int)$by)));
                 if (!$who->fainted() && $to !== $who->stages[$stat]) {
                     $who->stages[$stat] = $to;
                     $this->log[] = ['stage', $way === 'up' ? $side : 1 - $side, $stat, $to];

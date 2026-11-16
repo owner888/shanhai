@@ -624,3 +624,17 @@ foreach ($moves as $id => $m) {
 
 same(['你好，', '世界'], Text::wrap('你好，世界', 6), 'a CJK character takes two columns');
 same(['abc', 'def'], Text::wrap("abc\ndef", 10), 'a newline breaks');
+
+// docs/numbers.md 26: the gods have the things the reference's leaders have, gym for gym (the twelfth's has one of
+// ours' none, so its god has nothing); from the seventeenth range on, what the sixteenth's has.
+$uses = [];
+foreach ($scripts as $script) {
+    foreach ($script as $cmd) {
+        if ($cmd[0] === 'trial') {
+            $uses[$gods[end($cmd[2])[0]]['range']] = $cmd[3] ?? [];
+        }
+    }
+}
+ksort($uses);
+same([1 => [], 2 => [], 3 => [], 4 => [], 5 => ['yupei'], 6 => ['licao'], 7 => ['licao'], 8 => ['yupei', 'licao'], 9 => ['licao'], 10 => ['licao'], 11 => ['licao'], 12 => [], 13 => ['yupei'], 14 => ['licao'],
+    15 => ['youmu', 'yupei'], 16 => ['dixiu', 'dixiu']] + array_fill(17, 10, ['dixiu', 'dixiu']), $uses, 'what each god has to use in its trial');

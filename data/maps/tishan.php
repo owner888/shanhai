@@ -38,7 +38,7 @@ return [
             ['say', '人面蛇身的神盘在路的尽头，隄水从祂身旁流过。'],
             ['ask', '「自单狐至隄山，二十五山。山北的人，都吃生的、不用火的东西。要受我的试炼吗？」', [['接受试炼', 'go'], ['再等等', 'wait']]],
             ['label', 'go'],
-            ['trial', '北山经之首之神', [['nafu', 37], ['tuotuo', 37], ['shuima', 37], ['beishan', 40]]],
+            ['trial', '北山经之首之神', [['nafu', 37], ['tuotuo', 37], ['shuima', 37], ['beishan', 40]], ['yupei', 'licao']],
             ['setFlag', 'passedBeishan'],
             ['say', '「好。再往北是北次二经。想去时再来找我。」'],
             ['give', 'sealLevel', 1],

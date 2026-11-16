@@ -14,7 +14,7 @@ use Shanhai\World\{Controls, Menu, PartyMenu};
  * Lines are read one at a time, confirm going on; between turns the menu asks what to do. What is shown of each
  * side (which beast, its hp, its status) changes with the line that tells it, not when the turn is worked out.
  * The player is side 0, and chooses the next beast when one falls. A wild beast uses any move it has left; in a
- * trial the other side uses the move that would do most. When one of theirs falls, the player's beasts that fought it and still stand gain experience (docs/numbers.md 7.3), and one
+ * trial the other side does what Ai makes of the turn (docs/numbers.md 26). When one of theirs falls, the player's beasts that fought it and still stand gain experience (docs/numbers.md 7.3), and one
  * that comes to a move knowing four already is asked which to forget. A seal from the bag tries to bind the wild
  * beast (docs/numbers.md 8): bound, it is $caught and the battle ends; else the turn is the wild beast's. With a full
  * party the beast bound goes to the pen's current box, and with that full too no seal is used (docs/numbers.md 16).
@@ -60,6 +60,8 @@ final class Screen
     /** Whether the line asking which move to forget for the first of $toLearn has been said. */
     private bool $asked = false;
 
+    /** What the one who sets the trial goes by (docs/numbers.md 26); null with a wild beast. */
+    private readonly ?Ai $ai;
     /** @var array<string, int> the player's bag, which using a thing takes from */
     private array $bag;
 
@@ -73,10 +75,12 @@ final class Screen
      * @param int $penRoom how many more that box holds
      * @param int $reward what the one who sets the trial pays when it is won (docs/numbers.md 17)
      * @param bool $water the battle began on the water (docs/numbers.md 22)
+     * @param list<string> $uses the things the one who sets the trial has to use on their beasts (docs/numbers.md 26)
      */
-    public function __construct(public readonly Battle $battle, private readonly array $moves, private readonly Rng $rng, private readonly array $things, array &$bag, public readonly ?string $trial = null, public readonly bool $duel = false, private readonly ?string $pen = null, private readonly int $penRoom = 0, public readonly int $reward = 0, private readonly bool $water = false)
+    public function __construct(public readonly Battle $battle, private readonly array $moves, private readonly Rng $rng, private readonly array $things, array &$bag, public readonly ?string $trial = null, public readonly bool $duel = false, private readonly ?string $pen = null, private readonly int $penRoom = 0, public readonly int $reward = 0, private readonly bool $water = false, array $uses = [])
     {
         $this->bag = &$bag;
+        $this->ai = $trial === null ? null : new Ai($duel ? Ai::ROAD : Ai::GOD, $moves, $things, $uses);
         $this->cursor = new Cursor();
         $this->shown = [$this->truth(0), $this->truth(1)];
         $this->fought = [$battle->active[0] => true];
@@ -445,19 +449,21 @@ final class Screen
         $this->turn(['pass', 0]);
     }
 
-    /** A turn: the player's action, and the other side's: any move a wild beast has left, each as likely; in a trial, the one that would do most. */
+    /** A turn: the player's action, and the other side's: any move a wild beast has left, each as likely; in a trial, what Ai makes of it (docs/numbers.md 26). */
     private function turn(array $action): void
     {
         $this->coin();
         $foe = ['move', 0];
         $usable = $this->battle->usable(1);
-        if ($usable !== [] && $this->trial !== null) {
-            [$theirs, $mine] = [$this->battle->fighter(1), $this->battle->fighter(0)];
-            $foe[1] = $usable[0];
-            foreach ($usable as $i) {
-                if ($this->battle->estimate($theirs, $mine, $i) > $this->battle->estimate($theirs, $mine, $foe[1])) {
-                    $foe[1] = $i;
+        if ($this->ai !== null) {
+            $foe = $this->ai->act($this->battle, $this->rng);
+            if ($foe[0] === 'item') { // a thing used takes the turn
+                $theirs = $this->battle->fighter(1);
+                if (!Medicine::apply($this->things[$foe[1]], $theirs)) {
+                    throw new LogicException("the one who sets the trial used '{$foe[1]}' for nothing");
                 }
+                $this->say($this->trial . '给' . $theirs->species['name'] . '用了' . $this->things[$foe[1]]['name'] . '。', [$this->truth(0), $this->truth(1)]);
+                $foe = ['pass', 0];
             }
         } elseif ($usable !== []) {
             do {
@@ -467,6 +473,7 @@ final class Screen
         [$hp, $status, $stages] = $this->before();
         $from = count($this->battle->log);
         $this->battle->turn($action, $foe);
+        $this->ai?->seen($this->battle, $action, $foe);
         $this->coin();
         // docs/numbers.md 25: one of the player's that fell this turn is less close for it, and much less if what felled it was thirty levels or more over it
         foreach ($this->battle->parties[0] as $i => $f) {

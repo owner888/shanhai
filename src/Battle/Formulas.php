@@ -19,6 +19,8 @@ final class Formulas
     /** 5: what a stage from -6 to +6 multiplies a stat by, as [times, over]. */
     public const STAGES = [[25, 100], [28, 100], [33, 100], [40, 100], [50, 100], [66, 100], [1, 1], [15, 10], [2, 1], [25, 10], [3, 1], [35, 10], [4, 1]];
     /** 5: the same for accuracy and evasion. */
+    /** A stage goes from this many under to this many over. */
+    public const MAX_STAGE = 6;
     public const ACCURACY_STAGES = [[33, 100], [36, 100], [43, 100], [50, 100], [60, 100], [75, 100], [1, 1], [133, 100], [166, 100], [2, 1], [233, 100], [133, 50], [3, 1]];
     /** 3.4: the random multiplier of damage is from this to 255, over 255. */
     public const VARY_FROM = 217;

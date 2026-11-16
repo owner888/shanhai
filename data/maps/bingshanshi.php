@@ -35,7 +35,7 @@ return [
             ['say', '龙身人面的神盘在路的尽头的梓树和檀树之间。'],
             ['ask', '「自首阳至丙山，九山，是中山经最短的一段。要受我的试炼吗？」', [['接受试炼', 'go'], ['再等等', 'wait']]],
             ['label', 'go'],
-            ['trial', '中次十经之神', [['quyu', 88], ['yilang', 90], ['qiezhi', 90], ['qizhongniao', 92], ['zhongcishi', 92]]],
+            ['trial', '中次十经之神', [['quyu', 88], ['yilang', 90], ['qiezhi', 90], ['qizhongniao', 92], ['zhongcishi', 92]], ['dixiu', 'dixiu']],
             ['setFlag', 'passedZhongcishi'],
             ['say', '「好。荆山还有一段，四十八山，是最长的。想去时再来找我。」'],
             ['give', 'sealLevel', 1],

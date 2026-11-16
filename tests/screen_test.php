@@ -507,7 +507,7 @@ foreach ([$beastName . '想学' . $moveName . '，可是已经会四个招式了
 }
 
 // A trial: against the beasts of the one who sets it, in their order. It cannot be fled, nor its beasts bound; each
-// that falls gives its experience then, half as much again; the other side uses the move that would do most.
+// that falls gives its experience then, half as much again; what the other side does with a turn is tests/ai_test.php's.
 $w = new World($maps, 'field', 0, 0, Dir::Down, $book + ['gods' => Data::gods()], Rng::seeded(4));
 $w->join('lushu', 60);
 $w->join('xuangui', 5);
@@ -539,18 +539,15 @@ same(['鹿蜀获得了51点经验！', '山神派出了鹊山之神！'], array_
 same([51, null, 1], [$w->party[0]->exp - $before, $s->outcome, $s->battle->active[1]], 'the battle goes on against the next');
 same('queshan', $s->battle->fighter(1)->id, 'which is a god, fighting as a beast does');
 same(Data::gods()['queshan']['moves'], array_column($s->battle->fighter(1)->moves, 'id'), 'with the moves its entry gives it');
-// Their move: the one that would do most to the beast that is out.
+// Their move: one of its own, chosen as tests/ai_test.php tells.
 $theirs = $s->battle->fighter(1);
-$would = array_map(fn(int $i) => $s->battle->estimate($theirs, $w->party[0], $i), array_keys($theirs->moves));
-$best = array_search(max($would), $would, true);
-check(max($would) > 0 && count(array_keys($would, max($would), true)) === 1, 'one of the god\'s moves would do most to 鹿蜀: ' . implode(' ', array_map('intval', $would)));
 $uses = array_column($theirs->moves, 'pp');
 $w->step(new Controls());
 foreach ([$down, $confirm, $none, $down, $confirm] as $c) { // the menu's second entry; the party's second beast: a turn the god moves in
     $w->step($c);
 }
 $used = array_keys(array_filter(array_column($theirs->moves, 'pp'), fn(int $pp, int $i) => $pp < $uses[$i], ARRAY_FILTER_USE_BOTH));
-same([1, [$best]], [$s->battle->active[0], $used], 'and it is the one the god uses');
+same([1, 1], [$s->battle->active[0], count($used)], 'in a turn the god uses one move');
 for ($i = 0; $w->battle !== null && $i < 4000; $i++) {
     if ($s->phase === 'party') {
         $w->step($i % 2 === 0 ? $confirm : $none); // 鹿蜀 again, when 旋龟 falls
@@ -820,3 +817,19 @@ for ($i = 0; $i < 4 * World::WALK_STEPS && $walk->steps !== 0; $i++) {
 same([0, Formulas::BOND_BASE + 1], [$walk->steps, $walk->party[0]->bond], 'the step that makes 512 brings each of the party one closer');
 $walk->run([['trial', '山神', [['xingxing', 2]]]]);
 same(Formulas::BOND_BASE + 1 + 3, $walk->party[0]->bond, 'going into a god\'s trial, three');
+
+// docs/numbers.md 26: the one who sets a trial uses what they have on a beast of theirs that is badly hurt, which
+// takes their turn; a script that names a thing they could not use is refused.
+$w = new World($maps, 'field', 0, 0, Dir::Down, $book + ['gods' => Data::gods()], Rng::seeded(4));
+$w->join('xuangui', 5);
+$w->run([['trial', '山神', [['xingxing', 60]], ['licao']]]);
+$s = $w->battle;
+$theirs = $s->battle->fighter(1);
+$theirs->hp = 1;
+for ($i = 0; $s->battle->turns === 0 && $i < 40; $i++) { // through the lines; the menu's first entry; the first move
+    $w->step($i % 2 === 0 ? $confirm : $none);
+}
+same(['山神给狌狌用了梨。', true, 1], [$s->line, $theirs->hp >= $theirs->maxHp - 5, $s->battle->turns], 'the thing is used and told, and the turn is the player\'s move alone');
+check(!in_array(['use', 1, $theirs->moves[0]['id']], $s->battle->log, true) && $s->battle->log[0][0] === 'use' && $s->battle->log[0][1] === 0, 'their beast used no move in it');
+check(throws(fn() => \Shanhai\Script\Vm::check([['trial', '山神', [['xingxing', 3]], ['seal']]])) && throws(fn() => \Shanhai\Script\Vm::check([['duel', '猎户', [['xingxing', 3]], ['licao']]])),
+    'a trial\'s things are those there are rules for, and one on the road has none');

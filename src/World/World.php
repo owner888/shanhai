@@ -348,9 +348,9 @@ final class World
      * the beasts bound.
      * @param list<array{0: string, 1: int, 2?: string}> $theirs [beast or god, level], and what it holds when it holds a thing
      */
-    public function trial(string $who, array $theirs): void
+    public function trial(string $who, array $theirs, array $uses = []): void
     {
-        $this->begin(array_map(fn(array $t) => $this->beast($t[0], $t[1], $t[2] ?? null), $theirs), $who);
+        $this->begin(array_map(fn(array $t) => $this->beast($t[0], $t[1], $t[2] ?? null), $theirs), $who, false, $uses);
     }
 
     /**
@@ -375,7 +375,7 @@ final class World
     }
 
     /** @param list<Fighter> $theirs */
-    private function begin(array $theirs, ?string $trial, bool $duel = false): void
+    private function begin(array $theirs, ?string $trial, bool $duel = false, array $uses = []): void
     {
         if ($this->rng === null) {
             throw new LogicException('this world was made without the dice a battle needs');
@@ -397,7 +397,7 @@ final class World
         $full = count($this->party) >= self::PARTY;
         $reward = $trial === null ? 0 : Formulas::reward($duel ? Formulas::REWARD_ROAD : Formulas::REWARD_GOD, $theirs[count($theirs) - 1]->level);
         $this->battle = new Screen(new Battle([$this->party, $theirs], $b['elements'], $b['moves'], $this->rng, [true, false], $b['items']), $b['moves'], $this->rng, $b['items'], $this->items, $trial, $duel,
-            $full ? Pen::name($this->box) : null, $full ? Pen::BOX - count($this->boxes[$this->box]) : 0, $reward, $this->afloat);
+            $full ? Pen::name($this->box) : null, $full ? Pen::BOX - count($this->boxes[$this->box]) : 0, $reward, $this->afloat, $uses);
     }
 
     /**

@@ -35,7 +35,7 @@ return [
             ['say', '人身羊角的神立在路的尽头，风很大，南边是海。'],
             ['ask', '「自尸胡至无皋，九山，都隔着水。要受我的试炼吗？」', [['接受试炼', 'go'], ['再等等', 'wait']]],
             ['label', 'go'],
-            ['trial', '东次三经之神', [['wanhu', 42], ['gege', 42], ['jingjing', 44], ['dongcisan', 47]]],
+            ['trial', '东次三经之神', [['wanhu', 42], ['gege', 42], ['jingjing', 44], ['dongcisan', 47]], ['yupei']],
             ['setFlag', 'passedDongcisan'],
             ['say', '「好。东山经还剩最后一个山系。想去时再来找我。」'],
             ['give', 'sealLevel', 1],

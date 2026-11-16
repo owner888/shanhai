@@ -5,6 +5,7 @@ namespace Shanhai\Script;
 
 use InvalidArgumentException;
 use RuntimeException;
+use Shanhai\Battle\Ai;
 use Shanhai\World\{Dir, World};
 
 /**
@@ -22,7 +23,8 @@ use Shanhai\World\{Dir, World};
  *     ['giveBeast', beast, level]
  *     ['ask', line, [[choice, label], ...]]   shows the line with the choices; goes to the label of the one taken
  *     ['battle', beast, level]   a wild one; the script goes on when it is over, unless it was lost
- *     ['trial', who, [[beast or god, level], ...]]   a trial against their beasts, one holding a thing written [beast, level, thing]; the script goes on when it is passed
+ *     ['trial', who, [[beast or god, level], ...]]   a trial against their beasts, one holding a thing written [beast, level, thing]; the script goes on when it is passed.
+ *                                                    A fourth, [thing, ...], is what they use on their beasts in it (docs/numbers.md 26)
  *     ['duel', who, [[beast, level], ...]]   a battle with one met on the road, by a trial's rules; the script goes on when it is won
  *     ['rest']                   the party's beasts are whole again, and here is where a battle lost wakes the player
  *     ['pen']                    opens the pen, where beasts are left and taken; the script goes on when it is closed
@@ -68,7 +70,7 @@ final class Vm
             if (!isset(self::ARGS[$name])) {
                 throw new InvalidArgumentException("script line $i: unknown command '$name'");
             }
-            if (count($cmd) - 1 !== self::ARGS[$name]) {
+            if (count($cmd) - 1 !== self::ARGS[$name] && !($name === 'trial' && count($cmd) === 4)) {
                 throw new InvalidArgumentException("script line $i: '$name' takes " . self::ARGS[$name] . ' arguments');
             }
             if ($name === 'label') {
@@ -94,6 +96,9 @@ final class Vm
             if ($cmd[0] === 'trial' || $cmd[0] === 'duel') {
                 if (!is_string($cmd[1]) || $cmd[1] === '' || !is_array($cmd[2]) || $cmd[2] === []) {
                     throw new InvalidArgumentException("script line $i: 'trial' takes who sets it and their beasts");
+                }
+                if (isset($cmd[3]) && ($cmd[0] !== 'trial' || !is_array($cmd[3]) || $cmd[3] === [] || !array_is_list($cmd[3]) || array_diff($cmd[3], Ai::THINGS) !== [])) {
+                    throw new InvalidArgumentException("script line $i: what the one who sets a trial uses is a list of " . implode(', ', Ai::THINGS));
                 }
                 foreach ($cmd[2] as $theirs) {
                     if (!is_array($theirs) || !in_array(count($theirs), [2, 3], true) || !is_string($theirs[0]) || !is_int($theirs[1]) || !is_string($theirs[2] ?? '')) {
@@ -164,7 +169,7 @@ final class Vm
                 case 'load': $w->load(); break;
                 case 'ask': $w->ask($cmd[1], array_column($cmd[2], 0)); $this->asked = array_column($cmd[2], 1); break;
                 case 'battle': $w->fight($cmd[1], $cmd[2]); break;
-                case 'trial': $w->trial($cmd[1], $cmd[2]); break;
+                case 'trial': $w->trial($cmd[1], $cmd[2], $cmd[3] ?? []); break;
                 case 'duel': $w->duel($cmd[1], $cmd[2]); break;
                 case 'end': $this->done = true; break;
             }

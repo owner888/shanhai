@@ -36,7 +36,7 @@ return [
             ['say', '人面鸟身的神立在路的尽头，伊水从它脚下向东流去。'],
             ['ask', '「自煇诸至蔓渠，九山。要受我的试炼吗？」', [['接受试炼', 'go'], ['再等等', 'wait']]],
             ['label', 'go'],
-            ['trial', '中次二经之神', [['he', 54], ['longchi', 56], ['mingshe', 56], ['huashe', 58], ['mafu', 58], ['zhongci', 58]]],
+            ['trial', '中次二经之神', [['he', 54], ['longchi', 56], ['mingshe', 56], ['huashe', 58], ['mafu', 58], ['zhongci', 58]], ['dixiu', 'dixiu']],
             ['setFlag', 'passedZhongci'],
             ['say', '「好。参照的路到这里走完了；再往后的山，没有先例。想往下走时再来找我。」'],
             ['give', 'sealLevel', 1],
