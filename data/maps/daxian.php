@@ -31,5 +31,6 @@ return [
         ]],
     ],
     // The scree: 长蛇.
-    'wild' => ['rate' => 2, 'slots' => [[21, 'changshe'], [22, 'changshe'], [22, 'changshe'], [23, 'changshe'], [24, 'changshe'], [22, 'changshe'], [22, 'changshe']]],
+    // The frequent places are the common beasts' of the range (docs/numbers.md 28): 蕃、马、兕、蕃 come here from its other mountains; the rare places are the mountain's own.
+    'wild' => ['rate' => 2, 'slots' => [[21, 'fan'], [22, 'ma'], [22, 'si'], [23, 'fan'], [24, 'changshe'], [22, 'changshe'], [22, 'changshe']]],
 ];

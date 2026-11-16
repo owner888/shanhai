@@ -33,5 +33,6 @@ return [
     // The 敦水: 䰽䰽之鱼.
     'water' => ['rate' => 2, 'slots' => [[20, 'beibei'], [15, 'beibei'], [20, 'beibei']]],
     // The scree: 窫窳.
-    'wild' => ['rate' => 2, 'slots' => [[23, 'yayu'], [24, 'yayu'], [24, 'yayu'], [25, 'yayu'], [26, 'yayu'], [22, 'yayu'], [24, 'yayu']]],
+    // The frequent places are the common beasts' of the range (docs/numbers.md 28): 兕、旄牛、尸鸠、兕 come here from its other mountains; the rare places are the mountain's own.
+    'wild' => ['rate' => 2, 'slots' => [[23, 'si'], [24, 'maoniu'], [24, 'shijiu'], [25, 'si'], [26, 'yayu'], [22, 'yayu'], [24, 'yayu']]],
 ];

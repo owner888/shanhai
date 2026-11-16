@@ -31,5 +31,6 @@ return [
         ]],
     ],
     // The scree: 孟极.
-    'wild' => ['rate' => 10, 'slots' => [[23, 'mengji'], [22, 'mengji'], [22, 'mengji'], [24, 'mengji'], [24, 'mengji'], [26, 'mengji'], [26, 'mengji']]],
+    // The frequent places are the common beasts' of the range (docs/numbers.md 28): 旄牛、尸鸠、橐驼、旄牛 come here from its other mountains; the rare places are the mountain's own.
+    'wild' => ['rate' => 10, 'slots' => [[23, 'maoniu'], [22, 'shijiu'], [22, 'tuotuo'], [24, 'maoniu'], [24, 'mengji'], [26, 'mengji'], [26, 'mengji']]],
 ];

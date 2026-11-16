@@ -30,5 +30,6 @@ return [
         ]],
     ],
     // The tall grass: 獓因, 鴟 and the three blue birds.
-    'wild' => ['rate' => 2, 'slots' => [[16, 'chi'], [16, 'sanqingniao'], [16, 'aoye'], [16, 'chi'], [15, 'sanqingniao'], [15, 'aoye'], [15, 'chi']]],
+    // The frequent places are the common beasts' of the range (docs/numbers.md 28): 积蛇、鹰鸇、积蛇、鹰鸇 come here from its other mountains; the rare places are the mountain's own.
+    'wild' => ['rate' => 2, 'slots' => [[16, 'jishe'], [16, 'yingzhan'], [16, 'jishe'], [16, 'yingzhan'], [15, 'chi'], [15, 'sanqingniao'], [15, 'aoye']]],
 ];

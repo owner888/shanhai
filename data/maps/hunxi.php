@@ -31,5 +31,6 @@ return [
         ]],
     ],
     // The scree: the snake 肥遗.
-    'wild' => ['rate' => 2, 'slots' => [[21, 'feiyishe'], [22, 'feiyishe'], [22, 'feiyishe'], [23, 'feiyishe'], [24, 'feiyishe'], [22, 'feiyishe'], [22, 'feiyishe']]],
+    // The frequent places are the common beasts' of the range (docs/numbers.md 28): 尸鸠、橐驼、麢、尸鸠 come here from its other mountains; the rare places are the mountain's own.
+    'wild' => ['rate' => 2, 'slots' => [[21, 'shijiu'], [22, 'tuotuo'], [22, 'ling'], [23, 'shijiu'], [24, 'feiyishe'], [22, 'feiyishe'], [22, 'feiyishe']]],
 ];

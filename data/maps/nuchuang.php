@@ -31,5 +31,5 @@ return [
         ]],
     ],
     // The tall grass: 虎, 豹, 犀, 兕, and seldom 鸾鸟.
-    'wild' => ['rate' => 2, 'slots' => [[16, 'hu'], [16, 'bao'], [16, 'xi'], [16, 'si'], [15, 'hu'], [15, 'luanniao'], [15, 'luanniao']]],
+    'wild' => ['rate' => 2, 'slots' => [[16, 'hu'], [16, 'bao'], [16, 'xi'], [16, 'si'], [15, 'luanniao'], [15, 'luanniao'], [15, 'luanniao']]],
 ];

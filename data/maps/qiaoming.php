@@ -32,5 +32,6 @@ return [
     // The 谯水: 何罗之鱼.
     'water' => ['rate' => 2, 'slots' => [[20, 'heluo'], [15, 'heluo'], [20, 'heluo']]],
     // The scree: 孟槐.
-    'wild' => ['rate' => 2, 'slots' => [[21, 'menghuai'], [22, 'menghuai'], [22, 'menghuai'], [23, 'menghuai'], [24, 'menghuai'], [22, 'menghuai'], [22, 'menghuai']]],
+    // The frequent places are the common beasts' of the range (docs/numbers.md 28): 马、兕、旄牛、马 come here from its other mountains; the rare places are the mountain's own.
+    'wild' => ['rate' => 2, 'slots' => [[21, 'ma'], [22, 'si'], [22, 'maoniu'], [23, 'ma'], [24, 'menghuai'], [22, 'menghuai'], [22, 'menghuai']]],
 ];

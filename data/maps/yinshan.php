@@ -30,5 +30,6 @@ return [
         ]],
     ],
     // The tall grass: 天狗.
-    'wild' => ['rate' => 10, 'slots' => [[16, 'tiangou'], [16, 'tiangou'], [16, 'tiangou'], [16, 'tiangou'], [13, 'tiangou'], [13, 'tiangou'], [13, 'tiangou']]],
+    // The frequent places are the common beasts' of the range (docs/numbers.md 28): 鹰鸇、积蛇、鹰鸇、积蛇 come here from its other mountains; the rare places are the mountain's own.
+    'wild' => ['rate' => 10, 'slots' => [[16, 'yingzhan'], [16, 'jishe'], [16, 'yingzhan'], [16, 'jishe'], [13, 'tiangou'], [13, 'tiangou'], [13, 'tiangou']]],
 ];

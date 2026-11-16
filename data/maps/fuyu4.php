@@ -31,5 +31,6 @@ return [
         ]],
     ],
     // The tall grass: 葱聋 and 鴖.
-    'wild' => ['rate' => 10, 'slots' => [[13, 'conglong'], [14, 'min'], [15, 'conglong'], [16, 'min'], [15, 'conglong'], [15, 'min'], [15, 'conglong']]],
+    // The frequent places are the common beasts' of the range (docs/numbers.md 28): 赤鷩、犀、兕、赤鷩 come here from its other mountains; the rare places are the mountain's own.
+    'wild' => ['rate' => 10, 'slots' => [[13, 'chibi'], [14, 'xi'], [15, 'si'], [16, 'chibi'], [15, 'min'], [15, 'conglong'], [15, 'min']]],
 ];

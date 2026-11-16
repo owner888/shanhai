@@ -42,5 +42,6 @@ return [
         ]],
     ],
     // The tall grass: 土蝼, 钦原 and 鹑鸟.
-    'wild' => ['rate' => 2, 'slots' => [[16, 'tulou'], [16, 'qinyuan'], [16, 'chunniao'], [16, 'tulou'], [15, 'qinyuan'], [15, 'chunniao'], [15, 'tulou']]],
+    // The frequent places are the common beasts' of the range (docs/numbers.md 28): 鹰鸇、积蛇、鹰鸇、积蛇 come here from its other mountains; the rare places are the mountain's own.
+    'wild' => ['rate' => 2, 'slots' => [[16, 'yingzhan'], [16, 'jishe'], [16, 'yingzhan'], [16, 'jishe'], [15, 'chunniao'], [15, 'tulou'], [15, 'qinyuan']]],
 ];

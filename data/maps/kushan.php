@@ -30,5 +30,6 @@ return [
         ]],
     ],
     // Its wild ground. The range is past the reference's sixteen gyms: its levels are ours, about half its trial's last (docs/numbers.md 14).
-    'wild' => ['rate' => 10, 'slots' => [[38, 'shangao'], [39, 'shangao'], [39, 'shangao'], [41, 'shangao'], [40, 'shangao'], [42, 'shangao'], [42, 'shangao']]],
+    // The frequent places are the common beasts' of the range (docs/numbers.md 28): 赤鷩、㸲牛、赤鷩、㸲牛 come here from its other mountains; the rare places are the mountain's own.
+    'wild' => ['rate' => 10, 'slots' => [[38, 'chibi'], [39, 'zuoniu'], [39, 'chibi'], [41, 'zuoniu'], [40, 'shangao'], [42, 'shangao'], [42, 'shangao']]],
 ];

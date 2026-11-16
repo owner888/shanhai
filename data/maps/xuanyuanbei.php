@@ -30,5 +30,6 @@ return [
         ]],
     ],
     // Its wild ground. The range's levels are those of the three areas before the reference's tenth gym (docs/numbers.md 14).
-    'wild' => ['rate' => 10, 'slots' => [[17, 'huangniao'], [17, 'huangniao'], [18, 'huangniao'], [18, 'huangniao'], [18, 'huangniao'], [16, 'huangniao'], [16, 'huangniao']]],
+    // The frequent places are the common beasts' of the range (docs/numbers.md 28): 鹠、白蛇、橐驼、鹠 come here from its other mountains; the rare places are the mountain's own.
+    'wild' => ['rate' => 10, 'slots' => [[17, 'liu'], [17, 'baishe'], [18, 'tuotuo'], [18, 'liu'], [18, 'huangniao'], [16, 'huangniao'], [16, 'huangniao']]],
 ];

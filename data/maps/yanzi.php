@@ -62,5 +62,6 @@ return [
         ]],
     ],
     // The tall grass: 龟, 孰湖, and the owl with a human face.
-    'wild' => ['rate' => 10, 'slots' => [[13, 'gui'], [14, 'shuhu'], [15, 'renmianxiao'], [16, 'gui'], [15, 'shuhu'], [16, 'renmianxiao'], [16, 'gui']]],
+    // The frequent places are the common beasts' of the range (docs/numbers.md 28): 白翰、白翟 come here from its other mountains; the rare places are the mountain's own.
+    'wild' => ['rate' => 10, 'slots' => [[13, 'gui'], [14, 'baihan'], [15, 'baidi'], [16, 'gui'], [15, 'renmianxiao'], [16, 'shuhu'], [16, 'renmianxiao']]],
 ];

@@ -30,5 +30,6 @@ return [
         ]],
     ],
     // The tall grass: 猼訑 and 尚付, the two beasts the classic gives this mountain.
-    'wild' => ['rate' => 10, 'slots' => [[3, 'boyi'], [4, 'changfu'], [5, 'boyi'], [3, 'changfu'], [6, 'boyi'], [5, 'changfu'], [5, 'boyi']]],
+    // The frequent places are the common beasts' of the range (docs/numbers.md 28): 白猿、蝮虫、白猿、蝮虫 come here from its other mountains; the rare places are the mountain's own.
+    'wild' => ['rate' => 10, 'slots' => [[3, 'baiyuan'], [4, 'fuchong'], [5, 'baiyuan'], [3, 'fuchong'], [6, 'boyi'], [5, 'changfu'], [5, 'boyi']]],
 ];

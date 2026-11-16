@@ -50,5 +50,6 @@ return [
         ]],
     ],
     // The tall grass: 举父 and 蛮蛮. The range's levels are those before the reference's sixth gym, which are the fifth's: no new ground lies between the two (docs/numbers.md 14).
-    'wild' => ['rate' => 10, 'slots' => [[16, 'jufu'], [16, 'manman'], [16, 'jufu'], [16, 'manman'], [13, 'jufu'], [13, 'manman'], [13, 'jufu']]],
+    // The frequent places are the common beasts' of the range (docs/numbers.md 28): 积蛇、鹰鸇、积蛇、鹰鸇 come here from its other mountains; the rare places are the mountain's own.
+    'wild' => ['rate' => 10, 'slots' => [[16, 'jishe'], [16, 'yingzhan'], [16, 'jishe'], [16, 'yingzhan'], [13, 'manman'], [13, 'jufu'], [13, 'manman']]],
 ];

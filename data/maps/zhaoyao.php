@@ -55,7 +55,8 @@ return [
         ]],
     ],
     // The tall grass: 狌狌, the one beast the classic gives this mountain.
-    'wild' => ['rate' => 10, 'slots' => [[2, 'xingxing'], [2, 'xingxing'], [3, 'xingxing'], [3, 'xingxing'], [2, 'xingxing'], [3, 'xingxing'], [3, 'xingxing']]],
+    // The frequent places are the common beasts' of the range (docs/numbers.md 28): 蝮虫、白猿、蝮虫、白猿 come here from its other mountains; the rare places are the mountain's own.
+    'wild' => ['rate' => 10, 'slots' => [[2, 'fuchong'], [2, 'baiyuan'], [3, 'fuchong'], [3, 'baiyuan'], [2, 'xingxing'], [3, 'xingxing'], [3, 'xingxing']]],
     'triggers' => [
         [3, 10, 'seenSea', [
             ['say', '海风从西海上吹来，带着桂花的香气。'],

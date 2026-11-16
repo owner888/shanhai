@@ -30,5 +30,6 @@ return [
         ]],
     ],
     // The scree: 类, the one beast the classic gives this mountain.
-    'wild' => ['rate' => 10, 'slots' => [[4, 'lei'], [4, 'lei'], [5, 'lei'], [5, 'lei'], [4, 'lei'], [5, 'lei'], [5, 'lei']]],
+    // The frequent places are the common beasts' of the range (docs/numbers.md 28): 白猿、蝮虫、白猿、蝮虫 come here from its other mountains; the rare places are the mountain's own.
+    'wild' => ['rate' => 10, 'slots' => [[4, 'baiyuan'], [4, 'fuchong'], [5, 'baiyuan'], [5, 'fuchong'], [4, 'lei'], [5, 'lei'], [5, 'lei']]],
 ];

@@ -33,5 +33,5 @@ return [
     'water' => ['rate' => 2, 'slots' => [[20, 'hujiao'], [15, 'hujiao'], [20, 'hujiao']]],
     // The tall grass: 犀, 兕 and 象 below the mountain, and the bird 瞿如. Its levels and its rate are those of the
     // first area before the reference's third gym (docs/numbers.md 14).
-    'wild' => ['rate' => 4, 'slots' => [[5, 'xi'], [5, 'si'], [7, 'quru'], [7, 'xiang'], [7, 'xi'], [6, 'quru'], [6, 'si']]],
+    'wild' => ['rate' => 4, 'slots' => [[5, 'xi'], [5, 'si'], [7, 'xiang'], [7, 'xi'], [7, 'quru'], [6, 'quru'], [6, 'quru']]],
 ];

@@ -31,5 +31,6 @@ return [
         ]],
     ],
     // The scree: 居暨 and the bird 嚻.
-    'wild' => ['rate' => 10, 'slots' => [[13, 'juji'], [13, 'xiaoque'], [14, 'juji'], [15, 'xiaoque'], [12, 'juji'], [15, 'xiaoque'], [15, 'juji']]],
+    // The frequent places are the common beasts' of the range (docs/numbers.md 28): 白翟、白䳑、怪蛇、白翟 come here from its other mountains; the rare places are the mountain's own.
+    'wild' => ['rate' => 10, 'slots' => [[13, 'baidi'], [13, 'baiyou'], [14, 'guaishe'], [15, 'baidi'], [12, 'juji'], [15, 'xiaoque'], [15, 'juji']]],
 ];

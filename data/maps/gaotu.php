@@ -37,5 +37,6 @@ return [
         ]],
     ],
     // The tall grass: 玃如 and the bird 数斯.
-    'wild' => ['rate' => 4, 'slots' => [[13, 'shusi'], [14, 'shusi'], [15, 'jueru'], [14, 'shusi'], [15, 'jueru'], [15, 'jueru'], [15, 'shusi']]],
+    // The frequent places are the common beasts' of the range (docs/numbers.md 28): 犀、兕、罴、犀 come here from its other mountains; the rare places are the mountain's own.
+    'wild' => ['rate' => 4, 'slots' => [[13, 'xi'], [14, 'si'], [15, 'pi'], [14, 'xi'], [15, 'shusi'], [15, 'jueru'], [15, 'shusi']]],
 ];

@@ -168,7 +168,17 @@ foreach ($maps as $map) {
     }
 }
 
-// What a map's tall grass holds (docs/numbers.md 13): a rate, seven beasts with their levels, each one of the map's own mountain.
+// What a map's tall grass holds (docs/numbers.md 13, 28): a rate, seven beasts with their levels. A strange beast is of
+// the map's own mountain; a common one of any mountain of the range, or of the range this one has its common beasts from.
+// Where both are met the common come first and the strange last, in three places (one in ten) unless the mountain has more kinds of them.
+$named = [];
+foreach ($maps as $map) {
+    $named[$map->range][] = $map->name;
+}
+$roams = fn(int $range) => [...$named[$range], ...(isset(Data::ranges()[$range]['commons']) ? $named[Data::ranges()[$range]['commons']] : [])];
+foreach (Data::ranges() as $n => $r) {
+    check(!isset($r['commons']) || (isset(Data::ranges()[$r['commons']]) && Data::ranges()[$r['commons']]['book'] === $r['book'] && !isset(Data::ranges()[$r['commons']]['commons'])), "range $n has its common beasts from a range of its own book that has its own");
+}
 foreach ($maps as $map) {
     if ($map->wild === null) {
         continue;
@@ -179,8 +189,20 @@ foreach ($maps as $map) {
     foreach ($map->wild['slots'] as [$level, $id]) {
         check(isset($beasts[$id]) && is_int($level) && $level >= 1 && $level <= 100, "{$map->id}: $id is a beast there is, at a level of 1 to 100");
         $mountains = isset($beasts[$id]) ? explode('、', $beasts[$id]['mountain']) : [];
-        check(array_filter($mountains, fn(string $m) => str_contains($map->name, $m)) !== [], "{$map->id}: $id lives on this map's mountain, as the classic has it");
+        if (($beasts[$id]['kind'] ?? null) === 'common') {
+            check(array_filter($mountains, fn(string $m) => array_filter($roams($map->range), fn(string $name) => str_contains($name, $m)) !== []) !== [], "{$map->id}: $id, a common beast, lives on a mountain of this range, as the classic has it");
+        } else {
+            check(array_filter($mountains, fn(string $m) => str_contains($map->name, $m)) !== [], "{$map->id}: $id lives on this map's mountain, as the classic has it");
+        }
     }
+    $kinds = array_map(fn(array $slot) => $beasts[$slot[1]]['kind'] ?? null, $map->wild['slots']);
+    $strange = array_keys($kinds, 'strange', true);
+    if ($strange !== [] && count($strange) < count($kinds)) {
+        same(range(count($kinds) - count($strange), count($kinds) - 1), $strange, "{$map->id}: the common beasts come first and the strange last");
+        check(count($strange) <= max(3, count(array_unique(array_map(fn(int $i) => $map->wild['slots'][$i][1], $strange)))), "{$map->id}: the strange hold three places, or one each when they are more kinds");
+    }
+    $lends = array_filter($maps, fn($m) => in_array($m->range, [$map->range, Data::ranges()[$map->range]['commons'] ?? 0], true) && $m->wild !== null && array_filter($m->wild['slots'], fn(array $slot) => ($beasts[$slot[1]]['kind'] ?? null) === 'common') !== []);
+    check($strange === [] || count($strange) < count($kinds) || $lends === [], "{$map->id}: where the range has common beasts, a mountain's strange ones are not all that is met");
 }
 $scripts['data/game.php: waking after a battle lost'] = (require Data::DIR . '/game.php')['rest']['script'];
 $scripts['data/game.php: asking at the start'] = (require Data::DIR . '/game.php')['resume'];

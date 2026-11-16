@@ -31,5 +31,6 @@ return [
         ]],
     ],
     // The tall grass: 㸲牛, 羬羊, 白豪, and the bird 凫徯.
-    'wild' => ['rate' => 10, 'slots' => [[16, 'zuoniu'], [16, 'qianyang'], [16, 'baihao'], [16, 'fuxi'], [13, 'zuoniu'], [13, 'baihao'], [13, 'fuxi']]],
+    // The frequent places are the common beasts' of the range (docs/numbers.md 28): 虎 come here from its other mountains; the rare places are the mountain's own.
+    'wild' => ['rate' => 10, 'slots' => [[16, 'zuoniu'], [16, 'baihao'], [16, 'hu'], [16, 'zuoniu'], [13, 'qianyang'], [13, 'fuxi'], [13, 'qianyang']]],
 ];

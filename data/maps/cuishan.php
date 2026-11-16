@@ -31,5 +31,5 @@ return [
         ]],
     ],
     // The tall grass, on the north side: 旄牛, 麢, 麝, and the bird 鸓.
-    'wild' => ['rate' => 10, 'slots' => [[13, 'ling'], [14, 'she'], [15, 'maoniu'], [16, 'leiniao'], [15, 'ling'], [15, 'she'], [15, 'maoniu']]],
+    'wild' => ['rate' => 10, 'slots' => [[13, 'ling'], [14, 'she'], [15, 'maoniu'], [16, 'ling'], [15, 'leiniao'], [15, 'leiniao'], [15, 'leiniao']]],
 ];

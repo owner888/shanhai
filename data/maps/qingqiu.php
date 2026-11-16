@@ -33,5 +33,6 @@ return [
     // The 英水: 赤鱬.
     'water' => ['rate' => 2, 'slots' => [[20, 'chiru'], [15, 'chiru'], [20, 'chiru']]],
     // The tall grass: 灌灌, and seldom the nine-tailed fox.
-    'wild' => ['rate' => 10, 'slots' => [[4, 'guanguan'], [4, 'guanguan'], [5, 'guanguan'], [5, 'guanguan'], [4, 'guanguan'], [6, 'jiuweihu'], [6, 'jiuweihu']]],
+    // The frequent places are the common beasts' of the range (docs/numbers.md 28): 白猿、蝮虫、白猿、蝮虫 come here from its other mountains; the rare places are the mountain's own.
+    'wild' => ['rate' => 10, 'slots' => [[4, 'baiyuan'], [4, 'fuchong'], [5, 'baiyuan'], [5, 'fuchong'], [4, 'guanguan'], [6, 'jiuweihu'], [6, 'guanguan']]],
 ];

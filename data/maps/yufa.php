@@ -33,5 +33,6 @@ return [
     // The 瀤泽之水: 䲃鱼.
     'water' => ['rate' => 2, 'slots' => [[20, 'zaoyu'], [15, 'zaoyu'], [20, 'zaoyu']]],
     // The tall grass: 山晖.
-    'wild' => ['rate' => 2, 'slots' => [[24, 'shanhui'], [25, 'shanhui'], [25, 'shanhui'], [26, 'shanhui'], [22, 'shanhui'], [24, 'shanhui'], [26, 'shanhui']]],
+    // The frequent places are the common beasts' of the range (docs/numbers.md 28): 橐驼、麢、蕃、橐驼 come here from its other mountains; the rare places are the mountain's own.
+    'wild' => ['rate' => 2, 'slots' => [[24, 'tuotuo'], [25, 'ling'], [25, 'fan'], [26, 'tuotuo'], [22, 'shanhui'], [24, 'shanhui'], [26, 'shanhui']]],
 ];

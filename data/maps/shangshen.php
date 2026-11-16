@@ -31,5 +31,6 @@ return [
         ]],
     ],
     // The scree: 白鹿 and 当扈. The range's levels are those of the four areas before the reference's seventh gym (docs/numbers.md 14).
-    'wild' => ['rate' => 10, 'slots' => [[13, 'bailu'], [14, 'danghu'], [15, 'bailu'], [16, 'danghu'], [15, 'bailu'], [16, 'danghu'], [16, 'bailu']]],
+    // The frequent places are the common beasts' of the range (docs/numbers.md 28): 白狼、白翰 come here from its other mountains; the rare places are the mountain's own.
+    'wild' => ['rate' => 10, 'slots' => [[13, 'bailu'], [14, 'bailang'], [15, 'baihan'], [16, 'bailu'], [15, 'danghu'], [16, 'danghu'], [16, 'danghu']]],
 ];

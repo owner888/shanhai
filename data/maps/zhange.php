@@ -31,5 +31,6 @@ return [
         ]],
     ],
     // The scree: 狰 and 毕方.
-    'wild' => ['rate' => 2, 'slots' => [[16, 'zheng'], [16, 'bifang'], [16, 'zheng'], [16, 'bifang'], [15, 'zheng'], [15, 'bifang'], [15, 'zheng']]],
+    // The frequent places are the common beasts' of the range (docs/numbers.md 28): 积蛇、鹰鸇、积蛇、鹰鸇 come here from its other mountains; the rare places are the mountain's own.
+    'wild' => ['rate' => 2, 'slots' => [[16, 'jishe'], [16, 'yingzhan'], [16, 'jishe'], [16, 'yingzhan'], [15, 'zheng'], [15, 'bifang'], [15, 'zheng']]],
 ];

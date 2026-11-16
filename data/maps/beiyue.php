@@ -33,5 +33,6 @@ return [
     // The 诸怀之水: 鮨鱼.
     'water' => ['rate' => 2, 'slots' => [[20, 'yiyu'], [15, 'yiyu'], [20, 'yiyu']]],
     // The tall grass: 诸怀.
-    'wild' => ['rate' => 10, 'slots' => [[23, 'zhuhuai'], [22, 'zhuhuai'], [22, 'zhuhuai'], [24, 'zhuhuai'], [24, 'zhuhuai'], [26, 'zhuhuai'], [26, 'zhuhuai']]],
+    // The frequent places are the common beasts' of the range (docs/numbers.md 28): 兕、旄牛、尸鸠、兕 come here from its other mountains; the rare places are the mountain's own.
+    'wild' => ['rate' => 10, 'slots' => [[23, 'si'], [22, 'maoniu'], [22, 'shijiu'], [24, 'si'], [24, 'zhuhuai'], [26, 'zhuhuai'], [26, 'zhuhuai']]],
 ];

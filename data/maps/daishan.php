@@ -33,5 +33,6 @@ return [
     // The 彭水: 儵鱼.
     'water' => ['rate' => 2, 'slots' => [[20, 'shuyu'], [15, 'shuyu'], [20, 'shuyu']]],
     // The tall grass: 䑏疏 and 鵸䳜. The range's levels are those of the five areas before the reference's eighth gym (docs/numbers.md 14).
-    'wild' => ['rate' => 10, 'slots' => [[23, 'huanshu'], [22, 'qiyu'], [22, 'huanshu'], [24, 'qiyu'], [24, 'huanshu'], [26, 'qiyu'], [26, 'huanshu']]],
+    // The frequent places are the common beasts' of the range (docs/numbers.md 28): 尸鸠、橐驼、麢、尸鸠 come here from its other mountains; the rare places are the mountain's own.
+    'wild' => ['rate' => 10, 'slots' => [[23, 'shijiu'], [22, 'tuotuo'], [22, 'ling'], [24, 'shijiu'], [24, 'qiyu'], [26, 'huanshu'], [26, 'qiyu']]],
 ];

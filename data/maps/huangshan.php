@@ -31,5 +31,6 @@ return [
         ]],
     ],
     // The scree: 敏 and the bird 鹦䳇.
-    'wild' => ['rate' => 6, 'slots' => [[14, 'yingwu'], [14, 'minniu'], [16, 'yingwu'], [15, 'minniu'], [12, 'yingwu'], [16, 'minniu'], [16, 'minniu']]],
+    // The frequent places are the common beasts' of the range (docs/numbers.md 28): 兕、罴、麢、兕 come here from its other mountains; the rare places are the mountain's own.
+    'wild' => ['rate' => 6, 'slots' => [[14, 'si'], [14, 'pi'], [16, 'ling'], [15, 'si'], [12, 'yingwu'], [16, 'minniu'], [16, 'yingwu']]],
 ];

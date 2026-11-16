@@ -60,5 +60,6 @@ return [
         ]],
     ],
     // The scree: 讙 and 鵸鵌.
-    'wild' => ['rate' => 10, 'slots' => [[16, 'huanshou'], [16, 'qitu'], [16, 'huanshou'], [16, 'qitu'], [13, 'huanshou'], [13, 'qitu'], [13, 'huanshou']]],
+    // The frequent places are the common beasts' of the range (docs/numbers.md 28): 积蛇、鹰鸇、积蛇、鹰鸇 come here from its other mountains; the rare places are the mountain's own.
+    'wild' => ['rate' => 10, 'slots' => [[16, 'jishe'], [16, 'yingzhan'], [16, 'jishe'], [16, 'yingzhan'], [13, 'huanshou'], [13, 'qitu'], [13, 'huanshou']]],
 ];

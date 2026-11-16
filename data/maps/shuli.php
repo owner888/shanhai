@@ -30,5 +30,6 @@ return [
         ]],
     ],
     // The tall grass: 鹦䳇. Its levels are those of the first area before the reference's fifth gym (docs/numbers.md 14).
-    'wild' => ['rate' => 10, 'slots' => [[16, 'yingwu'], [16, 'yingwu'], [16, 'yingwu'], [16, 'yingwu'], [13, 'yingwu'], [13, 'yingwu'], [13, 'yingwu']]],
+    // The frequent places are the common beasts' of the range (docs/numbers.md 28): 犳、白豪、豹、犳 come here from its other mountains; the rare places are the mountain's own.
+    'wild' => ['rate' => 10, 'slots' => [[16, 'zhuo'], [16, 'baihao'], [16, 'bao'], [16, 'zhuo'], [13, 'yingwu'], [13, 'yingwu'], [13, 'yingwu']]],
 ];
