@@ -772,7 +772,7 @@ same(1, count($dex->entry($book['beasts'], $book['elements'], 0)), 'of a kind on
 check(str_contains($dex->entry($book['beasts'], $book['elements'], 0)[0], '出没：招摇之山') && !str_contains($dex->entry($book['beasts'], $book['elements'], 0)[0], '属性'), 'and not its elements');
 $dex->bind('xingxing');
 $told = $dex->entry($book['beasts'], $book['elements'], 0);
-check(count($told) >= 2 && str_contains($told[0], '属性：') && $told[1] === $book['beasts']['xingxing']['looks'], 'of one bound: its elements and how the classic says it looks');
+check(count($told) >= 2 && str_contains($told[0], '属性：') && $told[1] === $book['beasts']['xingxing']['looks'] . '  体格：轻', 'of one bound: its elements, how the classic says it looks, and how heavy it is');
 // Kinds are seen in a battle, the other side's all of them, and bound when one joins.
 $d->run([]);
 $b = Data::newWorld(1);
@@ -847,4 +847,6 @@ for ($i = 0; $w->battle !== null && $i < 60; $i++) {
 }
 check(in_array('野生的天马逃走了！', $told, true), 'a wild 天马 is gone on its turn');
 same(['gone', null, $before], [$w->lastBattle, $w->battle, $w->party[0]->exp], 'the battle ends, with no experience');
-same(8, count(array_filter($book['beasts'], fn(array $b) => isset($b['flees']))), 'eight kinds flee, each by the classic\'s words of it');
+$flee = array_count_values(array_column(array_filter($book['beasts'], fn(array $b) => isset($b['flees'])), 'flees'));
+ksort($flee);
+same(['always' => 1, 'often' => 5, 'sometimes' => 14], $flee, 'twenty kinds flee, each by the classic\'s words of it');

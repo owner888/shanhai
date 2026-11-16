@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Shanhai\World;
 
+use Shanhai\Battle\Formulas;
+
 /**
  * The record of beasts (图鉴, docs/numbers.md 24): which kinds the player has seen, in a battle, and which it has had
  * bound to it. A kind seen shows its name and where it lives; one bound, what the classic says of it besides.
@@ -57,7 +59,7 @@ final class Dex
         $said = array_filter(['叫声' => $b['sound'] ?? null, '征兆' => $b['omen'] ?? null, '功效' => $b['lore'] ?? null]);
         return [
             $first . '  属性：' . implode('、', array_map(fn(string $e) => $elements[$e]['name'], $b['elements'])),
-            $b['looks'],
+            $b['looks'] . '  体格：' . Formulas::WEIGHT_WORDS[$b['weight'] ?? 0],
             ...($said === [] ? [] : [implode('  ', array_map(fn(string $what, string $text) => $what . '：' . $text, array_keys($said), $said))]),
         ];
     }

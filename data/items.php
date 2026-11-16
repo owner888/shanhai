@@ -31,6 +31,7 @@ return [
     'yubi' => ['name' => '璧玉', 'use' => 'rite', 'by' => 2, 'price' => 2100, 'from' => '南次二经祠神之礼：「毛用一璧瘞」。受过璋礼的常兽、或本就不弱的常兽，三十六级起，凭它受璧礼。'],
     'yugui' => ['name' => '圭玉', 'use' => 'rite', 'by' => 3, 'price' => 2100, 'from' => '中次八经祠神之礼：「用一藻圭」。受过璧礼、又与你十分亲近的，凭它受圭礼。'],
     'sealFast' => ['name' => '速契印', 'use' => 'catch', 'by' => 'fast', 'from' => '对见人就逃的异兽，成契的机会是四倍。游戏自己的设定。'],
+    'sealHeavy' => ['name' => '重契印', 'use' => 'catch', 'by' => 'heavy', 'from' => '越重的异兽越容易成契，轻的反而更难。游戏自己的设定。'],
     'sealSure' => ['name' => '天契印', 'use' => 'catch', 'by' => 'sure', 'from' => '一定成契。全天下只有一枚。游戏自己的设定。'],
     'seal3' => ['name' => '金契印', 'use' => 'catch', 'by' => 200, 'price' => 1200, 'from' => '嵌金的契印，最容易成契。游戏自己的设定。'],
     // What a beast can hold (docs/numbers.md 19): each the classic's own, named with its mountain and what the classic says of

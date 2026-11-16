@@ -345,7 +345,7 @@ final class Screen
             return null;
         }
         $foe = $this->battle->fighter(1);
-        $rate = Formulas::sealRate($foe->species['catch'], $by, $this->battle->fighter(0)->level, $foe->level, $this->water, isset($foe->species['flees']));
+        $rate = Formulas::sealRate($foe->species['catch'], $by, $this->battle->fighter(0)->level, $foe->level, $this->water, isset($foe->species['flees']), $foe->species['weight'] ?? 0);
         return Formulas::catchValue($rate, $foe->maxHp, $foe->hp, $foe->status);
     }
 

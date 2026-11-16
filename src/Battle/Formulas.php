@@ -167,10 +167,13 @@ final class Formulas
      * 8, 22: a kind's catch rate as a seal makes it, 255 at most. By a number, that many hundredths of it. By 'level', twice
      * with the wild beast's level under that of the player's beast, four times under half of it, eight under a quarter.
      * By 'water', three times in a battle begun on the water. By 'bond', as it is: that seal changes what is bound, not the binding.
-     * By 'fast', four times for a kind that flees (30).
+     * By 'fast', four times for a kind that flees (30). By 'heavy', more or less by the kind's weight (31), 1 at least.
      */
-    public static function sealRate(int $rate, int|string $by, int $mine = 0, int $theirs = 0, bool $water = false, bool $flees = false): int
+    public static function sealRate(int $rate, int|string $by, int $mine = 0, int $theirs = 0, bool $water = false, bool $flees = false, int $weight = 0): int
     {
+        if ($by === 'heavy') {
+            return max(1, min(255, $rate + self::WEIGHT[$weight]));
+        }
         $times = match ($by) {
             'level' => $theirs >= $mine ? 1 : ($theirs >= $mine >> 1 ? 2 : ($theirs >= $mine >> 2 ? 4 : 8)),
             'water' => $water ? 3 : 1,
@@ -180,6 +183,13 @@ final class Formulas
         };
         return min(255, $times === null ? intdiv($rate * $by, 100) : $rate * $times);
     }
+
+    /**
+     * 31: what the seal for the heavy adds to a kind's catch rate, by its weight's class. The reference's: 20 less under
+     * 102.4 kg, nothing under 204.8, 20 more under 307.2, 30 under 409.6, 40 from there.
+     */
+    public const WEIGHT = [0 => -20, 1 => 0, 2 => 20, 3 => 30, 4 => 40];
+    public const WEIGHT_WORDS = [0 => '轻', 1 => '中', 2 => '重', 3 => '很重', 4 => '极重'];
 
     /**
      * 30: a wild beast of a kind that flees does, when its turn to act comes and it is not asleep, on a byte under

@@ -140,3 +140,9 @@ same(128, $females, 'of the 256 a beast can be, 128 are female');
 
 // 30: the seal for those that flee: four times the catch rate of a kind that does, as it is of one that does not.
 same([180, 45, 255], [Formulas::sealRate(45, 'fast', 0, 0, false, true), Formulas::sealRate(45, 'fast', 0, 0, false, false), Formulas::sealRate(120, 'fast', 0, 0, false, true)], 'four times, 255 at most');
+
+// 31: the seal for the heavy: 20 less for the light, as it is, then 20, 30 and 40 more by the weight's class; 1 to 255.
+same([25, 45, 65, 75, 85, 1, 255], [Formulas::sealRate(45, 'heavy'), ...array_map(fn(int $w) => Formulas::sealRate(45, 'heavy', 0, 0, false, false, $w), [1, 2, 3, 4]), Formulas::sealRate(15, 'heavy'), Formulas::sealRate(250, 'heavy', 0, 0, false, false, 4)],
+    'by the weight\'s class');
+same([20, 7, 2, 23], array_map(fn(int $w) => count(array_filter(\Shanhai\Data::beasts(), fn(array $b) => ($b['weight'] ?? 0) === $w)), [4, 3, 2, 1]), 'twenty kinds as heavy as an ox, seven as a horse, two as a bear, twenty-three as a tiger, a deer or a pig');
+same([4, 3, 0], [\Shanhai\Data::beasts()['si']['weight'], \Shanhai\Data::beasts()['lushu']['weight'], \Shanhai\Data::beasts()['xingxing']['weight'] ?? 0], '兕 is like a water buffalo, 鹿蜀 like a horse, 狌狌 like an ape');
