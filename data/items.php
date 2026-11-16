@@ -1,10 +1,12 @@
 <?php
 // The things a bag holds.
 //   name   as it is shown
-//   use    what it does when used: 'catch', in a battle with a wild beast, tries to bind it (docs/numbers.md 8); none: nothing yet
+//   use    what it does when used: 'catch', in a battle with a wild beast, tries to bind it (docs/numbers.md 8, 22); used on a beast of the
+//          party (docs/numbers.md 21): 'heal' restores hp, 'cure' ends a status, 'revive' stands a fallen one up, 'restore' makes it whole and well
 //   hold   what it does held by a beast (docs/numbers.md 18, 19): share, flee, leftovers, first, endure, evade, calm, flinch, crit, coin,
 //          boost, heal, cure or pp
-//   by     the number or the kind it does it by: a chance of 256, hp, a part of the hp at most, an element (or none), a status (or any)
+//   by     the number or the kind it does it by: a chance of 256, hp (or all), a part of the hp at most, an element (or none), a status (or any),
+//          for a seal the hundredths of the catch rate it makes it
 //   grows  the mountain the classic has it on: a wild beast of that mountain may hold it (docs/numbers.md 20)
 //   price  what one costs where it is sold (docs/numbers.md 17)
 //   from   what in the classic, or in the game's own story, it comes from
@@ -12,6 +14,16 @@ declare(strict_types=1);
 
 return [
     'seal' => ['name' => '契印', 'use' => 'catch', 'price' => 200, 'from' => '巫祝所制，人与异兽结契的凭信。游戏自己的设定。'],
+    // Medicines (docs/numbers.md 21): used on a beast from the bag, in a battle or out of one. Each is the classic's, as above.
+    'zhuyu' => ['name' => '祝余', 'use' => 'heal', 'by' => 20, 'price' => 300, 'from' => '招摇之山：「食之不饥」。回复 20 点体力。'],
+    'bili' => ['name' => '萆荔', 'use' => 'heal', 'by' => 50, 'price' => 700, 'from' => '小华之山：「食之已心痛」。回复 50 点体力。'],
+    'licao' => ['name' => '梨', 'use' => 'heal', 'by' => 200, 'price' => 1200, 'from' => '中次七经的太山：草名，「可以已疽」。回复 200 点体力。'],
+    'youmu' => ['name' => '栯木', 'use' => 'heal', 'by' => 'all', 'price' => 2500, 'from' => '泰室之山：「服者不妒」。体力全满。'],
+    'dixiu' => ['name' => '帝休', 'use' => 'restore', 'price' => 3000, 'from' => '少室之山：「服者不怒」。体力全满，异常全消。'],
+    'jibai' => ['name' => '葪柏', 'use' => 'revive', 'price' => 1500, 'from' => '敏山：「服者不寒」。倒下的异兽站起来，体力一半。'],
+    // Better seals (docs/numbers.md 22): `by` is how many hundredths of a kind's catch rate one makes it.
+    'seal2' => ['name' => '玉契印', 'use' => 'catch', 'by' => 150, 'price' => 600, 'from' => '刻在玉上的契印，比寻常的更容易成契。游戏自己的设定。'],
+    'seal3' => ['name' => '金契印', 'use' => 'catch', 'by' => 200, 'price' => 1200, 'from' => '嵌金的契印，最容易成契。游戏自己的设定。'],
     // What a beast can hold (docs/numbers.md 19): each the classic's own, named with its mountain and what the classic says of
     // it; what it does held is the game's. Those with no price are found once, on their mountain; those with one are sold.
     'mihu' => ['name' => '迷榖', 'hold' => 'flee', 'grows' => '招摇之山', 'from' => '招摇之山：「佩之不迷」。拿着它的异兽，野外的战斗一定逃得掉。'],
@@ -29,15 +41,15 @@ return [
     'xuncao' => ['name' => '薰草', 'hold' => 'boost', 'grows' => '浮山', 'by' => 'wood', 'from' => '浮山：「佩之可以已疠」。拿着它的异兽，木属性招式的伤害多一成。'],
     'yushi' => ['name' => '礜', 'hold' => 'boost', 'grows' => '皋涂之山', 'by' => 'metal', 'from' => '皋涂之山：「可以毒鼠」。拿着它的异兽，金属性招式的伤害多一成。'],
     'liuzhe' => ['name' => '流赭', 'hold' => 'boost', 'grows' => '石脆之山', 'by' => 'earth', 'from' => '石脆之山：「以涂牛马无病」。拿着它的异兽，土属性招式的伤害多一成。'],
-    'baigao' => ['name' => '白䓘', 'hold' => 'heal', 'grows' => '仑者之山', 'by' => 10, 'price' => 10, 'from' => '仑者之山：「食者不饥，可以释劳」。拿着它的异兽体力不到一半时吃掉，回复 10 点。'],
-    'jiaguo' => ['name' => '嘉果', 'hold' => 'heal', 'grows' => '不周之山', 'by' => 20, 'price' => 100, 'from' => '不周之山：「食之不劳」。拿着它的异兽体力不到一半时吃掉，回复 20 点。'],
-    'pincao' => ['name' => '薲草', 'hold' => 'heal', 'grows' => '昆仑之丘', 'by' => 30, 'price' => 10, 'from' => '昆仑之丘：「食之已劳」。拿着它的异兽体力不到一半时吃掉，回复 30 点。'],
-    'kangmu' => ['name' => '亢木', 'hold' => 'cure', 'grows' => '浮戏之山', 'by' => 'poison', 'price' => 10, 'from' => '浮戏之山：「食之不蛊」。拿着它的异兽中毒时吃掉，解毒。'],
-    'huangguan' => ['name' => '黄雚', 'hold' => 'cure', 'grows' => '竹山', 'by' => 'burn', 'price' => 10, 'from' => '竹山：「浴之已疥，又可以已胕」。拿着它的异兽灼伤时用掉，治好灼伤。'],
-    'rongcao' => ['name' => '荣草', 'hold' => 'cure', 'grows' => '鼓镫之山', 'by' => 'paralyze', 'price' => 10, 'from' => '鼓镫之山：「食之已风」。拿着它的异兽麻痹时吃掉，治好麻痹。'],
-    'zhichu' => ['name' => '植楮', 'hold' => 'cure', 'grows' => '脱扈之山', 'by' => 'sleep', 'price' => 10, 'from' => '脱扈之山：「食之不眯」。拿着它的异兽睡着时吃掉，醒过来。'],
-    'mengmu' => ['name' => '蒙木', 'hold' => 'cure', 'grows' => '放皋之山', 'by' => 'confuse', 'price' => 10, 'from' => '放皋之山：「服之不惑」。拿着它的异兽混乱时吃掉，清醒过来。'],
-    'yupei' => ['name' => '育沛', 'hold' => 'cure', 'grows' => '招摇之山', 'by' => 'any', 'price' => 10, 'from' => '招摇之山的丽之水：「佩之无瘕疾」。拿着它的异兽有任何异常时用掉，全都治好。'],
-    'ditai' => ['name' => '帝台之浆', 'hold' => 'pp', 'grows' => '高前之山', 'by' => 5, 'price' => 10, 'from' => '高前之山：「饮之者不心痛」。拿着它的异兽有招式次数用完时喝掉，那一招回复 5 次。'],
+    'baigao' => ['name' => '白䓘', 'use' => 'heal', 'hold' => 'heal', 'grows' => '仑者之山', 'by' => 10, 'from' => '仑者之山：「食者不饥，可以释劳」。拿着它的异兽体力不到一半时吃掉，回复 10 点。'],
+    'jiaguo' => ['name' => '嘉果', 'use' => 'heal', 'hold' => 'heal', 'grows' => '不周之山', 'by' => 20, 'from' => '不周之山：「食之不劳」。拿着它的异兽体力不到一半时吃掉，回复 20 点。'],
+    'pincao' => ['name' => '薲草', 'use' => 'heal', 'hold' => 'heal', 'grows' => '昆仑之丘', 'by' => 30, 'from' => '昆仑之丘：「食之已劳」。拿着它的异兽体力不到一半时吃掉，回复 30 点。'],
+    'kangmu' => ['name' => '亢木', 'use' => 'cure', 'hold' => 'cure', 'grows' => '浮戏之山', 'by' => 'poison', 'price' => 100, 'from' => '浮戏之山：「食之不蛊」。拿着它的异兽中毒时吃掉，解毒。'],
+    'huangguan' => ['name' => '黄雚', 'use' => 'cure', 'hold' => 'cure', 'grows' => '竹山', 'by' => 'burn', 'price' => 250, 'from' => '竹山：「浴之已疥，又可以已胕」。拿着它的异兽灼伤时用掉，治好灼伤。'],
+    'rongcao' => ['name' => '荣草', 'use' => 'cure', 'hold' => 'cure', 'grows' => '鼓镫之山', 'by' => 'paralyze', 'price' => 200, 'from' => '鼓镫之山：「食之已风」。拿着它的异兽麻痹时吃掉，治好麻痹。'],
+    'zhichu' => ['name' => '植楮', 'use' => 'cure', 'hold' => 'cure', 'grows' => '脱扈之山', 'by' => 'sleep', 'price' => 250, 'from' => '脱扈之山：「食之不眯」。拿着它的异兽睡着时吃掉，醒过来。'],
+    'mengmu' => ['name' => '蒙木', 'use' => 'cure', 'hold' => 'cure', 'grows' => '放皋之山', 'by' => 'confuse', 'from' => '放皋之山：「服之不惑」。拿着它的异兽混乱时吃掉，清醒过来。'],
+    'yupei' => ['name' => '育沛', 'use' => 'cure', 'hold' => 'cure', 'grows' => '招摇之山', 'by' => 'any', 'price' => 600, 'from' => '招摇之山的丽之水：「佩之无瘕疾」。拿着它的异兽有任何异常时用掉，全都治好。'],
+    'ditai' => ['name' => '帝台之浆', 'hold' => 'pp', 'grows' => '高前之山', 'by' => 5, 'from' => '高前之山：「饮之者不心痛」。拿着它的异兽有招式次数用完时喝掉，那一招回复 5 次。'],
     'tongxiu' => ['name' => '同修玉', 'hold' => 'share', 'from' => '佩着它的异兽，不上场也分得一半修行。游戏自己的设定；山经里处处有玉。'],
 ];

@@ -27,6 +27,11 @@ return [
     'signs' => [
         [12, 6, [
             ['say', '放皋之山 —— 明水出焉，南流注于伊水，其中多苍玉'],
+            ['ifFlag', 'found_mengmu', 'had_mengmu'],
+            ['setFlag', 'found_mengmu'],
+            ['give', 'mengmu', 1],
+            ['say', '牌子旁边有蒙木。你采了一份。'],
+            ['label', 'had_mengmu'],
         ]],
     ],
     // Its wild ground. The range is past the reference's sixteen gyms: its levels are ours, about half its trial's last (docs/numbers.md 14).

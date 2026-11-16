@@ -7,6 +7,7 @@ use LogicException;
 use Shanhai\Cursor;
 use Shanhai\World\{Controls, Menu, PartyMenu};
 
+
 /**
  * A battle as the player goes through it, with no drawing: with a wild beast, or, with $trial, a trial, against the
  * beasts of the one who sets it, which cannot be fled nor bound. step() takes an update's Controls.
@@ -111,6 +112,7 @@ final class Screen
                 'moves' => $this->move($this->cursor->at),
                 'party' => $this->send($this->cursor->at),
                 'bag' => $this->use(array_keys($this->bag)[$this->cursor->at]),
+                'dose' => $this->dose($this->cursor->at),
                 'forget' => $this->forget($this->cursor->at),
             };
         }
@@ -126,6 +128,7 @@ final class Screen
             'moves' => array_map(fn(array $m) => sprintf('%s  %d/%d', $this->moves[$m['id']]['name'], $m['pp'], $this->moves[$m['id']]['pp']), $me->moves),
             'party' => array_map(PartyMenu::line(...), $this->battle->parties[0]),
             'bag' => $this->bagLines(),
+            'dose' => array_map(PartyMenu::line(...), $this->battle->parties[0]),
             'forget' => [
                 ...array_map(fn(array $m) => $this->moves[$m['id']]['name'], $this->battle->parties[0][$this->toLearn[0][0]]->moves),
                 '不学' . $this->moves[$this->toLearn[0][1]]['name'],
@@ -145,9 +148,9 @@ final class Screen
             return $lines;
         }
         $foe = $this->battle->fighter(1);
-        $percent = Formulas::catchPercent(Formulas::catchValue($foe->species['catch'], $foe->maxHp, $foe->hp, $foe->status));
         foreach (array_keys($this->bag) as $i => $id) {
             if (($this->things[$id]['use'] ?? null) === 'catch') {
+                $percent = Formulas::catchPercent(Formulas::catchValue(Formulas::sealRate($foe->species['catch'], $this->things[$id]['by'] ?? 100), $foe->maxHp, $foe->hp, $foe->status));
                 $lines[$i] .= "  成功率 $percent%";
             }
         }
@@ -318,10 +321,38 @@ final class Screen
         return $this->pen === null || $this->penRoom > 0;
     }
 
-    /** A thing of the bag is used: a seal is thrown; another is of no use here. */
+    /** The medicine of the bag chosen to be used on a beast, an id. */
+    private string $dosing = '';
+
+    /**
+     * The medicine chosen is used on the party's beast at $which (docs/numbers.md 21): one that would do nothing is not
+     * used, and the turn is not spent; used, it is gone from the bag and the turn is the other side's.
+     */
+    private function dose(int $which): void
+    {
+        $thing = $this->things[$this->dosing];
+        $f = $this->battle->parties[0][$which];
+        if (!Medicine::apply($thing, $f)) {
+            $this->say('用了也没有效果。');
+            $this->next();
+            return;
+        }
+        if (--$this->bag[$this->dosing] === 0) {
+            unset($this->bag[$this->dosing]);
+        }
+        $this->say('给' . $f->species['name'] . '用了' . $thing['name'] . '。', [$this->truth(0), $this->truth(1)]);
+        $this->turn(['pass', 0]);
+    }
+
+    /** A thing of the bag is used: a medicine on a beast, a seal thrown; another is of no use here. */
     private function use(string $id): void
     {
         $thing = $this->things[$id];
+        if (Medicine::is($thing)) { // docs/numbers.md 21: used on a beast of the party, which is chosen next
+            $this->dosing = $id;
+            $this->open('dose');
+            return;
+        }
         if (($thing['use'] ?? null) !== 'catch') {
             $this->say($thing['name'] . '在这里用不上。');
             $this->next();
@@ -344,7 +375,7 @@ final class Screen
         $name = $foe->species['name'];
         $this->say('使用了' . $thing['name'] . '！', null, ['what' => 'seal']);
         // docs/numbers.md 8: a byte not over what the catch needs binds it.
-        $needs = Formulas::catchValue($foe->species['catch'], $foe->maxHp, $foe->hp, $foe->status);
+        $needs = Formulas::catchValue(Formulas::sealRate($foe->species['catch'], $thing['by'] ?? 100), $foe->maxHp, $foe->hp, $foe->status);
         if ($this->rng->byte() <= $needs) {
             [$this->outcome, $this->caught] = ['caught', $foe];
             $this->say('结契成功！' . $name . '成了你的同伴！', null, ['what' => 'caught']);

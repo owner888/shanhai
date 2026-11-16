@@ -116,7 +116,7 @@ final class Play extends Game
         $at = match (true) {
             $w->battle !== null => $w->battle->phase === 'text' ? null : $w->battle->phase . $w->battle->cursor->at,
             $w->choices !== null => 'ask' . $w->choiceCursor->at,
-            $w->menu !== null => $w->menu->phase . $w->menu->at(),
+            $w->menu !== null => $w->menu->note !== null ? null : $w->menu->phase . $w->menu->at(),
             $w->pen !== null => $w->pen->note !== null ? null : 'pen' . $w->pen->phase . $w->pen->cursor->at,
             $w->shop !== null => $w->shop->note !== null ? null : 'shop' . $w->shop->phase . ($w->shop->phase === 'count' ? $w->shop->count : $w->shop->at),
             default => null,
@@ -243,7 +243,12 @@ final class Play extends Game
 
         if ($this->world->menu !== null) {
             $menu = $this->world->menu;
-            $this->choices($p, $r, $menu->items($this->world->party, $this->world->items, $this->items), $menu->at(), $menu->phase === 'top' ? 200.0 : 420.0);
+            if ($menu->note !== null) {
+                $this->dialog($p, $r, $menu->note);
+            } else {
+                [$lines, $at] = Pen::window($menu->items($this->world->party, $this->world->items, $this->items), $menu->at());
+                $this->choices($p, $r, $lines, $at, $menu->phase === 'top' ? 200.0 : 420.0);
+            }
         }
         if (($shop = $this->world->shop) !== null) {
             if ($shop->note !== null) {
@@ -286,7 +291,8 @@ final class Play extends Game
             $this->dialog($p, $r, $s->line);
             return;
         }
-        $this->choices($p, $r, $s->items(), $s->cursor->at, $s->phase === 'menu' ? 200.0 : 420.0);
+        [$lines, $at] = Pen::window($s->items(), $s->cursor->at);
+        $this->choices($p, $r, $lines, $at, $s->phase === 'menu' ? 200.0 : 420.0);
     }
 
     /** A list at the bottom right of the view, $w wide and $lift above the bottom, the cursor's mark by one of its entries. @param list<string> $items */

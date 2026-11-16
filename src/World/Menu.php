@@ -3,18 +3,18 @@ declare(strict_types=1);
 
 namespace Shanhai\World;
 
-use Shanhai\Battle\Fighter;
+use Shanhai\Battle\{Fighter, Medicine};
 use Shanhai\Cursor;
 
 /**
  * The menu the menu button opens outside battle, with no drawing: the party's screen (PartyMenu), when there is a
- * party, what its beasts hold (a thing of the bag given to one, or taken back), the bag, which is only looked at, and saving, which closes the menu with $saves set for the World to do. Cancel goes back, and from the first list closes it; the menu button closes it from anywhere.
+ * party, what its beasts hold (a thing of the bag given to one, or taken back), the bag, whose medicines are used on a beast (docs/numbers.md 21), and saving, which closes the menu with $saves set for the World to do. Cancel goes back, and from the first list closes it; the menu button closes it from anywhere.
  */
 final class Menu
 {
     public const ENTRIES = ['party' => '异兽', 'hold' => '携带', 'bag' => '背包', 'save' => '存档'];
 
-    /** top, party, bag, hold (the party, each with what it holds) or give (the things of the bag a beast can hold) */
+    /** top, party, bag, hold (the party, each with what it holds), give (the things of the bag a beast can hold) or use (the party, to use a thing of the bag on one) */
     public string $phase = 'top';
     public Cursor $cursor;
     public ?PartyMenu $party = null;
@@ -23,6 +23,10 @@ final class Menu
     public bool $saves = false;
     /** The beast of the party a thing is being chosen for. */
     private int $holder = 0;
+    /** The thing of the bag being used on a beast (the 'use' list), an id. */
+    private string $using = '';
+    /** What was just done or cannot be, shown until confirm or cancel; null with nothing to say. */
+    public ?string $note = null;
 
     /** @param bool $canSave whether the game has a file to save to */
     public function __construct(private readonly bool $canSave)
@@ -53,7 +57,11 @@ final class Menu
      */
     public function step(Controls $c, array &$party, array &$bag, array $things): void
     {
-        if ($c->menu) {
+        if ($this->note !== null) {
+            if ($c->confirm || $c->cancel) {
+                $this->note = null;
+            }
+        } elseif ($c->menu) {
             $this->done = true;
         } elseif ($this->phase === 'party') {
             $this->party->step($c, $party);
@@ -66,7 +74,7 @@ final class Menu
             if ($this->phase === 'top') {
                 $this->done = true;
             } else {
-                [$this->phase, $this->cursor] = [$this->phase === 'give' ? 'hold' : 'top', new Cursor()];
+                [$this->phase, $this->cursor] = [['give' => 'hold', 'use' => 'bag'][$this->phase] ?? 'top', new Cursor()];
             }
         } elseif ($c->confirm && $this->phase === 'hold') {
             // confirm on a beast that holds a thing takes it back to the bag; on one that holds none, opens what it could be given
@@ -84,6 +92,23 @@ final class Menu
             }
             $party[$this->holder]->item = $id;
             [$this->phase, $this->cursor] = ['hold', new Cursor()];
+        } elseif ($c->confirm && $this->phase === 'bag' && $bag !== []) {
+            // docs/numbers.md 21: a thing that is used on a beast opens the party to choose one; another is only looked at
+            $id = array_keys($bag)[$this->cursor->at];
+            if (Medicine::is($things[$id]) && $party !== []) {
+                [$this->phase, $this->using, $this->cursor] = ['use', $id, new Cursor()];
+            }
+        } elseif ($c->confirm && $this->phase === 'use') {
+            $f = $party[$this->cursor->at];
+            if (!Medicine::apply($things[$this->using], $f)) {
+                $this->note = '用了也没有效果。';
+                return;
+            }
+            $this->note = '给' . $f->species['name'] . '用了' . $things[$this->using]['name'] . '。';
+            if (--$bag[$this->using] === 0) {
+                unset($bag[$this->using]);
+                [$this->phase, $this->cursor] = ['bag', new Cursor()];
+            }
         } elseif ($c->confirm && $this->phase === 'top') {
             $entry = $this->entries($party, $bag, $things)[$this->cursor->at];
             if ($entry === 'save') {
@@ -105,6 +130,7 @@ final class Menu
             'hold' => array_map(fn(Fighter $f) => $f->species['name'] . '  Lv' . $f->level . '  ' . ($f->item === null ? '（空手）' : '持：' . $table[$f->item]['name']), $party),
             'give' => array_map(fn(string $id) => $table[$id]['name'], self::holdable($bag, $table)),
             'bag' => $bag === [] ? ['（空）'] : self::bag($bag, $table),
+            'use' => array_map(PartyMenu::line(...), $party),
         };
     }
 

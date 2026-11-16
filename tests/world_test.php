@@ -443,7 +443,7 @@ same('left', $w->dialog, 'and the script goes on');
 check(throws(fn() => \Shanhai\Script\Vm::check([['shop', []]])) && throws(fn() => \Shanhai\Script\Vm::check([['shop', 'seal']])), 'buying with nothing sold is refused');
 
 // What a wild beast holds (docs/numbers.md 20): nothing on a byte under 192; else, of what grows on its mountain, the thing
-// that is found on a byte under 20, and the thing that is sold on any other. 土蝼 lives on 昆仑之丘, where 薲草 and 沙棠 grow.
+// that is kept on a byte under 20, and the thing that is used up on any other. 土蝼 lives on 昆仑之丘, where 薲草 and 沙棠 grow.
 $book = ['beasts' => Data::beasts(), 'learnsets' => Data::learnsets(), 'moves' => Data::moves(), 'elements' => Data::elements(), 'items' => Data::items()];
 $holds = function (string $beast, array $rolls) use ($book): array {
     $w = new World(['field' => \Shanhai\World\Map::fromArray(['id' => 'field', 'name' => 'Field', 'rows' => ['..']])], 'field', 0, 0, Dir::Right, $book, $rng = \Shanhai\Battle\Rng::scripted($rolls));
@@ -451,7 +451,7 @@ $holds = function (string $beast, array $rolls) use ($book): array {
     $w->run([['battle', $beast, 5]]);
     return [$w->battle->battle->fighter(1)->item, $rng->left()];
 };
-same([[null, 0], ['pincao', 0], ['shatang', 0]], [$holds('tulou', [191]), $holds('tulou', [192, 20]), $holds('tulou', [192, 19])], 'three in four hold nothing; of the rest, most the thing sold, a few the thing found');
+same([[null, 0], ['pincao', 0], ['shatang', 0]], [$holds('tulou', [191]), $holds('tulou', [192, 20]), $holds('tulou', [192, 19])], 'three in four hold nothing; of the rest, most the thing that is used up, a few the thing that is kept');
 same([[null, 0], [null, 0]], [$holds('fuchong', [255, 0]), $holds('fuchong', [255, 255])], 'one of a mountain where nothing grows holds nothing, the rolls made all the same');
 same(['mihu', 'yupei'], [$holds('xingxing', [192, 0])[0], $holds('xingxing', [192, 20])[0]], '狌狌 of 招摇之山: 迷榖, or 育沛');
 // One of a trial's or a duel's beasts holds what its entry says.

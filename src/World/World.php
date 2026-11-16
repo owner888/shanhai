@@ -270,7 +270,7 @@ final class World
 
     /**
      * What a wild beast of kind $id holds (docs/numbers.md 20): three times in four nothing; else, of the things that grow on
-     * a mountain it lives on, the one that is found rather than sold on a byte under WILD_HOLDS_SECOND, and otherwise the one sold.
+     * a mountain it lives on, the one that is kept on a byte under WILD_HOLDS_SECOND, and otherwise the one that is used up.
      * A kind with no such thing holds nothing. The rolls are made whatever the kind.
      */
     private function wildHolds(string $id): ?string
@@ -281,7 +281,7 @@ final class World
         $second = $this->rng->byte() < Formulas::WILD_HOLDS_SECOND;
         $mountains = explode('、', $this->book['beasts'][$id]['mountain']);
         foreach ($this->book['items'] as $thing => $t) {
-            if (isset($t['hold'], $t['grows']) && in_array($t['grows'], $mountains, true) && isset($t['price']) !== $second) {
+            if (isset($t['hold'], $t['grows']) && in_array($t['grows'], $mountains, true) && in_array($t['hold'], ['heal', 'cure', 'pp'], true) !== $second) {
                 return $thing;
             }
         }

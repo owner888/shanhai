@@ -55,7 +55,7 @@ return [
             ['pen'],
             ['end'],
             ['label', 'shop'],
-            ['shop', ['seal', 'baigao', 'jiaguo', 'pincao', 'kangmu', 'huangguan', 'rongcao', 'zhichu', 'mengmu', 'yupei', 'ditai']],
+            ['shop', ['seal', 'zhuyu', 'kangmu', 'rongcao', 'zhichu']],
         ]],
     ],
 ];

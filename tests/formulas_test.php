@@ -99,3 +99,7 @@ same([0, 0, 1, 1, 2, 2, 3, 3, 4, 4], array_map(Formulas::waterLevelBonus(...), [
 // 17: winning pays the base of the one beaten for each level of their last beast, four times over.
 same([900, 4000, 160], [Formulas::reward(Formulas::REWARD_GOD, 9), Formulas::reward(Formulas::REWARD_GOD, 40), Formulas::reward(Formulas::REWARD_ROAD, 5)], 'a god of level 9 pays 900, of 40 pays 4000; one on the road whose last is level 5 pays 160');
 same([3000, 999999, 99], [Formulas::START_MONEY, Formulas::MAX_MONEY, Formulas::MAX_STACK], 'a game begins with 3000; there can be 999999; a bag holds 99 of a thing');
+
+// 22: a better seal makes a kind's catch rate half as much again, or twice, 255 at most.
+same([45, 67, 90, 255, 255, 190], [Formulas::sealRate(45, 100), Formulas::sealRate(45, 150), Formulas::sealRate(45, 200), Formulas::sealRate(190, 150), Formulas::sealRate(255, 200), Formulas::sealRate(127, 150)],
+    'the plain seal leaves the rate; 45 half as much again is 67, twice is 90; 190 half as much again is over 255, and is 255; 127 is 190');

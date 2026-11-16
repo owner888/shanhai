@@ -27,6 +27,11 @@ return [
     'signs' => [
         [9, 6, [
             ['say', '高前之山 —— 其上有水焉，甚寒而清，帝台之浆也，饮之者不心痛'],
+            ['ifFlag', 'found_ditai', 'had_ditai'],
+            ['setFlag', 'found_ditai'],
+            ['give', 'ditai', 1],
+            ['say', '牌子旁边有帝台之浆。你舀了一份。'],
+            ['label', 'had_ditai'],
         ]],
     ],
 ];

@@ -29,6 +29,11 @@ return [
     'signs' => [
         [9, 6, [
             ['say', '昆仑之丘 —— 神陆吾司之，其神状虎身而九尾，人面而虎爪'],
+            ['ifFlag', 'found_pincao', 'had_pincao'],
+            ['setFlag', 'found_pincao'],
+            ['give', 'pincao', 1],
+            ['say', '牌子旁边有薲草。你采了一份。'],
+            ['label', 'had_pincao'],
             ['ifFlag', 'found_shatang', 'had'],
             ['setFlag', 'found_shatang'],
             ['give', 'shatang', 1],

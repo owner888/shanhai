@@ -58,7 +58,8 @@ src/World/         the game outside battle, with no drawing: Dir, Tile (the char
 src/Script/Vm.php  the event script interpreter: say, ask (a line with choices), flags, jumps, face, move, warp, give, battle, trial, duel, rest, pen, shop, load; check()
 src/Battle/        the battle, with no drawing: Rng (bytes, from a seed or a test's script), Formulas (docs/numbers.md as code,
                    a function a rule), Fighter, Battle (turn(): order, what stops a beast, a move, statuses, weather, switching),
-                   Screen (a wild battle as the player goes through it: lines, the menu, its lists, the bag's seal, fleeing),
+                   Screen (a wild battle as the player goes through it: lines, the menu, its lists, the bag's seals and medicines,
+                   fleeing), Medicine (what a thing of the bag does used on a beast),
                    Simulator (battles with no player, to weigh the tables)
 src/Text.php       the dialog box's measures and line breaking
 src/Cursor.php     a list's cursor: moves on a press, not while held

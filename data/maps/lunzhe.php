@@ -28,6 +28,11 @@ return [
     'signs' => [
         [5, 6, [
             ['say', '仑者之山 —— 其上多金玉，其下多青雘'],
+            ['ifFlag', 'found_baigao', 'had_baigao'],
+            ['setFlag', 'found_baigao'],
+            ['give', 'baigao', 1],
+            ['say', '牌子旁边有白䓘。你采了一份。'],
+            ['label', 'had_baigao'],
         ]],
         [11, 5, [
             ['say', '白䓘 —— 其味如饴，食者不饥，可以释劳'],

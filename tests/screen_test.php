@@ -652,3 +652,67 @@ foreach ([$confirm, $confirm, $down, $none, $down, $confirm, $confirm] as $c) {
 same(['使用了契印！', ['what' => 'seal']], [$s->line, $s->cue], 'a seal thrown has its cue');
 $s->step($confirm);
 same(['what' => 'caught'], $s->cue, 'and so has the beast bound');
+
+// Better seals (docs/numbers.md 22): 狌狌's 190 half as much again is 255: whole, 255 × 17 ÷ 51 = 85, and 86 bytes of 256 bind it.
+$bag = ['seal' => 1, 'seal2' => 1, 'seal3' => 1];
+$s = $screen([['lushu', 5]], ['xingxing', 4], Rng::scripted([85]), $bag);
+foreach ($open as $c) {
+    $s->step($c);
+}
+same(['契印  ×1  成功率 25%', '玉契印  ×1  成功率 33%', '金契印  ×1  成功率 33%'], $s->items(), 'each seal shows its own chance');
+foreach ([$down, $none, $confirm] as $c) {
+    $s->step($c);
+}
+foreach ([$confirm, $confirm] as $c) {
+    $s->step($c);
+}
+same(['caught', ['seal' => 1, 'seal3' => 1]], [$s->outcome, $bag], 'a byte of 85, which the plain seal\'s 63 would not hold, binds with the better one');
+
+// Medicines in a battle (docs/numbers.md 21): one chosen, then the beast; used, it is gone and the turn is the other side's.
+$hurt = $fighter('lushu', 30);
+$hurt->hp = 10;
+$fallen = $fighter('xuangui', 5);
+$fallen->hp = 0;
+$bag = ['zhuyu' => 2, 'jibai' => 1];
+$rng = Rng::scripted([0]); // the wild beast's choice of move
+$s = $screen([$hurt, $fallen], ['xingxing', 2], $rng, $bag);
+$s->battle->fighter(1)->moves = [['id' => 'swift', 'pp' => 5]]; // 善走 alone, which asks for no roll
+foreach ($open as $c) {
+    $s->step($c);
+}
+$s->step($confirm);
+same(['dose', 2], [$s->phase, count($s->items())], 'a medicine opens the party to choose a beast');
+$s->step($confirm);
+same(['给鹿蜀用了祝余。', 30, ['zhuyu' => 1, 'jibai' => 1], 1], [$s->line, $hurt->hp, $bag, $s->battle->turns], 'used, it restores, is gone from the bag, and the turn is spent');
+while ($s->phase === 'text') {
+    $s->step($confirm);
+}
+foreach ([$down, $none, $down, $none, $confirm, $down, $none, $confirm, $confirm] as $c) { // the bag; its second; the first beast
+    $s->step($c);
+}
+same(['用了也没有效果。', ['zhuyu' => 1, 'jibai' => 1], 1], [$s->line, $bag, $s->battle->turns], 'what would do nothing is not used, and no turn is spent');
+$rng->more([0]);
+foreach ([$confirm, $down, $none, $down, $none, $confirm, $down, $none, $confirm, $down, $none, $confirm] as $c) { // the bag; its second; the second beast
+    $s->step($c);
+}
+same(['给旋龟用了葪柏。', intdiv($fallen->maxHp, 2), ['zhuyu' => 1]], [$s->line, $fallen->hp, $bag], 'one that has fallen is stood up with half its hp');
+
+// Medicines from the menu's bag, out of a battle.
+$m = Data::newWorld(1);
+$m->join('lushu', 30);
+$m->party[0]->hp = 10;
+$m->run([['give', 'seal', 1], ['give', 'bili', 1]]);
+$m->step($menu);
+foreach ([$down, $none, $confirm, $confirm] as $c) { // the bag; its first, the seal
+    $m->step($c);
+}
+same('bag', $m->menu->phase, 'a seal is only looked at there');
+foreach ([$down, $none, $confirm] as $c) {
+    $m->step($c);
+}
+same(['use', ['鹿蜀  Lv30  10/' . $m->party[0]->maxHp]], [$m->menu->phase, $m->menu->items($m->party, $m->items, $book['items'])], 'a medicine opens the party');
+$m->step($confirm);
+same(['给鹿蜀用了萆荔。', 60, ['seal' => 1], 'bag'], [$m->menu->note, $m->party[0]->hp, $m->items, $m->menu->phase], 'used, it restores and is gone; with no more of it, back to the bag');
+$m->step($confirm);
+same(null, $m->menu->note, 'confirm goes on');
+$m->run([]);

@@ -320,3 +320,21 @@ $dry->moves[0]['pp'] = 0;
 $b->turn(['pass', 0], ['pass', 0]);
 same([2, null], [$dry->moves[0]['pp'], $dry->item], 'what restores a move\'s uses gives 5, or all the move has, to one that has none, and is used up');
 check($b->copy(Rng::scripted([]))->fighter(0) !== $dry, 'a copy of the battle keeps what is held apart');
+
+// Medicines (docs/numbers.md 21): what a thing used on a beast does, and when it does nothing and is not used.
+$use = fn(array $thing, Fighter $f) => \Shanhai\Battle\Medicine::apply($thing, $f);
+$f = $beast('water', ['tap']);
+$f->hp = 100;
+same([true, 120, true, 160, false], [$use(['use' => 'heal', 'by' => 20], $f), $f->hp, $use(['use' => 'heal', 'by' => 200], $f), $f->hp, $use(['use' => 'heal', 'by' => 20], $f)], 'hp is restored by the number, to all there is at most; one that is whole takes none');
+$f->hp = 7;
+same([true, 160], [$use(['use' => 'heal', 'by' => 'all'], $f), $f->hp], 'or all of it');
+$f->hp = 0;
+same([false, false, false, 0], [$use(['use' => 'heal', 'by' => 20], $f), $use(['use' => 'cure', 'by' => 'any'], $f), $use(['use' => 'restore'], $f), $f->hp], 'one that has fallen is not healed, cured or restored');
+same([true, 80, false], [$use(['use' => 'revive'], $f), $f->hp, $use(['use' => 'revive'], $f)], 'it is stood up with half its hp; one that stands is not');
+$f->status = 'poison';
+same([false, true, null, false], [$use(['use' => 'cure', 'by' => 'burn'], $f), $use(['use' => 'cure', 'by' => 'poison'], $f), $f->status, $use(['use' => 'cure', 'by' => 'poison'], $f)], 'a status is ended by what cures it, not by what cures another; one without it takes none');
+[$f->status, $f->sleep, $f->confused] = ['sleep', 3, 2];
+same([true, null, 0, 0], [$use(['use' => 'cure', 'by' => 'any'], $f), $f->status, $f->sleep, $f->confused], 'what cures any ends any, and confusion with it');
+[$f->status, $f->confused] = ['burn', 2];
+same([true, 160, null, 0, false], [$use(['use' => 'restore'], $f), $f->hp, $f->status, $f->confused, $use(['use' => 'restore'], $f)], 'what restores makes whole and well; one that is, takes none');
+same(false, $use(['use' => 'catch'], $f), 'a seal is no medicine');

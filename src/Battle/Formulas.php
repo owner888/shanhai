@@ -161,6 +161,12 @@ final class Formulas
     public const WILD_SLOTS = [30, 60, 80, 90, 95, 99, 100];
     /** 13: of a hundred, the last number that falls to each of the three wild beasts a map's water holds: 60, 30 and 10 in a hundred. */
     public const WATER_SLOTS = [60, 90, 100];
+    /** 8, 22: a kind's catch rate as a seal of $percent makes it: that many hundredths of it, 255 at most. */
+    public static function sealRate(int $rate, int $percent): int
+    {
+        return min(255, intdiv($rate * $percent, 100));
+    }
+
     /** 17: the money a new game begins with, the most there can be, and the most of one thing a bag holds. */
     public const START_MONEY = 3000, MAX_MONEY = 999999, MAX_STACK = 99;
     /** 17: what the one beaten pays for each level of their last beast, before it is counted four times: a god, and one met on the road. */

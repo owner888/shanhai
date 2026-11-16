@@ -28,6 +28,11 @@ return [
     'signs' => [
         [9, 6, [
             ['say', '不周之山 —— 爰有嘉果，其实如桃，其叶如枣，食之不劳'],
+            ['ifFlag', 'found_jiaguo', 'had_jiaguo'],
+            ['setFlag', 'found_jiaguo'],
+            ['give', 'jiaguo', 1],
+            ['say', '牌子旁边有嘉果。你采了一份。'],
+            ['label', 'had_jiaguo'],
         ]],
     ],
 ];
