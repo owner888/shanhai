@@ -33,7 +33,7 @@ return [
         ['god', 18, 7, 'left', 'god', [
             ['ifFlag', 'passedDongshan', 'passed'],
             ['say', '人身龙首的神立在路的尽头，身后是汶水。'],
-            ['ask', '「自樕𧑤至竹山，十二山。要受我的试炼吗？」', [['接受试炼', 'go'], ['再等等', 'wait']]],
+            ['ask', '「自樕蛛至竹山，十二山。要受我的试炼吗？」', [['接受试炼', 'go'], ['再等等', 'wait']]],
             ['label', 'go'],
             ['trial', '东山经之首之神', [['tongtong', 42], ['congcong', 41], ['chaishou', 46], ['dongshan', 46]]],
             ['setFlag', 'passedDongshan'],

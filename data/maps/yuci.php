@@ -1,7 +1,7 @@
 <?php
 // 羭次之山, seventy li west of 浮山: 羭山, which the classic says is the range's god. The classic: on it many 棫 and 橿,
 // below it much bamboo; on its north side much red copper; the 漆水 rises on it and runs north into the 渭; the beast
-// 嚻 lives there, and the bird 橐𩇯. The god stands off the road; the classic gives it no shape.
+// 嚻 lives there, and the bird 橐非. The god stands off the road; the classic gives it no shape.
 declare(strict_types=1);
 
 return [
@@ -47,6 +47,6 @@ return [
             ['say', '「水能载你了。走过的那些山下的水，也可以回去看看。」'],
         ]],
     ],
-    // The tall grass: 嚻 and 橐𩇯.
+    // The tall grass: 嚻 and 橐非.
     'wild' => ['rate' => 10, 'slots' => [[13, 'xiao'], [14, 'tuofei'], [15, 'xiao'], [16, 'tuofei'], [15, 'xiao'], [15, 'tuofei'], [15, 'xiao']]],
 ];

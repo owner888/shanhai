@@ -1,11 +1,11 @@
 <?php
-// 樕𧑤之山, the first of the Eastern Mountains. The classic: it looks north on 乾昧; the 食水 rises on it and runs northeast
+// 樕蛛之山, the first of the Eastern Mountains. The classic: it looks north on 乾昧; the 食水 rises on it and runs northeast
 // into the sea, and in it is the fish 鳙鳙, shaped like a brindled ox, with a pig's cry.
 declare(strict_types=1);
 
 return [
     'id' => 'sudu',
-    'name' => '樕𧑤之山',
+    'name' => '樕蛛之山',
     'range' => 11,
     'rows' => [
         '^^^^^^^^^^^^^^^^^^^^',
@@ -26,7 +26,7 @@ return [
     'exits' => ['right' => ['leishan', 0]],
     'signs' => [
         [9, 6, [
-            ['say', '东山经之首，曰樕𧑤之山 —— 北临乾昧；食水出焉，而东北流注于海'],
+            ['say', '东山经之首，曰樕蛛之山 —— 北临乾昧；食水出焉，而东北流注于海'],
         ]],
     ],
     'npcs' => [

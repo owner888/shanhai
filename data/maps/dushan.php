@@ -1,6 +1,6 @@
 <?php
 // 独山, three hundred li south. The classic: gold and jade on it, fine stone below; the 末涂之水 rises on it and runs
-// southeast into the 沔, and in it are many 偹𧌁, yellow snakes with a fish's fins, which shine as they come and go, and at
+// southeast into the 沔, and in it are many 条庸, yellow snakes with a fish's fins, which shine as they come and go, and at
 // whose sight a town has drought: met here on the ground by the water, being of fire (docs/elements.md 6).
 declare(strict_types=1);
 

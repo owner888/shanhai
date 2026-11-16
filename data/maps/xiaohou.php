@@ -1,5 +1,5 @@
 <?php
-// 小侯之山, a hundred and eighty li east. The classic: the 明漳之水 rises on it and runs south into 黄泽; the bird 鸪𪄶 lives there,
+// 小侯之山, a hundred and eighty li east. The classic: the 明漳之水 rises on it and runs south into 黄泽; the bird 鸪习 lives there,
 // a crow with white markings.
 declare(strict_types=1);
 

@@ -40,6 +40,9 @@ Entry point for coding agents and contributors. `docs/rules.md` is the rule of t
     second generation's exactly, each read from its source, never recalled, and listed in `docs/numbers.md`
     (written with M2) with where it was read; none is retuned by feel. The tables of our own beasts and moves
     are built inside the same ranges. A question of balance is settled by the numbers before anything else.
+16. What the game shows is in characters its font draws: a character of the classic's that is beyond the basic
+    plane is replaced, by a current other spelling or else its phonetic, and listed in `docs/bestiary.md`
+    (生僻字的替换); a test keeps `data/` free of them.
 
 ## Layout
 
@@ -158,4 +161,4 @@ docs/elements.md   the elements' table and how a beast's elements are settled
 - **Phase 1, battle** (M2): the engine in PHP alone with tests → a simulator that checks the tables → its scene and menus.
 - **Phase 2, the loop** (M3): wild beasts, catching, the party, the bag, growth, saving, `choose` in scripts.
 - **Phase 3, v0.1** (M4): the Southern Mountains' maps, a cave, the first trial.
-- **Phase 4**: the other ranges (the Western Mountains' four and the Northern's three and the Eastern's four and the Central's first ten are in), phones, models, sound.
+- **Phase 4**: the other ranges (the Western Mountains' four and the Northern's three and the Eastern's four and the Central's first eleven are in), phones, models, sound.

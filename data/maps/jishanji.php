@@ -1,0 +1,51 @@
+<?php
+// 几山, three hundred and fifty li east, the last of the range. The classic: 楢, 檀 and 杻, fragrant herbs; the beast 闻粦
+// lives there, a pig with a yellow body, a white head and a white tail, at whose sight the world has great wind.
+declare(strict_types=1);
+
+return [
+    'id' => 'jishanji',
+    'name' => '几山',
+    'range' => 25,
+    'rows' => [
+        'TTTTTTTTTTTTTTTTTTTT',
+        'T..................T',
+        'T..,,,,,....,,,,,..T',
+        'T..,,,,,....,,,,,..T',
+        'T..,,,,,....,,,,,..T',
+        'T..............TT..T',
+        'T..................T',
+        '===================T',
+        'T..................T',
+        'T.......,,,,,......T',
+        'T.......,,,,,^^....T',
+        'T.......,,,,,^^....T',
+        'T..................T',
+        'TTTTTTTTTTTTTTTTTTTT',
+    ],
+    'exits' => ['left' => ['yaoshan', 0]],
+    'signs' => [
+        [9, 6, [
+            ['say', '几山 —— 其木多楢檀杻，其草多香'],
+        ]],
+    ],
+    'npcs' => [
+        ['god', 18, 7, 'left', 'god', [
+            ['ifFlag', 'passedZhongcishiyi', 'passed'],
+            ['say', '彘身人首的神立在路的尽头，山上的香草被风吹得伏下去。'],
+            ['ask', '「自翼望至几山，四十八山，是山经里最长的一段。要受我的试炼吗？」', [['接受试炼', 'go'], ['再等等', 'wait']]],
+            ['label', 'go'],
+            ['trial', '中次十一经之神', [['qinggeng', 92], ['yonghe', 94], ['yiji', 94], ['wenlin', 96], ['liangqushou', 96], ['zhongcishiyi', 96]]],
+            ['setFlag', 'passedZhongcishiyi'],
+            ['say', '「好。只剩洞庭山了。」'],
+            ['end'],
+            ['label', 'wait'],
+            ['say', '「准备好了再来。」'],
+            ['end'],
+            ['label', 'passed'],
+            ['say', '「中次十二经的路还没有开。」'],
+        ]],
+    ],
+    // Its wild ground. The range is past the reference's sixteen gyms: its levels are ours, about half its trial's last (docs/numbers.md 14).
+    'wild' => ['rate' => 10, 'slots' => [[46, 'wenlin'], [47, 'wenlin'], [47, 'wenlin'], [49, 'wenlin'], [48, 'wenlin'], [50, 'wenlin'], [50, 'wenlin']]],
+];

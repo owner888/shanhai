@@ -119,7 +119,7 @@ return [
         'stats' => ['hp' => 90, 'atk' => 70, 'def' => 80, 'spa' => 110, 'spd' => 90, 'spe' => 75],
         'exp' => 205, 'growth' => 'slow',
         'moves' => ['revive', 'selfcall', 'tempest', 'hillcharge'],
-        'from' => '凡东山经之首，自樕𧑤之山以至于竹山，凡十二山，三千六百里。其神状皆人身龙首。',
+        'from' => '凡东山经之首，自樕蛛之山以至于竹山，凡十二山，三千六百里。其神状皆人身龙首。',
     ],
     'dongci' => [
         'name' => '东次二经之神', 'range' => 12,
@@ -250,5 +250,15 @@ return [
         'exp' => 205, 'growth' => 'slow',
         'moves' => ['bewilder', 'southwind', 'rockfall', 'landslide'],
         'from' => '凡首阳山之首，自首山至于丙山，凡九山，二百六十七里。其神状皆龙身而人面。其祠之：毛用一雄鸡瘞，糈用五种之糈。',
+    ],
+    'zhongcishiyi' => [
+        'name' => '中次十一经之神', 'range' => 25,
+        'looks' => '彘身人首。',
+        'elements' => ['earth'],
+        'why' => '中山经属土，人首也是土；彘身没有别的依据，不加副属性。',
+        'stats' => ['hp' => 110, 'atk' => 115, 'def' => 95, 'spa' => 65, 'spd' => 90, 'spe' => 75],
+        'exp' => 205, 'growth' => 'slow',
+        'moves' => ['infantcry', 'hillcharge', 'cliffbreak', 'landslide'],
+        'from' => '凡荆山之首，自翼望之山至于几山，凡四十八山，三千七百三十二里。其神状皆彘身人首。其祠：毛用一雄鸡祈瘞，用一珪，糈用五种之精。禾山，帝也。堵山、玉山，冢也。',
     ],
 ];

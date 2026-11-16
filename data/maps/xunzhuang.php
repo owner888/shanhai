@@ -1,6 +1,6 @@
 <?php
 // 栒状之山, three hundred li south. The classic: gold and jade on it, 青碧 stone below; the beast 从从 lives there, a dog with
-// six feet; the bird 䖪鼠, a fowl with a rat's fur, at whose sight a town has drought; the 𣲵水 rises on it and runs north
+// six feet; the bird 䖪鼠, a fowl with a rat's fur, at whose sight a town has drought; the 沚水 rises on it and runs north
 // into the 湖水, and in it is the 箴鱼, whose beak is a needle.
 declare(strict_types=1);
 
@@ -27,7 +27,7 @@ return [
     'exits' => ['left' => ['leishan', 0], 'right' => ['boqi', 0]],
     'signs' => [
         [12, 6, [
-            ['say', '栒状之山 —— 其上多金玉，其下多青碧石；𣲵水出焉，而北流注于湖水'],
+            ['say', '栒状之山 —— 其上多金玉，其下多青碧石；沚水出焉，而北流注于湖水'],
         ]],
     ],
     // Its water.

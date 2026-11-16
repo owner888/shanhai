@@ -1,5 +1,5 @@
 <?php
-// 蛇山, four hundred li east. The classic: gold on it, clay below; 栒 and 豫章, 嘉荣 and 少辛; the beast 𤜣狼 lives there, a fox
+// 蛇山, four hundred li east. The classic: gold on it, clay below; 栒 and 豫章, 嘉荣 and 少辛; the beast 迤狼 lives there, a fox
 // with a white tail and long ears, at whose sight there is war in the state.
 declare(strict_types=1);
 

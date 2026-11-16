@@ -1,6 +1,6 @@
 <?php
 // 大騩之山, thirty li east, the last of the range. The classic: iron, fine jade and green clay on its north side; a herb
-// called 𦴭, which keeps one from dying young. It names no beast.
+// whose name is a rare character, which keeps one from dying young. It names no beast.
 declare(strict_types=1);
 
 return [
