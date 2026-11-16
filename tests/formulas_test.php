@@ -103,3 +103,6 @@ same([3000, 999999, 99], [Formulas::START_MONEY, Formulas::MAX_MONEY, Formulas::
 // 22: a better seal makes a kind's catch rate half as much again, or twice, 255 at most.
 same([45, 67, 90, 255, 255, 190], [Formulas::sealRate(45, 100), Formulas::sealRate(45, 150), Formulas::sealRate(45, 200), Formulas::sealRate(190, 150), Formulas::sealRate(255, 200), Formulas::sealRate(127, 150)],
     'the plain seal leaves the rate; 45 half as much again is 67, twice is 90; 190 half as much again is over 255, and is 255; 127 is 190');
+same([45, 90, 90, 180, 180, 255, 255], array_map(fn(int $theirs) => Formulas::sealRate(45, 'level', 40, $theirs), [40, 39, 20, 19, 10, 9, 1]),
+    'the seal that goes by level: nothing at the same level; twice under it; four times under half of it; eight under a quarter, 255 at most');
+same([45, 135, 255], [Formulas::sealRate(45, 'water', 0, 0, false), Formulas::sealRate(45, 'water', 0, 0, true), Formulas::sealRate(120, 'water', 0, 0, true)], 'the seal of the water: three times in a battle begun on it, 255 at most');

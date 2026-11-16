@@ -6,7 +6,7 @@
 //   hold   what it does held by a beast (docs/numbers.md 18, 19): share, flee, leftovers, first, endure, evade, calm, flinch, crit, coin,
 //          boost, heal, cure or pp
 //   by     the number or the kind it does it by: a chance of 256, hp (or all), a part of the hp at most, an element (or none), a status (or any),
-//          for a seal the hundredths of the catch rate it makes it
+//          for a seal the hundredths of the catch rate it makes it, or level, water or sure
 //   grows  the mountain the classic has it on: a wild beast of that mountain may hold it (docs/numbers.md 20)
 //   price  what one costs where it is sold (docs/numbers.md 17)
 //   from   what in the classic, or in the game's own story, it comes from
@@ -23,6 +23,9 @@ return [
     'jibai' => ['name' => '葪柏', 'use' => 'revive', 'price' => 1500, 'from' => '敏山：「服者不寒」。倒下的异兽站起来，体力一半。'],
     // Better seals (docs/numbers.md 22): `by` is how many hundredths of a kind's catch rate one makes it.
     'seal2' => ['name' => '玉契印', 'use' => 'catch', 'by' => 150, 'price' => 600, 'from' => '刻在玉上的契印，比寻常的更容易成契。游戏自己的设定。'],
+    'sealLevel' => ['name' => '威契印', 'use' => 'catch', 'by' => 'level', 'from' => '野生异兽的等级比你场上的那只低，就更容易成契：低于它两倍，低过一半四倍，低过四分之一八倍。游戏自己的设定。'],
+    'sealWater' => ['name' => '水契印', 'use' => 'catch', 'by' => 'water', 'from' => '在水面上遇到的异兽，三倍容易成契。游戏自己的设定。'],
+    'sealSure' => ['name' => '天契印', 'use' => 'catch', 'by' => 'sure', 'from' => '一定成契。全天下只有一枚。游戏自己的设定。'],
     'seal3' => ['name' => '金契印', 'use' => 'catch', 'by' => 200, 'price' => 1200, 'from' => '嵌金的契印，最容易成契。游戏自己的设定。'],
     // What a beast can hold (docs/numbers.md 19): each the classic's own, named with its mountain and what the classic says of
     // it; what it does held is the game's. Those with no price are found once, on their mountain; those with one are sold.

@@ -375,7 +375,7 @@ final class World
         $full = count($this->party) >= self::PARTY;
         $reward = $trial === null ? 0 : Formulas::reward($duel ? Formulas::REWARD_ROAD : Formulas::REWARD_GOD, $theirs[count($theirs) - 1]->level);
         $this->battle = new Screen(new Battle([$this->party, $theirs], $b['elements'], $b['moves'], $this->rng, [true, false], $b['items']), $b['moves'], $this->rng, $b['items'], $this->items, $trial, $duel,
-            $full ? Pen::name($this->box) : null, $full ? Pen::BOX - count($this->boxes[$this->box]) : 0, $reward);
+            $full ? Pen::name($this->box) : null, $full ? Pen::BOX - count($this->boxes[$this->box]) : 0, $reward, $this->afloat);
     }
 
     /**

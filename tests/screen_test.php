@@ -716,3 +716,23 @@ same(['给鹿蜀用了萆荔。', 60, ['seal' => 1], 'bag'], [$m->menu->note, $m
 $m->step($confirm);
 same(null, $m->menu->note, 'confirm goes on');
 $m->run([]);
+
+// The seals that go by a condition (docs/numbers.md 22). 鹿蜀 at level 20 against 狌狌 at level 4, under a quarter of it: eight
+// times 190 is 255, and whole that is 85. The seal that cannot fail asks for no roll.
+$bag = ['sealLevel' => 1, 'sealWater' => 1, 'sealSure' => 1];
+$s = $screen([['lushu', 20]], ['xingxing', 4], Rng::scripted([]), $bag);
+foreach ($open as $c) {
+    $s->step($c);
+}
+same(['威契印  ×1  成功率 33%', '水契印  ×1  成功率 25%', '天契印  ×1  成功率 100%'], $s->items(), 'the seal by level counts the levels; the seal of the water is a plain one on land; the last cannot fail');
+foreach ([$down, $none, $down, $none, $confirm, $confirm, $confirm] as $c) {
+    $s->step($c);
+}
+same(['caught', ['sealLevel' => 1, 'sealWater' => 1]], [$s->outcome, $bag], 'which binds with no roll');
+$bag = ['sealWater' => 1];
+$rng = Rng::scripted([]);
+$s = new Screen(new Battle([[$fighter('lushu', 5)], [$fighter('xingxing', 4)]], $book['elements'], $book['moves'], $rng, [true, false]), $book['moves'], $rng, $book['items'], $bag, null, false, null, 0, 0, true);
+foreach ($open as $c) {
+    $s->step($c);
+}
+same(['水契印  ×1  成功率 33%'], $s->items(), 'in a battle begun on the water the rate is three times as much: 190 × 3 is 255 at most, and whole that is 85, not the 63 of the land');

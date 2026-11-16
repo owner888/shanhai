@@ -40,7 +40,7 @@ foreach ($items as $id => $item) {
     $by = $item['by'] ?? null;
     if (!isset($item['hold'])) {
         check(match ($item['use'] ?? null) { 'heal' => $by === 'all' || (is_int($by) && $by >= 1), 'cure' => in_array($by, ['poison', 'burn', 'paralyze', 'sleep', 'confuse', 'any'], true),
-            'catch' => $by === null || (is_int($by) && $by > 100), default => $by === null }, "the thing $id is used by a number or a kind that fits its use");
+            'catch' => $by === null || (is_int($by) && $by > 100) || in_array($by, ['level', 'water', 'sure'], true), default => $by === null }, "the thing $id is used by a number or a kind that fits its use");
     } else {
         check(!isset($item['use']) || $item['use'] === $item['hold'], "the thing $id, used from the bag, does what it does held");
     }

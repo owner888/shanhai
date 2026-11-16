@@ -70,8 +70,9 @@ final class Screen
      * @param ?string $pen the name of the pen's box a beast bound is sent to, the party being full; null when it joins the party
      * @param int $penRoom how many more that box holds
      * @param int $reward what the one who sets the trial pays when it is won (docs/numbers.md 17)
+     * @param bool $water the battle began on the water (docs/numbers.md 22)
      */
-    public function __construct(public readonly Battle $battle, private readonly array $moves, private readonly Rng $rng, private readonly array $things, array &$bag, public readonly ?string $trial = null, public readonly bool $duel = false, private readonly ?string $pen = null, private readonly int $penRoom = 0, public readonly int $reward = 0)
+    public function __construct(public readonly Battle $battle, private readonly array $moves, private readonly Rng $rng, private readonly array $things, array &$bag, public readonly ?string $trial = null, public readonly bool $duel = false, private readonly ?string $pen = null, private readonly int $penRoom = 0, public readonly int $reward = 0, private readonly bool $water = false)
     {
         $this->bag = &$bag;
         $this->cursor = new Cursor();
@@ -147,11 +148,10 @@ final class Screen
         if ($this->trial !== null || !$this->room()) {
             return $lines;
         }
-        $foe = $this->battle->fighter(1);
         foreach (array_keys($this->bag) as $i => $id) {
             if (($this->things[$id]['use'] ?? null) === 'catch') {
-                $percent = Formulas::catchPercent(Formulas::catchValue(Formulas::sealRate($foe->species['catch'], $this->things[$id]['by'] ?? 100), $foe->maxHp, $foe->hp, $foe->status));
-                $lines[$i] .= "  成功率 $percent%";
+                $needs = $this->needs($this->things[$id]);
+                $lines[$i] .= '  成功率 ' . ($needs === null ? 100 : Formulas::catchPercent($needs)) . '%';
             }
         }
         return $lines;
@@ -321,6 +321,18 @@ final class Screen
         return $this->pen === null || $this->penRoom > 0;
     }
 
+    /** What a byte must not be over for the seal $thing to bind the wild beast as it stands (docs/numbers.md 8, 22); null for the seal that cannot fail. */
+    private function needs(array $thing): ?int
+    {
+        $by = $thing['by'] ?? 100;
+        if ($by === 'sure') {
+            return null;
+        }
+        $foe = $this->battle->fighter(1);
+        $rate = Formulas::sealRate($foe->species['catch'], $by, $this->battle->fighter(0)->level, $foe->level, $this->water);
+        return Formulas::catchValue($rate, $foe->maxHp, $foe->hp, $foe->status);
+    }
+
     /** The medicine of the bag chosen to be used on a beast, an id. */
     private string $dosing = '';
 
@@ -375,8 +387,8 @@ final class Screen
         $name = $foe->species['name'];
         $this->say('使用了' . $thing['name'] . '！', null, ['what' => 'seal']);
         // docs/numbers.md 8: a byte not over what the catch needs binds it.
-        $needs = Formulas::catchValue(Formulas::sealRate($foe->species['catch'], $thing['by'] ?? 100), $foe->maxHp, $foe->hp, $foe->status);
-        if ($this->rng->byte() <= $needs) {
+        $needs = $this->needs($thing);
+        if ($needs === null || $this->rng->byte() <= $needs) { // 22: the seal that cannot fail asks for no roll
             [$this->outcome, $this->caught] = ['caught', $foe];
             $this->say('结契成功！' . $name . '成了你的同伴！', null, ['what' => 'caught']);
             if ($this->pen !== null) {

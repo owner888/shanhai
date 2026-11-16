@@ -161,10 +161,19 @@ final class Formulas
     public const WILD_SLOTS = [30, 60, 80, 90, 95, 99, 100];
     /** 13: of a hundred, the last number that falls to each of the three wild beasts a map's water holds: 60, 30 and 10 in a hundred. */
     public const WATER_SLOTS = [60, 90, 100];
-    /** 8, 22: a kind's catch rate as a seal of $percent makes it: that many hundredths of it, 255 at most. */
-    public static function sealRate(int $rate, int $percent): int
+    /**
+     * 8, 22: a kind's catch rate as a seal makes it, 255 at most. By a number, that many hundredths of it. By 'level', twice
+     * with the wild beast's level under that of the player's beast, four times under half of it, eight under a quarter.
+     * By 'water', three times in a battle begun on the water.
+     */
+    public static function sealRate(int $rate, int|string $by, int $mine = 0, int $theirs = 0, bool $water = false): int
     {
-        return min(255, intdiv($rate * $percent, 100));
+        $times = match ($by) {
+            'level' => $theirs >= $mine ? 1 : ($theirs >= $mine >> 1 ? 2 : ($theirs >= $mine >> 2 ? 4 : 8)),
+            'water' => $water ? 3 : 1,
+            default => null,
+        };
+        return min(255, $times === null ? intdiv($rate * $by, 100) : $rate * $times);
     }
 
     /** 17: the money a new game begins with, the most there can be, and the most of one thing a bag holds. */
