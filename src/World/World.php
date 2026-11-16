@@ -268,8 +268,38 @@ final class World
         $this->wildWait = Formulas::WILD_WAIT;
     }
 
-    /** A beast of $level as data/ makes it, or a god. */
-    private function beast(string $id, int $level): Fighter
+    /**
+     * What a wild beast of kind $id holds (docs/numbers.md 20): three times in four nothing; else, of the things that grow on
+     * a mountain it lives on, the one that is found rather than sold on a byte under WILD_HOLDS_SECOND, and otherwise the one sold.
+     * A kind with no such thing holds nothing. The rolls are made whatever the kind.
+     */
+    private function wildHolds(string $id): ?string
+    {
+        if ($this->rng->byte() < Formulas::WILD_HOLDS_NONE) {
+            return null;
+        }
+        $second = $this->rng->byte() < Formulas::WILD_HOLDS_SECOND;
+        $mountains = explode('、', $this->book['beasts'][$id]['mountain']);
+        foreach ($this->book['items'] as $thing => $t) {
+            if (isset($t['hold'], $t['grows']) && in_array($t['grows'], $mountains, true) && isset($t['price']) !== $second) {
+                return $thing;
+            }
+        }
+        return null;
+    }
+
+    /** A beast of $level as data/ makes it, or a god; holding $item, when one is given. */
+    private function beast(string $id, int $level, ?string $item = null): Fighter
+    {
+        $f = $this->make($id, $level);
+        if ($item !== null && !isset($this->book['items'][$item]['hold'])) {
+            throw new InvalidArgumentException("'$item' is not a thing a beast can hold");
+        }
+        $f->item = $item;
+        return $f;
+    }
+
+    private function make(string $id, int $level): Fighter
     {
         $b = $this->book ?? throw new LogicException('this world was made without the tables beasts and battles need');
         if (isset($b['gods'][$id])) { // a god fights as a beast does, knowing its moves from the first
@@ -306,11 +336,11 @@ final class World
     /**
      * Begins a trial: a battle against the beasts of the one who sets it, in their order, which cannot be fled nor
      * the beasts bound.
-     * @param list<array{0: string, 1: int}> $theirs [beast or god, level]
+     * @param list<array{0: string, 1: int, 2?: string}> $theirs [beast or god, level], and what it holds when it holds a thing
      */
     public function trial(string $who, array $theirs): void
     {
-        $this->begin(array_map(fn(array $t) => $this->beast($t[0], $t[1]), $theirs), $who);
+        $this->begin(array_map(fn(array $t) => $this->beast($t[0], $t[1], $t[2] ?? null), $theirs), $who);
     }
 
     /**
@@ -320,13 +350,16 @@ final class World
      */
     public function duel(string $who, array $theirs): void
     {
-        $this->begin(array_map(fn(array $t) => $this->beast($t[0], $t[1]), $theirs), $who, true);
+        $this->begin(array_map(fn(array $t) => $this->beast($t[0], $t[1], $t[2] ?? null), $theirs), $who, true);
     }
 
     /** Begins a battle with a wild $beast of $level: the party's beasts come to it as they are, and it leaves them as it ends. */
     public function fight(string $beast, int $level): void
     {
-        $this->begin([$this->beast($beast, $level)], null);
+        if ($this->rng === null) {
+            throw new LogicException('this world was made without the dice a battle needs');
+        }
+        $this->begin([$this->beast($beast, $level, $this->wildHolds($beast))], null);
     }
 
     /** @param list<Fighter> $theirs */

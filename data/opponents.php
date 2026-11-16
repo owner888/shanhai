@@ -11,7 +11,8 @@
 //   needs    the flag without which they do not fight: the player has a beast
 //   unready  what they say to one who has none
 //   says     [what is said before, when beaten, when met again], taken in turn
-//   at       map => [[x, y, facing, sight, who, [[beast, level], ...]], ...]
+//   at       map => [[x, y, facing, sight, who, [[beast, level], ...]], ...]; a beast that holds a thing is [beast, level, thing]:
+//            those of the reference's that hold one hold ours of the same effect, and past its sixteenth gym as many do (docs/numbers.md 20)
 // Data::maps() puts each on its map as a person (id foe0, foe1, ...) whose script is the challenge, and who watches.
 declare(strict_types=1);
 
@@ -120,7 +121,7 @@ return [
         ],
         'danxue' => [
             [7, 6, 'down', 3, '猎户', [['xingxing', 10], ['jiyu', 12]]],
-            [13, 8, 'up', 3, '樵夫', [['biluo', 13]]],
+            [13, 8, 'up', 3, '樵夫', [['biluo', 13, 'baigao']]],
         ],
         'fashuang' => [
             [10, 6, 'down', 2, '渔人', [['fuchong', 12], ['xi', 14]]],
@@ -142,10 +143,10 @@ return [
         ],
         'jishan3' => [
             [7, 6, 'down', 3, '渔人', [['xingxing', 12], ['xingxing', 15]]],
-            [13, 8, 'up', 2, '采药人', [['xuangui', 14]]],
+            [13, 8, 'up', 2, '采药人', [['xuangui', 14, 'baigao']]],
         ],
         'lingqiu' => [
-            [10, 8, 'up', 2, '采药人', [['baiyuan', 14]]],
+            [10, 8, 'up', 2, '采药人', [['baiyuan', 14, 'baigao']]],
         ],
         'lunzhe' => [
             [7, 6, 'down', 3, '行商', [['xingxing', 12], ['xingxing', 15]]],
@@ -196,10 +197,10 @@ return [
         ],
         'shuli' => [
             [7, 6, 'down', 1, '巫祝弟子', [['chibi', 19]]],
-            [13, 8, 'up', 5, '猎户', [['shijiu', 17]]],
+            [13, 8, 'up', 5, '猎户', [['shijiu', 17, 'baigao']]],
         ],
         'gaoshan' => [
-            [7, 6, 'down', 4, '猎户', [['she', 17]]],
+            [7, 6, 'down', 4, '猎户', [['she', 17, 'baigao']]],
             [13, 8, 'up', 4, '牧人', [['lu', 17], ['zhu', 17], ['baihan', 19]]],
         ],
         'nuchuang' => [
@@ -382,8 +383,8 @@ return [
             [10, 6, 'down', 3, '樵夫', [['minniu', 30], ['hu', 30], ['jufu', 34]]],
         ],
         'gouwu' => [
-            [7, 6, 'down', 0, '渔人', [['yelu', 35]]],
-            [13, 8, 'up', 0, '采药人', [['luomu', 35]]],
+            [7, 6, 'down', 0, '渔人', [['yelu', 35, 'baigao']]],
+            [13, 8, 'up', 0, '采药人', [['luomu', 35, 'baigao']]],
         ],
         'beixiao' => [
             [10, 6, 'down', 3, '采药人', [['tongqu', 35]]],
@@ -475,10 +476,10 @@ return [
             [10, 6, 'down', 3, '采药人', [['zheng', 30], ['bifang', 30], ['aoye', 30]]],
         ],
         'geshanwei' => [
-            [10, 6, 'down', 2, '猎户', [['zhuhuai', 29], ['zhujian', 29], ['ranyi', 29]]],
+            [10, 6, 'down', 2, '猎户', [['zhuhuai', 29, 'baigao'], ['zhujian', 29, 'baigao'], ['ranyi', 29, 'baigao']]],
         ],
         'geshanshou' => [
-            [10, 6, 'down', 2, '巫祝弟子', [['shijiu', 23], ['she', 23], ['luomu', 23], ['chigui', 23], ['shanyu', 23], ['huyu', 23]]],
+            [10, 6, 'down', 2, '巫祝弟子', [['shijiu', 23, 'baigao'], ['she', 23, 'baigao'], ['luomu', 23, 'baigao'], ['chigui', 23, 'baigao'], ['shanyu', 23, 'baigao'], ['huyu', 23, 'baigao']]],
         ],
         'yue' => [
             [10, 6, 'down', 3, '行商', [['min', 34]]],
@@ -490,13 +491,13 @@ return [
             [10, 6, 'down', 4, '采药人', [['zuzi', 27], ['guxi', 29], ['zheng', 31], ['shiyu', 29]]],
         ],
         'luqi' => [
-            [10, 6, 'down', 3, '猎户', [['fan', 29], ['chigui', 29], ['baiyou', 29]]],
+            [10, 6, 'down', 3, '猎户', [['fan', 29, 'baigao'], ['chigui', 29, 'baigao'], ['baiyou', 29, 'baigao']]],
         ],
         'gushe' => [
             [10, 6, 'down', 3, '樵夫', [['shuima', 29], ['yongyong', 35]]],
         ],
         'beigushe' => [
-            [10, 6, 'down', 3, '渔人', [['huyu', 33]]],
+            [10, 6, 'down', 3, '渔人', [['huyu', 33, 'baigao']]],
         ],
         'nangushe' => [
             [10, 6, 'down', 4, '牧人', [['meng', 36]]],
@@ -530,7 +531,7 @@ return [
         ],
         'zhongfu' => [
             [7, 6, 'down', 3, '樵夫', [['feiyishe', 35]]],
-            [13, 8, 'up', 3, '牧人', [['yongyong', 33]]],
+            [13, 8, 'up', 3, '牧人', [['yongyong', 33, 'baigao']]],
         ],
         'hushe' => [
             [7, 6, 'down', 3, '牧人', [['fan', 35]]],
@@ -673,7 +674,7 @@ return [
             [10, 6, 'down', 3, '采玉人', [['xiang', 41]]],
         ],
         'chaoshan' => [
-            [10, 6, 'down', 4, '渔人', [['chi', 42], ['bailu', 43]]],
+            [10, 6, 'down', 4, '渔人', [['chi', 42, 'baigao'], ['bailu', 43, 'baigao']]],
         ],
         'chenghou' => [
             [10, 6, 'down', 3, '巫祝弟子', [['haozhi', 44], ['xiao', 45], ['xiong', 46]]],
@@ -733,7 +734,7 @@ return [
             [10, 6, 'down', 3, '采玉人', [['fuzhu', 55], ['lingyao', 56], ['lushu', 57]]],
         ],
         'guishanliu' => [
-            [10, 6, 'down', 1, '渔人', [['luoyu', 57], ['saoyu', 58]]],
+            [10, 6, 'down', 1, '渔人', [['luoyu', 57, 'baigao'], ['saoyu', 58, 'baigao']]],
         ],
         'gaodi' => [
             [10, 6, 'down', 3, '牧人', [['renmianxiao', 60]]],
@@ -790,7 +791,7 @@ return [
             [10, 6, 'down', 3, '采药人', [['dongdong', 62]]],
         ],
         'minshanqi' => [
-            [10, 6, 'down', 1, '行商', [['chaishou', 62], ['tiaoyong', 63]]],
+            [10, 6, 'down', 1, '行商', [['chaishou', 62, 'baigao'], ['tiaoyong', 63, 'baigao']]],
         ],
         'jingshanba' => [
             [10, 6, 'down', 3, '猎户', [['yinmo', 42]]],
@@ -850,7 +851,7 @@ return [
             [10, 6, 'down', 2, '采药人', [['lingling', 62], ['zhuru', 63], ['youyou', 64]]],
         ],
         'huanshanba' => [
-            [10, 6, 'down', 3, '行商', [['qinyuan', 63], ['jiao', 64]]],
+            [10, 6, 'down', 3, '行商', [['qinyuan', 63, 'baigao'], ['jiao', 64, 'baigao']]],
         ],
         'renju' => [
             [10, 6, 'down', 3, '猎户', [['renmianxiao', 65]]],
@@ -910,7 +911,7 @@ return [
             [10, 6, 'down', 1, '渔人', [['conglong', 48], ['bangyu', 49]]],
         ],
         'fanhui' => [
-            [10, 6, 'down', 3, '巫祝弟子', [['ershu', 52], ['youyan', 53], ['baiye', 54]]],
+            [10, 6, 'down', 3, '巫祝弟子', [['ershu', 52, 'baigao'], ['youyan', 53, 'baigao'], ['baiye', 54, 'baigao']]],
         ],
         'yongshi' => [
             [10, 6, 'down', 2, '猎户', [['pijiu', 55], ['yongyong', 56]]],
@@ -967,7 +968,7 @@ return [
             [10, 6, 'down', 1, '采玉人', [['xianfu', 56], ['huangniao', 57]]],
         ],
         'youxi' => [
-            [10, 6, 'down', 3, '樵夫', [['zhu', 58]]],
+            [10, 6, 'down', 3, '樵夫', [['zhu', 58, 'baigao']]],
         ],
         'congshan' => [
             [10, 6, 'down', 2, '牧人', [['jiaolong', 58], ['xuanbao', 59]]],
@@ -1027,7 +1028,7 @@ return [
             [10, 6, 'down', 1, '采玉人', [['fuzhu', 73], ['lingyao', 74]]],
         ],
         'chouyang' => [
-            [10, 6, 'down', 3, '樵夫', [['tiyu', 75]]],
+            [10, 6, 'down', 3, '樵夫', [['tiyu', 75, 'baigao']]],
         ],
         'fushansy' => [
             [10, 6, 'down', 2, '牧人', [['qiezhi', 75], ['yilang', 76]]],

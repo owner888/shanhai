@@ -166,9 +166,9 @@ same([5, null, 0], [$calm->player->x, $calm->battle, $warded->left()], 'with wha
 $rng->more([25]);
 $step();
 same([5, null, 0], [$w->player->x, $w->battle, $rng->left()], 'the fifth asks for a roll: 25, not under the rate\'s 25, meets nothing');
-$rng->more([24, 200, 30]);
+$rng->more([24, 200, 30, 0]);
 $step();
-check($w->battle !== null && $rng->left() === 0, 'the next: 24 meets a beast; 200 is asked for again; 30 is the second of the seven');
+check($w->battle !== null && $rng->left() === 0, 'the next: 24 meets a beast; 200 is asked for again; 30 is the second of the seven; 0, it holds nothing');
 same(['baiyuan', 3], [$w->battle->battle->fighter(1)->id, $w->battle->battle->fighter(1)->level], 'which is the map\'s second, at its level');
 same([6, false], [$w->player->x, $w->player->moving], 'the player stands on the tile stepped onto');
 // the faster beast flees with no roll: the two lines, the menu's last entry, the last line
@@ -181,7 +181,7 @@ for ($i = 0; $i < 4; $i++) {
     $step();
 }
 same([10, null], [$w->player->x, $w->battle], 'after a battle the next four steps meet nothing again');
-$rng->more([0, 99]);
+$rng->more([0, 99, 0]);
 $step();
 same(['fuchong', 9], [$w->battle?->battle->fighter(1)->id, $w->battle?->battle->fighter(1)->level], 'then the fifth can: 99 is the last of the seven');
 foreach ([[null, true], [null, true], [Dir::Down, false], [null, false], [Dir::Down, false], [null, false], [Dir::Down, false], [null, true], [null, true]] as [$dir, $confirm]) {
@@ -293,7 +293,7 @@ $go(Dir::Left);
 $rng->more([15]);
 $go(Dir::Right);
 same([3, null, 0], [$w->player->x, $w->battle, $rng->left()], 'the fifth step asks for a roll: 15, not under the water\'s 15, meets nothing');
-$rng->more([14, 60, 216]);
+$rng->more([14, 60, 216, 0]);
 $go(Dir::Left);
 same(['chiru', 15], [$w->battle?->battle->fighter(1)->id, $w->battle?->battle->fighter(1)->level], 'the next: 14 meets a beast; 60 is the second of the three; 216 adds three levels to its 12');
 // the faster beast flees with no roll: the two lines, the menu's last entry, the last line
@@ -441,3 +441,22 @@ same(null, $w->shop, 'leaving closes it');
 $w->step(new Controls());
 same('left', $w->dialog, 'and the script goes on');
 check(throws(fn() => \Shanhai\Script\Vm::check([['shop', []]])) && throws(fn() => \Shanhai\Script\Vm::check([['shop', 'seal']])), 'buying with nothing sold is refused');
+
+// What a wild beast holds (docs/numbers.md 20): nothing on a byte under 192; else, of what grows on its mountain, the thing
+// that is found on a byte under 20, and the thing that is sold on any other. 土蝼 lives on 昆仑之丘, where 薲草 and 沙棠 grow.
+$book = ['beasts' => Data::beasts(), 'learnsets' => Data::learnsets(), 'moves' => Data::moves(), 'elements' => Data::elements(), 'items' => Data::items()];
+$holds = function (string $beast, array $rolls) use ($book): array {
+    $w = new World(['field' => \Shanhai\World\Map::fromArray(['id' => 'field', 'name' => 'Field', 'rows' => ['..']])], 'field', 0, 0, Dir::Right, $book, $rng = \Shanhai\Battle\Rng::scripted($rolls));
+    $w->join('xingxing', 20);
+    $w->run([['battle', $beast, 5]]);
+    return [$w->battle->battle->fighter(1)->item, $rng->left()];
+};
+same([[null, 0], ['pincao', 0], ['shatang', 0]], [$holds('tulou', [191]), $holds('tulou', [192, 20]), $holds('tulou', [192, 19])], 'three in four hold nothing; of the rest, most the thing sold, a few the thing found');
+same([[null, 0], [null, 0]], [$holds('fuchong', [255, 0]), $holds('fuchong', [255, 255])], 'one of a mountain where nothing grows holds nothing, the rolls made all the same');
+same(['mihu', 'yupei'], [$holds('xingxing', [192, 0])[0], $holds('xingxing', [192, 20])[0]], '狌狌 of 招摇之山: 迷榖, or 育沛');
+// One of a trial's or a duel's beasts holds what its entry says.
+$w = new World(['field' => \Shanhai\World\Map::fromArray(['id' => 'field', 'name' => 'Field', 'rows' => ['..']])], 'field', 0, 0, Dir::Right, $book, \Shanhai\Battle\Rng::seeded(1));
+$w->join('xingxing', 20);
+$w->run([['duel', '猎户', [['fuchong', 3], ['baiyuan', 4, 'baigao']]]]);
+same([null, 'baigao'], array_map(fn($f) => $f->item, $w->battle->battle->parties[1]), 'one of a duel\'s beasts holds what its entry says');
+check(throws(fn() => $w->duel('猎户', [['fuchong', 3, 'seal']])) && throws(fn() => \Shanhai\Script\Vm::check([['duel', '猎户', [['fuchong', 3, 4]]]])), 'a thing that cannot be held, or what is no thing, is refused');

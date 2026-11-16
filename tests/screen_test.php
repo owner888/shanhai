@@ -360,7 +360,7 @@ foreach ([[[64, 191], 0, '啊，狌狌挣脱了！'], [[64, 190, 191], 1, '可�
 }
 
 // Bound, the wild beast joins the party as the battle left it; a full party cannot bind.
-$w = new World($maps, 'field', 0, 0, Dir::Down, $book, Rng::scripted([0]));
+$w = new World($maps, 'field', 0, 0, Dir::Down, $book, Rng::scripted([0, 0])); // the wild beast holds nothing; the seal binds
 $w->join('lushu', 30);
 $w->run([['give', 'seal', 1], ['battle', 'xingxing', 4], ['say', 'after']]);
 $w->battle->battle->fighter(1)->hp = 7;
@@ -371,7 +371,7 @@ same([null, 'caught', ['lushu', 'xingxing'], 7, [], 'after'], [$w->battle, $w->l
 $w->step($confirm);
 // With six in the party the beast bound goes to the pen's current box, first in it and whole, and the player is told
 // when that fills the box; with the box full too no seal is used (docs/numbers.md 16).
-$w = new World($maps, 'field', 0, 0, Dir::Down, $book, Rng::scripted([0]));
+$w = new World($maps, 'field', 0, 0, Dir::Down, $book, $rolls = Rng::scripted([0, 0]));
 for ($i = 0; $i < World::PARTY; $i++) {
     $w->join('lushu', 30);
 }
@@ -388,6 +388,7 @@ for ($lines = []; $w->battle !== null && count($lines) < 9; $w->step($confirm)) 
 same(['使用了契印！', '结契成功！狌狌成了你的同伴！', '队伍满了，狌狌被送到了兽栏的第三栏。', '第三栏满了。到兽栏换一栏之前，没法再结契。'], $lines, 'with six in the party the beast bound is sent to the pen, and the box it fills is told of');
 $kept = $w->boxes[2][0];
 same([World::PARTY, Pen::BOX, 4, $kept->maxHp, ['seal' => 1]], [count($w->party), count($w->boxes[2]), $kept->level, $kept->hp, $w->items], 'it is first in the current box, whole, and the seal is spent');
+$rolls->more([0]);
 $w->run([['battle', 'xingxing', 4]]);
 foreach ([...$open, $confirm] as $c) {
     $w->step($c);

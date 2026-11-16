@@ -22,7 +22,7 @@ use Shanhai\World\{Dir, World};
  *     ['giveBeast', beast, level]
  *     ['ask', line, [[choice, label], ...]]   shows the line with the choices; goes to the label of the one taken
  *     ['battle', beast, level]   a wild one; the script goes on when it is over, unless it was lost
- *     ['trial', who, [[beast or god, level], ...]]   a trial against their beasts; the script goes on when it is passed
+ *     ['trial', who, [[beast or god, level], ...]]   a trial against their beasts, one holding a thing written [beast, level, thing]; the script goes on when it is passed
  *     ['duel', who, [[beast, level], ...]]   a battle with one met on the road, by a trial's rules; the script goes on when it is won
  *     ['rest']                   the party's beasts are whole again, and here is where a battle lost wakes the player
  *     ['pen']                    opens the pen, where beasts are left and taken; the script goes on when it is closed
@@ -96,8 +96,8 @@ final class Vm
                     throw new InvalidArgumentException("script line $i: 'trial' takes who sets it and their beasts");
                 }
                 foreach ($cmd[2] as $theirs) {
-                    if (!is_array($theirs) || count($theirs) !== 2 || !is_string($theirs[0]) || !is_int($theirs[1])) {
-                        throw new InvalidArgumentException("script line $i: a trial's beast is [beast or god, level]");
+                    if (!is_array($theirs) || !in_array(count($theirs), [2, 3], true) || !is_string($theirs[0]) || !is_int($theirs[1]) || !is_string($theirs[2] ?? '')) {
+                        throw new InvalidArgumentException("script line $i: a trial's beast is [beast or god, level], or with what it holds [beast, level, thing]");
                     }
                 }
             }

@@ -172,6 +172,9 @@ final class Formulas
         return 4 * $base * $level;
     }
 
+    /** 20: a wild beast holds nothing on a byte under the first; else its kind's second thing on a byte under the second, its first on any other. */
+    public const WILD_HOLDS_NONE = 192, WILD_HOLDS_SECOND = 20;
+
     /** 13: the steps after entering a map, or a battle, of which only the last can meet a wild beast. */
     public const WILD_WAIT = 5;
 

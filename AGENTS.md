@@ -75,7 +75,7 @@ src/Play.php       MyPHP's Game: keys and gamepad into Controls, World::step, dr
                    its GameAudio's tones
 data/game.php      where a new game starts, where the player wakes after a battle is lost, what is asked when a game is saved
 data/ranges.php    the ranges of mountains by number: the classic's book and name, the reference's gym they are measured from
-data/opponents.php those met on the roads: where each stands, how far they see, what they send (the reference's numbers)
+data/opponents.php those met on the roads: where each stands, how far they see, what they send and what those hold (the reference's numbers)
 data/gods.php      the gods that keep the ranges: what a beast's entry has to fight with, and the classic's line
 data/items.php     the things a bag holds: the seal that binds a wild beast, and its price; what a beast can hold, and what each does held
 data/elements.php  the five elements: what each overcomes and feeds, physical or special, its region
@@ -138,7 +138,7 @@ docs/elements.md   the elements' table and how a beast's elements are settled
   the party full goes there, whole; a script's `pen` opens its screen (`Pen`), where each range's place of rest is.
 - **A beast holds one thing** (`Fighter::$item`, docs/numbers.md 18, 19), given and taken back in the menu: held by one that can
   fight, 同修玉 halves what a fallen beast gives, and its holders divide as much again as those that fought. The rest are
-  the classic's herbs, trees and stones (`data/items.php`'s `hold` and `by`; `Battle::holds`): found once by their mountain's sign, or sold.
+  the classic's herbs, trees and stones (`data/items.php`'s `hold` and `by`; `Battle::holds`): found once by their mountain's sign, or sold; a wild beast may hold what grows on its mountain (20).
 - **Money** (贝, `World::$money`, docs/numbers.md 17): a trial or one on the road, beaten, pays by the level of their last
   beast; a battle lost takes half; a script's `shop` opens buying (`Shop`), where each range's place of rest is.
 - **A saved game** is `World::state()`: the map and place, flags, bag, money, where it last rested, the pen, and each beast's `Fighter::state()`. What does not

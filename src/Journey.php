@@ -289,6 +289,9 @@ final class Journey
         }
         if (!$none) {
             $this->cursorTo($low, $at);
+            if ($w->party[$low]->item !== null) { // what it holds already, bound with it in the wild, goes to the bag first
+                $this->tick(confirm: true);
+            }
             $this->tick(confirm: true);
             $this->cursorTo(array_search($this->share(), array_values(array_filter(array_keys($w->items), fn(string $id) => isset(Data::items()[$id]['hold']))), true), $at);
             $this->tick(confirm: true);

@@ -28,9 +28,13 @@ foreach ($items as $id => $item) {
         $boosted[] = $item['hold'] === 'boost' ? $item['by'] : null;
         $found = array_filter($maps ?? Data::maps(), fn($map) => str_contains(json_encode([$map->signs, $map->npcs]), "\"give\",\"$id\""));
         check(isset($item['price']) || $found !== [], "the thing $id, held, is sold or is given somewhere");
+        // docs/numbers.md 20: where the classic has it is a mountain there is a map of; what is found, is found there
+        $there = array_filter($maps ?? Data::maps(), fn($map) => isset($item['grows']) && str_starts_with($map->name, $item['grows']));
+        check(!isset($item['grows']) || $there !== [], "the thing $id grows on a mountain there is a map of");
+        check(!isset($item['grows']) || isset($item['price']) || array_intersect_key($found, $there) !== [], "the thing $id is found on the mountain it grows on");
     }
     check(($item['name'] ?? '') !== '' && ($item['from'] ?? '') !== '', "the thing $id has a name and where it comes from");
-    check(array_diff(array_keys($item), ['name', 'use', 'hold', 'by', 'price', 'from']) === [] && in_array($item['use'] ?? null, [null, 'catch'], true), "the thing $id has only the fields there are, and a use there is");
+    check(array_diff(array_keys($item), ['name', 'use', 'hold', 'by', 'grows', 'price', 'from']) === [] && in_array($item['use'] ?? null, [null, 'catch'], true), "the thing $id has only the fields there are, and a use there is");
     check(!isset($item['price']) || (is_int($item['price']) && $item['price'] >= 1), "the thing $id, if it is sold, has a price of one or more");
 }
 sort($boosted);
