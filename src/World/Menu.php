@@ -51,12 +51,15 @@ final class Menu
      * its experience and what it holds; its moves; and the word for its individual values (23).
      * @param array{moves: array, elements: array, items: array} $book @return list<string>
      */
+    /** How a gender is written after a name, in the classic's words (docs/numbers.md 29). */
+    public const GENDER = ['male' => '（牡）', 'female' => '（牝）'];
+
     public static function detail(Fighter $f, array $book): array
     {
         $s = $f->species;
         $next = $f->level >= Formulas::MAX_LEVEL ? '已到顶' : '到下一级还差 ' . (Formulas::expAtLevel($s['growth'], $f->level + 1) - $f->exp);
         return [
-            sprintf('%s  Lv%d  %s  体力 %d/%d%s', $s['name'], $f->level, implode('、', array_map(fn(string $e) => $book['elements'][$e]['name'], $s['elements'])), $f->hp, $f->maxHp,
+            sprintf('%s%s  Lv%d  %s  体力 %d/%d%s', $s['name'], self::GENDER[$f->gender() ?? ''] ?? '', $f->level, implode('、', array_map(fn(string $e) => $book['elements'][$e]['name'], $s['elements'])), $f->hp, $f->maxHp,
                 $f->fainted() ? '  倒' : ($f->status === null ? '' : '  ' . Screen::STATUS[$f->status])),
             sprintf('攻击 %d  防御 %d  特攻 %d  特防 %d  速度 %d', $f->stats['atk'], $f->stats['def'], $f->stats['spa'], $f->stats['spd'], $f->stats['spe']),
             '经验 ' . $f->exp . '，' . $next . '  ' . ($f->item === null ? '空手' : '持：' . $book['items'][$f->item]['name']),

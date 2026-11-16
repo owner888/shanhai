@@ -20,6 +20,8 @@
 //   tier      the game's own: which of data/tiers.php its numbers are built in
 //   stats     hp, attack, defense, special attack, special defense, speed: ours, inside the tier's band
 //   catch, exp, growth   its catch rate, base experience and growth rate (docs/numbers.md 7, 8)
+//   gender   its share of females, a byte of Formulas (docs/numbers.md 29), half when not given; 'none' for the three the classic
+//            calls 自为牝牡, both in one
 declare(strict_types=1);
 
 return [
@@ -74,7 +76,7 @@ return [
         'lore' => '冬死而夏生。食之无肿疾。',
     ],
     'lei' => [
-        'name' => '类', 'kind' => 'strange', 'range' => 1, 'mountain' => '亶爰之山',
+        'name' => '类', 'kind' => 'strange', 'gender' => 'none', 'range' => 1, 'mountain' => '亶爰之山',
         'elements' => ['fire'], 'why' => '征兆、栖居、形貌都无可据，取南山经的本地属性。',
         'tier' => 2, 'stats' => ['hp' => 65, 'atk' => 55, 'def' => 50, 'spa' => 75, 'spd' => 70, 'spe' => 70],
         'catch' => 120, 'exp' => 129, 'growth' => 'mediumFast',
@@ -927,7 +929,7 @@ return [
         'lore' => '可以辟火。',
     ],
     'qiyu' => [
-        'name' => '鵸䳜', 'kind' => 'strange', 'range' => 8, 'mountain' => '带山',
+        'name' => '鵸䳜', 'kind' => 'strange', 'gender' => 'none', 'range' => 8, 'mountain' => '带山',
         'elements' => ['wood'], 'why' => '鸟。',
         'tier' => 3, 'stats' => ['hp' => 75, 'atk' => 55, 'def' => 70, 'spa' => 100, 'spd' => 90, 'spe' => 80],
         'catch' => 60, 'exp' => 156, 'growth' => 'mediumSlow',
@@ -1293,7 +1295,7 @@ return [
         'lore' => '食之已狂。',
     ],
     'xiangshe' => [
-        'name' => '象蛇', 'kind' => 'strange', 'range' => 10, 'mountain' => '阳山',
+        'name' => '象蛇', 'kind' => 'strange', 'gender' => 'none', 'range' => 10, 'mountain' => '阳山',
         'elements' => ['wood'], 'why' => '鸟。',
         'tier' => 3, 'stats' => ['hp' => 75, 'atk' => 55, 'def' => 70, 'spa' => 100, 'spd' => 90, 'spe' => 80],
         'catch' => 60, 'exp' => 156, 'growth' => 'mediumSlow',

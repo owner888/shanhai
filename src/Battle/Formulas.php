@@ -244,6 +244,25 @@ final class Formulas
         }
     }
 
+    /**
+     * 29: a kind's share of females, as the byte its beasts' individual values are held against. The reference's: none
+     * 0, one in eight 31, a quarter 63, half 127, three quarters 191, all 254.
+     */
+    public const GENDER_EVEN = 127, GENDER_ALL = 254;
+
+    /**
+     * 29: 'female' or 'male', from the attack value (the high four bits) and the speed value (the low four): female
+     * when the two together are no more than $ratio. Always male with 0, always female with GENDER_ALL; null for a
+     * kind with none ($ratio null).
+     */
+    public static function gender(?int $ratio, int $atk, int $spe): ?string
+    {
+        if ($ratio === null) {
+            return null;
+        }
+        return $ratio !== 0 && ($ratio === self::GENDER_ALL || ($atk << 4 | $spe) <= $ratio) ? 'female' : 'male';
+    }
+
     /** 25, 27: the power of the move of the bond: the bond times ten over twenty-five, twelve for one of the last rite, and 1 at least. */
     public static function bondPower(int $bond, bool $last = false): int
     {

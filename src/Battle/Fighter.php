@@ -85,6 +85,13 @@ final class Fighter
             'hp' => $this->hp, 'status' => $this->status, 'sleep' => $this->sleep, 'moves' => $this->moves, 'item' => $this->item, 'bond' => $this->bond, 'offered' => $this->offered, 'rank' => $this->rank];
     }
 
+    /** 'female', 'male', or null for a kind with neither (docs/numbers.md 29): its kind's `gender`, half and half when it gives none. */
+    public function gender(): ?string
+    {
+        $ratio = $this->born['gender'] ?? Formulas::GENDER_EVEN;
+        return Formulas::gender($ratio === 'none' ? null : $ratio, $this->dvs['atk'], $this->dvs['spe']);
+    }
+
     /** It receives the rite $rank (docs/numbers.md 27): its base stats rise, and its hp by as much as its most does. */
     public function rite(int $rank): void
     {

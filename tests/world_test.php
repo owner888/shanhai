@@ -512,3 +512,13 @@ same([[2, 2]], $w->rites(), 'the last rite asks a bond of 220');
 $young->bond = 220;
 same(['白猿·璧受了圭礼，成了白猿·圭！它的同心更强了。', 3], [$w->rite(1, 3), $young->rank], 'which then is received');
 check(throws(fn() => $w->rite(0, 1)) && throws(fn() => $young->rite(3)), 'a rite that cannot be received is refused');
+
+// docs/numbers.md 29: a beast is female or male by its individual values; the three the classic calls both in one, and the gods, are neither.
+$w = new World(['field' => \Shanhai\World\Map::fromArray(['id' => 'field', 'name' => 'Field', 'rows' => ['..']])], 'field', 0, 0, Dir::Right, $book + ['gods' => Data::gods()], \Shanhai\Battle\Rng::scripted([0x70, 0x00, 0x80, 0x00, 0x00, 0x00]));
+$w->join('xingxing', 5); // an attack value of 7
+$w->join('xingxing', 5); // of 8
+$w->join('lei', 5);
+same(['female', 'male', null], array_map(fn($f) => $f->gender(), $w->party), 'female under an attack value of 8, male from it; 类 is neither');
+same(['狌狌（牝）', '狌狌（牡）', '类'], array_map(fn($f) => explode('  ', \Shanhai\World\Menu::detail($f, ['elements' => Data::elements(), 'items' => Data::items(), 'moves' => Data::moves()])[0])[0], $w->party), 'the details say which after the name, in the classic\'s words');
+$w->run([['trial', '山神', [['queshan', 5], ['xingxing', 5]]]]);
+same([null, 'male'], array_map(fn($f) => $f->gender(), $w->battle->battle->parties[1]), 'a god is neither; a beast of one who sets a trial, all its values 8, is male');

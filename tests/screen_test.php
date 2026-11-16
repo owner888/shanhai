@@ -744,7 +744,7 @@ same(['异兽', '背包', '详情', '图鉴'], $list(), 'with a kind seen, the m
 foreach ([$down, $none, $down, $none, $confirm, $confirm] as $c) {
     $d->step($c);
 }
-same(sprintf('鹿蜀  Lv5  %s  体力 %d/%d', $book['elements'][$f->species['elements'][0]]['name'], $f->hp, $f->maxHp), $d->menu->note, 'the look at a beast: what it is and how it stands');
+same(sprintf('鹿蜀（牡）  Lv5  %s  体力 %d/%d', $book['elements'][$f->species['elements'][0]]['name'], $f->hp, $f->maxHp), $d->menu->note, 'the look at a beast: what it is and how it stands');
 $shown = [];
 for ($i = 0; $i < 6 && $d->menu->note !== null; $i++) {
     $shown[] = $d->menu->note;

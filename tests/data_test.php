@@ -271,7 +271,8 @@ foreach ($beasts as $id => $b) {
     $names[$b['name']] = true;
     check(in_array($b['kind'], ['strange', 'common'], true), "$id is strange or common");
     check($b['mountain'] !== '' && $b['looks'] !== '', "$id has a mountain and its looks");
-    check(array_diff(array_keys($b), ['name', 'kind', 'range', 'mountain', 'elements', 'why', 'tier', 'stats', 'catch', 'exp', 'growth', 'looks', 'note', 'sound', 'omen', 'lore', 'unchecked', 'starter']) === [], "$id has only the fields there are");
+    check(array_diff(array_keys($b), ['name', 'kind', 'range', 'mountain', 'elements', 'why', 'tier', 'stats', 'catch', 'exp', 'growth', 'looks', 'note', 'sound', 'omen', 'lore', 'unchecked', 'starter', 'gender']) === [], "$id has only the fields there are");
+    check(!isset($b['gender']) || $b['gender'] === 'none' || (is_int($b['gender']) && $b['gender'] >= 0 && $b['gender'] <= \Shanhai\Battle\Formulas::GENDER_ALL), "$id's gender is a share of females or none");
     check(in_array(count($b['elements']), [1, 2], true) && count(array_unique($b['elements'])) === count($b['elements']), "$id has one element, or two that differ");
     foreach ($b['elements'] as $e) {
         check(isset($elements[$e]), "$id's element is one there is: $e");

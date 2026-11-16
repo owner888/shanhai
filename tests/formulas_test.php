@@ -128,3 +128,12 @@ same(['hp' => 118, 'atk' => 118, 'def' => 99, 'spa' => 39, 'spd' => 59, 'spe' =>
 same(255, Formulas::risen(['name' => 'x', 'kind' => 'common', 'tier' => 2, 'stats' => ['hp' => 250]], 2)['stats']['hp'], 'a base stat is 255 at most');
 check(throws(fn() => Formulas::risen(['name' => '鹿蜀', 'kind' => 'strange', 'tier' => 3, 'stats' => []], 1)), 'a kind that receives none is refused');
 same([102, 122, 105], [Formulas::bondPower(255), Formulas::bondPower(255, true), Formulas::bondPower(220, true)], 'after the last rite the move of the bond is the bond times twelve over twenty-five');
+
+// 29: female when the attack and the speed values together are no more than the kind's share of females.
+same(['female', 'male', 'male', 'female', 'male', 'female', null], [Formulas::gender(127, 7, 15), Formulas::gender(127, 8, 0), Formulas::gender(0, 0, 0), Formulas::gender(254, 15, 15), Formulas::gender(31, 2, 0), Formulas::gender(31, 1, 15), Formulas::gender(null, 0, 0)],
+    'half and half turns at an attack value of 8; none, all, one in eight; a kind with neither');
+$females = 0;
+for ($i = 0; $i < 256; $i++) {
+    $females += Formulas::gender(Formulas::GENDER_EVEN, $i >> 4, $i & 15) === 'female' ? 1 : 0;
+}
+same(128, $females, 'of the 256 a beast can be, 128 are female');
