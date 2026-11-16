@@ -1,6 +1,6 @@
 <?php
 // The beasts of the Classic of Mountains and Seas: the Southern Mountains (南山经), all three ranges, and the first
-// four ranges of the Western (西山经), which are all it has, the three of the Northern (北山经), and the first of the Eastern (东山经之首).
+// four ranges of the Western (西山经), which are all it has, the three of the Northern (北山经), and the first two of the Eastern (东山经之首, 东次二经).
 //
 // Every field here restates what the classic says, checked against its text (zh.wikisource.org/wiki/山海經/南山經 and
 // /西山經, which carry Guo Pu's commentary; the names and wording cross-checked with a second edition where one could
@@ -1504,5 +1504,95 @@ return [
         'catch' => 255, 'exp' => 58, 'growth' => 'mediumFast',
         'looks' => '激水中的紫色的螺。',
         'unchecked' => '原文只有名字；「蠃」一本作「羸」。',
+    ],
+    // 东次二经: 空桑之山 to 䃌山
+    'lingling' => [
+        'name' => '軨軨', 'kind' => 'strange', 'range' => 12, 'mountain' => '空桑之山',
+        'elements' => ['water'], 'why' => '见则天下大水。',
+        'tier' => 3, 'stats' => ['hp' => 95, 'atk' => 70, 'def' => 80, 'spa' => 90, 'spd' => 80, 'spe' => 50],
+        'catch' => 60, 'exp' => 155, 'growth' => 'mediumSlow',
+        'looks' => '形如牛而虎文。',
+        'sound' => '如钦；叫的就是自己的名字。',
+        'omen' => '见则天下大水。',
+    ],
+    'shenyao' => [
+        'name' => '蜃珧', 'kind' => 'common', 'range' => 12, 'mountain' => '峄皋之山',
+        'elements' => ['water'], 'why' => '生于峄皋之水中。',
+        'tier' => 1, 'stats' => ['hp' => 50, 'atk' => 35, 'def' => 90, 'spa' => 45, 'spd' => 55, 'spe' => 25],
+        'catch' => 255, 'exp' => 60, 'growth' => 'mediumFast',
+        'looks' => '峄皋之水中的蚌蛤。',
+        'unchecked' => '原文只有名字。',
+    ],
+    'zhubie' => [
+        'name' => '珠蟞鱼', 'kind' => 'strange', 'range' => 12, 'mountain' => '葛山之首',
+        'elements' => ['water'], 'why' => '生于澧水中。',
+        'tier' => 3, 'stats' => ['hp' => 80, 'atk' => 55, 'def' => 75, 'spa' => 85, 'spd' => 85, 'spe' => 50],
+        'catch' => 75, 'exp' => 145, 'growth' => 'mediumFast',
+        'looks' => '澧水中的鱼，形如肺而四目，六足有珠。',
+        'lore' => '其味酸甘，食之无疠。',
+        'unchecked' => '「四目」一本作「有目」。',
+    ],
+    'qiuyu' => [
+        'name' => '犰狳', 'kind' => 'strange', 'range' => 12, 'mountain' => '馀峨之山',
+        'elements' => ['wood'], 'why' => '鸟喙、鸱目；原文没有别的依据，和东山经的本地属性一致。',
+        'tier' => 2, 'stats' => ['hp' => 65, 'atk' => 50, 'def' => 80, 'spa' => 75, 'spd' => 70, 'spe' => 50],
+        'catch' => 90, 'exp' => 110, 'growth' => 'mediumFast',
+        'looks' => '形如菟而鸟喙，鸱目蛇尾，见人则眠。',
+        'sound' => '叫的就是自己的名字。',
+        'omen' => '见则螽蝗为败。',
+    ],
+    'zhuru' => [
+        'name' => '朱獳', 'kind' => 'strange', 'range' => 12, 'mountain' => '耿山',
+        'elements' => ['water'], 'why' => '鱼翼。',
+        'tier' => 3, 'stats' => ['hp' => 70, 'atk' => 65, 'def' => 65, 'spa' => 95, 'spd' => 75, 'spe' => 80],
+        'catch' => 60, 'exp' => 152, 'growth' => 'mediumSlow',
+        'looks' => '形如狐而鱼翼。',
+        'sound' => '叫的就是自己的名字。',
+        'omen' => '见则其国有恐。',
+    ],
+    'lihu' => [
+        'name' => '鵹鹕', 'kind' => 'strange', 'range' => 12, 'mountain' => '卢其之山',
+        'elements' => ['earth', 'wood'], 'why' => '见则其国多土功；鸟。',
+        'tier' => 3, 'stats' => ['hp' => 75, 'atk' => 90, 'def' => 80, 'spa' => 55, 'spd' => 70, 'spe' => 70],
+        'catch' => 60, 'exp' => 150, 'growth' => 'mediumSlow',
+        'looks' => '沙水中的鸟，形如鸳鸯而人足。',
+        'sound' => '叫的就是自己的名字。',
+        'omen' => '见则其国多土功。',
+    ],
+    'bibi' => [
+        'name' => '獙獙', 'kind' => 'strange', 'range' => 12, 'mountain' => '姑逢之山',
+        'elements' => ['fire'], 'why' => '见则天下大旱。',
+        'tier' => 3, 'stats' => ['hp' => 75, 'atk' => 65, 'def' => 65, 'spa' => 110, 'spd' => 80, 'spe' => 95],
+        'catch' => 45, 'exp' => 175, 'growth' => 'mediumSlow',
+        'looks' => '形如狐而有翼。',
+        'sound' => '如鸿雁。',
+        'omen' => '见则天下大旱。',
+    ],
+    'longzhi' => [
+        'name' => '蠪侄', 'kind' => 'strange', 'range' => 12, 'mountain' => '凫丽之山',
+        'elements' => ['metal'], 'why' => '虎爪；食人。',
+        'tier' => 4, 'stats' => ['hp' => 90, 'atk' => 115, 'def' => 80, 'spa' => 60, 'spd' => 75, 'spe' => 85],
+        'catch' => 45, 'exp' => 180, 'growth' => 'slow',
+        'looks' => '形如狐而九尾、九首、虎爪。',
+        'sound' => '如婴儿。',
+        'lore' => '是食人。',
+        'unchecked' => '名字一本作「蠪蛭」。',
+    ],
+    'youyou' => [
+        'name' => '峳峳', 'kind' => 'strange', 'range' => 12, 'mountain' => '䃌山',
+        'elements' => ['metal'], 'why' => '四角。',
+        'tier' => 3, 'stats' => ['hp' => 80, 'atk' => 95, 'def' => 75, 'spa' => 55, 'spd' => 70, 'spe' => 85],
+        'catch' => 60, 'exp' => 158, 'growth' => 'mediumSlow',
+        'looks' => '形如马而羊目、四角、牛尾。',
+        'sound' => '如獆狗。',
+        'omen' => '见则其国多狡客。',
+    ],
+    'jiegou' => [
+        'name' => '絜钩', 'kind' => 'strange', 'range' => 12, 'mountain' => '䃌山',
+        'elements' => ['wood'], 'why' => '鸟。',
+        'tier' => 2, 'stats' => ['hp' => 60, 'atk' => 50, 'def' => 55, 'spa' => 85, 'spd' => 65, 'spe' => 85],
+        'catch' => 90, 'exp' => 112, 'growth' => 'mediumFast',
+        'looks' => '鸟，形如凫而鼠尾，善登木。',
+        'omen' => '见则其国多疫。',
     ],
 ];

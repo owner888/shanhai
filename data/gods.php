@@ -121,4 +121,14 @@ return [
         'moves' => ['revive', 'selfcall', 'tempest', 'hillcharge'],
         'from' => '凡东山经之首，自樕𧑤之山以至于竹山，凡十二山，三千六百里。其神状皆人身龙首。',
     ],
+    'dongci' => [
+        'name' => '东次二经之神', 'range' => 12,
+        'looks' => '兽身人面，载觡。',
+        'elements' => ['wood', 'earth'],
+        'why' => '东山经属木；人面属土，作副属性。',
+        'stats' => ['hp' => 90, 'atk' => 70, 'def' => 80, 'spa' => 105, 'spd' => 90, 'spe' => 75],
+        'exp' => 205, 'growth' => 'slow',
+        'moves' => ['backeyes', 'breeze', 'gale', 'venom'],
+        'from' => '凡东次二经之首，自空桑之山至于䃌山，凡十七山，六千六百四十里。其神状皆兽身人面载觡。',
+    ],
 ];

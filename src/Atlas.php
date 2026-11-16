@@ -21,7 +21,7 @@ final class Atlas
             $b = $beasts[$id] ?? $gods[$id];
             return $b['name'] . '（' . implode('', array_map(fn(string $e) => $elements[$e]['name'], $b['elements'])) . '）';
         };
-        $out = "# 山海地图总表\n\n这份表由 `php tools/atlas.php` 从 `data/` 生成，不要手改；数据变了而没有重新生成，测试会报错。\n\n"
+        $out = "# 山海驭兽录地图总表\n\n这份表由 `php tools/atlas.php` 从 `data/` 生成，不要手改；数据变了而没有重新生成，测试会报错。\n\n"
             . "等级按 `docs/numbers.md` 第 14 节：一个山系对参考作的一座道馆。水里的等级是表里写的再加 0 到 4 级；「路上的对手」一栏每人一组，分号隔开，写的是各只的等级；渡水要先通过第四个山系的试炼。\n";
         $placed = [];
         foreach ($ranges as $n => $range) {

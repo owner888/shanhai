@@ -20,4 +20,5 @@ return [
     9 => ['book' => '北山经', 'name' => '北次二经', 'gym' => 9, 'toward' => 'right', 'compass' => ['left' => '南', 'right' => '北']],
     10 => ['book' => '北山经', 'name' => '北次三经（太行之山）', 'gym' => 10, 'toward' => 'right', 'compass' => ['left' => '南', 'right' => '北']],
     11 => ['book' => '东山经', 'name' => '东山经之首', 'gym' => 11, 'toward' => 'right', 'compass' => ['left' => '北', 'right' => '南']],
+    12 => ['book' => '东山经', 'name' => '东次二经', 'gym' => 12, 'toward' => 'right', 'compass' => ['left' => '北', 'right' => '南']],
 ];

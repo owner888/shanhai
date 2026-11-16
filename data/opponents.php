@@ -463,5 +463,57 @@ return [
         'taishan' => [
             [10, 6, 'down', 1, '采玉人', [['huanshou', 35], ['qitu', 35]]],
         ],
+        'kongsangdong' => [
+            [7, 6, 'down', 1, '牧人', [['haozhi', 28], ['maoniu', 31], ['xiao', 31]]],
+            [13, 8, 'up', 1, '行商', [['baiyuan', 32], ['shijiu', 32]]],
+        ],
+        'caoxi' => [
+            [10, 6, 'down', 5, '樵夫', [['fuchong', 25], ['jiyu', 25], ['zhu', 31], ['dae', 31]]],
+        ],
+        'yigao' => [
+            [10, 6, 'down', 3, '采药人', [['zheng', 30], ['bifang', 30], ['aoye', 30]]],
+        ],
+        'geshanwei' => [
+            [10, 6, 'down', 2, '猎户', [['zhuhuai', 29], ['zhujian', 29], ['ranyi', 29]]],
+        ],
+        'geshanshou' => [
+            [10, 6, 'down', 2, '巫祝弟子', [['shijiu', 23], ['she', 23], ['luomu', 23], ['chigui', 23], ['shanyu', 23], ['huyu', 23]]],
+        ],
+        'yue' => [
+            [10, 6, 'down', 3, '行商', [['min', 34]]],
+        ],
+        'dufu' => [
+            [10, 6, 'down', 4, '采玉人', [['ling', 32], ['xiao', 32]]],
+        ],
+        'gengshan' => [
+            [10, 6, 'down', 4, '采药人', [['zuzi', 27], ['guxi', 29], ['zheng', 31], ['shiyu', 29]]],
+        ],
+        'luqi' => [
+            [10, 6, 'down', 3, '猎户', [['fan', 29], ['chigui', 29], ['baiyou', 29]]],
+        ],
+        'gushe' => [
+            [10, 6, 'down', 3, '樵夫', [['shuima', 29], ['yongyong', 35]]],
+        ],
+        'beigushe' => [
+            [10, 6, 'down', 3, '渔人', [['huyu', 33]]],
+        ],
+        'nangushe' => [
+            [10, 6, 'down', 4, '牧人', [['meng', 36]]],
+        ],
+        'bishan' => [
+            [10, 6, 'down', 3, '巫祝弟子', [['min', 32], ['puyi', 36]]],
+        ],
+        'goushi' => [
+            [10, 6, 'down', 3, '樵夫', [['ganyu', 27], ['kanyu', 27], ['xingxing', 31], ['shuyu', 31]]],
+        ],
+        'gufeng' => [
+            [10, 6, 'down', 3, '牧人', [['tianma', 32], ['yayu', 34]]],
+        ],
+        'fuli' => [
+            [10, 6, 'down', 4, '行商', [['meng', 29], ['mengbao', 31], ['lingling', 33]]],
+        ],
+        'yinshandong' => [
+            [10, 6, 'down', 3, '渔人', [['fuchong', 27], ['jiyu', 27], ['shusi', 27], ['baiyuan', 35]]],
+        ],
     ],
 ];

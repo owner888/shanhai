@@ -1,4 +1,4 @@
-# 山海
+# 山海驭兽录
 
 山海经题材的 3D 异兽收集 RPG，基于 [myphp](https://github.com/owner888/myphp)。
 
