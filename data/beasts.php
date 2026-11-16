@@ -1,6 +1,6 @@
 <?php
 // The beasts of the Classic of Mountains and Seas: the Southern Mountains (南山经), all three ranges, and the first
-// four ranges of the Western (西山经), which are all it has, and the three of the Northern (北山经).
+// four ranges of the Western (西山经), which are all it has, the three of the Northern (北山经), and the first of the Eastern (东山经之首).
 //
 // Every field here restates what the classic says, checked against its text (zh.wikisource.org/wiki/山海經/南山經 and
 // /西山經, which carry Guo Pu's commentary; the names and wording cross-checked with a second edition where one could
@@ -1413,5 +1413,96 @@ return [
         'looks' => '赤首白身的大蛇。',
         'sound' => '如牛。',
         'omen' => '见则其邑大旱。',
+    ],
+    // 东山经之首: 樕𧑤之山 to 竹山
+    'yongyong' => [
+        'name' => '鳙鳙之鱼', 'kind' => 'strange', 'range' => 11, 'mountain' => '樕𧑤之山',
+        'elements' => ['water'], 'why' => '生于食水中。',
+        'tier' => 3, 'stats' => ['hp' => 90, 'atk' => 75, 'def' => 70, 'spa' => 75, 'spd' => 70, 'spe' => 50],
+        'catch' => 60, 'exp' => 150, 'growth' => 'mediumSlow',
+        'looks' => '食水中的鱼，形如犁牛。',
+        'sound' => '如彘鸣。',
+    ],
+    'huoshi' => [
+        'name' => '活师', 'kind' => 'common', 'range' => 11, 'mountain' => '藟山',
+        'elements' => ['water'], 'why' => '生于湖水中。',
+        'tier' => 1, 'stats' => ['hp' => 40, 'atk' => 30, 'def' => 35, 'spa' => 50, 'spd' => 45, 'spe' => 55],
+        'catch' => 255, 'exp' => 54, 'growth' => 'fast',
+        'looks' => '湖水中的活师。',
+        'unchecked' => '原文只有名字；通行的解释是蝌蚪。',
+    ],
+    'congcong' => [
+        'name' => '从从', 'kind' => 'strange', 'range' => 11, 'mountain' => '栒状之山',
+        'elements' => ['wood'], 'why' => '原文没有别的依据，取东山经的本地属性。',
+        'tier' => 3, 'stats' => ['hp' => 70, 'atk' => 60, 'def' => 65, 'spa' => 90, 'spd' => 70, 'spe' => 95],
+        'catch' => 60, 'exp' => 154, 'growth' => 'mediumSlow',
+        'looks' => '形如犬，六足。',
+        'sound' => '叫的就是自己的名字。',
+    ],
+    'zishu' => [
+        'name' => '䖪鼠', 'kind' => 'strange', 'range' => 11, 'mountain' => '栒状之山',
+        'elements' => ['fire', 'wood'], 'why' => '见则其邑大旱；鸟。',
+        'tier' => 3, 'stats' => ['hp' => 65, 'atk' => 55, 'def' => 60, 'spa' => 100, 'spd' => 75, 'spe' => 85],
+        'catch' => 60, 'exp' => 152, 'growth' => 'mediumSlow',
+        'looks' => '鸟，形如鸡而鼠毛。',
+        'omen' => '见则其邑大旱。',
+        'unchecked' => '「鼠毛」一本作「鼠尾」。',
+    ],
+    'zhenyu' => [
+        'name' => '箴鱼', 'kind' => 'strange', 'range' => 11, 'mountain' => '栒状之山',
+        'elements' => ['water'], 'why' => '生于𣲵水中。',
+        'tier' => 2, 'stats' => ['hp' => 60, 'atk' => 55, 'def' => 55, 'spa' => 80, 'spd' => 60, 'spe' => 70],
+        'catch' => 90, 'exp' => 106, 'growth' => 'mediumFast',
+        'looks' => '𣲵水中的鱼，形如儵，其喙如箴。',
+        'lore' => '食之无疫疾。',
+    ],
+    'ganyu' => [
+        'name' => '鳡鱼', 'kind' => 'common', 'range' => 11, 'mountain' => '番条之山、姑儿之山',
+        'elements' => ['water'], 'why' => '生于减水、姑儿之水中。',
+        'tier' => 2, 'stats' => ['hp' => 65, 'atk' => 60, 'def' => 50, 'spa' => 65, 'spd' => 50, 'spe' => 50],
+        'catch' => 120, 'exp' => 80, 'growth' => 'mediumFast',
+        'looks' => '减水、姑儿之水中的鱼。',
+    ],
+    'kanyu' => [
+        'name' => '堪㐨之鱼', 'kind' => 'common', 'range' => 11, 'mountain' => '犲山',
+        'elements' => ['water'], 'why' => '生于山下的水中。',
+        'tier' => 1, 'stats' => ['hp' => 55, 'atk' => 45, 'def' => 50, 'spa' => 60, 'spd' => 50, 'spe' => 60],
+        'catch' => 255, 'exp' => 62, 'growth' => 'mediumFast',
+        'looks' => '犲山下水中的鱼。',
+        'unchecked' => '原文只有名字。',
+    ],
+    'chaishou' => [
+        'name' => '犲山之兽', 'kind' => 'strange', 'range' => 11, 'mountain' => '犲山',
+        'elements' => ['water'], 'why' => '见则天下大水。',
+        'tier' => 3, 'stats' => ['hp' => 90, 'atk' => 70, 'def' => 75, 'spa' => 100, 'spd' => 80, 'spe' => 65],
+        'catch' => 45, 'exp' => 168, 'growth' => 'mediumSlow',
+        'looks' => '形如夸父而彘毛。原文没有给它名字。',
+        'sound' => '如呼。',
+        'omen' => '见则天下大水。',
+    ],
+    'tiaoyong' => [
+        'name' => '偹𧌁', 'kind' => 'strange', 'range' => 11, 'mountain' => '独山',
+        'elements' => ['fire'], 'why' => '见则其邑大旱。',
+        'tier' => 3, 'stats' => ['hp' => 75, 'atk' => 65, 'def' => 70, 'spa' => 110, 'spd' => 80, 'spe' => 85],
+        'catch' => 45, 'exp' => 172, 'growth' => 'mediumSlow',
+        'looks' => '末涂之水中的蛇，形如黄蛇，鱼翼，出入有光。',
+        'omen' => '见则其邑大旱。',
+        'unchecked' => '名字各本作 偹𧌁、䖺䗤 或 条䗤。',
+    ],
+    'tongtong' => [
+        'name' => '狪狪', 'kind' => 'strange', 'range' => 11, 'mountain' => '泰山',
+        'elements' => ['wood'], 'why' => '原文没有别的依据，取东山经的本地属性。',
+        'tier' => 3, 'stats' => ['hp' => 95, 'atk' => 60, 'def' => 75, 'spa' => 80, 'spd' => 80, 'spe' => 45],
+        'catch' => 60, 'exp' => 150, 'growth' => 'mediumSlow',
+        'looks' => '形如豚而有珠。',
+        'sound' => '叫的就是自己的名字。',
+    ],
+    'ziluo' => [
+        'name' => '茈蠃', 'kind' => 'common', 'range' => 11, 'mountain' => '竹山',
+        'elements' => ['water'], 'why' => '生于激水中。',
+        'tier' => 1, 'stats' => ['hp' => 45, 'atk' => 35, 'def' => 80, 'spa' => 45, 'spd' => 50, 'spe' => 35],
+        'catch' => 255, 'exp' => 58, 'growth' => 'mediumFast',
+        'looks' => '激水中的紫色的螺。',
+        'unchecked' => '原文只有名字；「蠃」一本作「羸」。',
     ],
 ];

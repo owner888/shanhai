@@ -111,4 +111,14 @@ return [
         'moves' => ['revive', 'billow', 'seatide', 'fearless'],
         'from' => '凡北次三经之首，自太行之山以至于毋逢之山，凡四十六山，万二千三百五十里。其神状皆马身而人面者廿神；其十四神状皆彘身而载玉；其十神状皆彘身而八足蛇尾。',
     ],
+    'dongshan' => [
+        'name' => '东山经之首之神', 'range' => 11,
+        'looks' => '人身龙首。',
+        'elements' => ['wood', 'earth'],
+        'why' => '东山经属木，龙首也是木；人身属土，作副属性。',
+        'stats' => ['hp' => 90, 'atk' => 70, 'def' => 80, 'spa' => 110, 'spd' => 90, 'spe' => 75],
+        'exp' => 205, 'growth' => 'slow',
+        'moves' => ['revive', 'selfcall', 'tempest', 'hillcharge'],
+        'from' => '凡东山经之首，自樕𧑤之山以至于竹山，凡十二山，三千六百里。其神状皆人身龙首。',
+    ],
 ];

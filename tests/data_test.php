@@ -195,8 +195,8 @@ foreach (Tile::KINDS as [$kind]) {
 check(isset(Stage::LOOKS['player']), 'the stage draws the player');
 same(array_keys($elements), array_keys(Arena::ELEMENTS), 'the arena has a color for a beast of each element');
 
-same(172, count($beasts), 'the beasts: 12, 9 and 9 over the Southern Mountains\' three ranges, 28, 11, 22 and 18 over the Western\'s four, 32, 10 and 21 in the Northern\'s three');
-foreach ([1 => 12, 2 => 9, 3 => 9, 4 => 28, 5 => 11, 6 => 22, 7 => 18, 8 => 32, 9 => 10, 10 => 21] as $range => $count) {
+same(183, count($beasts), 'the beasts: 12, 9 and 9 over the Southern Mountains\' three ranges, 28, 11, 22 and 18 over the Western\'s four, 32, 10 and 21 in the Northern\'s three, 11 in the Eastern\'s first');
+foreach ([1 => 12, 2 => 9, 3 => 9, 4 => 28, 5 => 11, 6 => 22, 7 => 18, 8 => 32, 9 => 10, 10 => 21, 11 => 11] as $range => $count) {
     same($count, count(array_filter($beasts, fn(array $b) => $b['range'] === $range)), "range $range");
 }
 same(['guanguan', 'lushu', 'xuangui'], (function () use ($beasts) {
@@ -456,7 +456,7 @@ foreach ($foes['at'] as $id => $list) {
     }
 }
 ksort($counts);
-same([1 => [12, 25], 2 => [23, 43], 3 => [22, 44], 4 => [9, 20], 5 => [35, 72], 7 => [23, 46], 8 => [12, 22], 9 => [21, 45], 10 => [9, 20]], $counts, 'by range, how many are met and how many beasts they send: the reference\'s before each gym');
+same([1 => [12, 25], 2 => [23, 43], 3 => [22, 44], 4 => [9, 20], 5 => [35, 72], 7 => [23, 46], 8 => [12, 22], 9 => [21, 45], 10 => [9, 20], 11 => [11, 24]], $counts, 'by range, how many are met and how many beasts they send: the reference\'s before each gym');
 foreach ($foes['says'] as $says) {
     check(count($says) === 3 && !in_array('', $says, true), 'what an opponent says is three lines: before, beaten, met again');
 }
