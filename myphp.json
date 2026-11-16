@@ -1,8 +1,14 @@
 {
-  "name": "山海驭兽录",
+  "name": "shanhai",
+  "displayName": "山海驭兽录 (Shanhai)",
+  "description": "取材自《山海经》原文的复古掌机风格 3D 怪兽收集 RPG。包含十余列山系地图、五行克制回合制战斗、契印收服与 1024×1024 PCF 实时软阴影。",
   "identifier": "com.agc.shanhai",
   "version": "0.1.0",
   "entry": "app.php",
   "out": "build",
-  "framework": "../myphp"
+  "framework": "../myphp",
+  "showcase": {
+    "category": "3d",
+    "tag": "3D 怪兽收集 RPG"
+  }
 }
