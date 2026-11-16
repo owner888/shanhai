@@ -195,8 +195,8 @@ foreach (Tile::KINDS as [$kind]) {
 check(isset(Stage::LOOKS['player']), 'the stage draws the player');
 same(array_keys($elements), array_keys(Arena::ELEMENTS), 'the arena has a color for a beast of each element');
 
-same(220, count($beasts), 'the beasts: 12, 9 and 9 over the Southern Mountains\' three ranges, 28, 11, 22 and 18 over the Western\'s four, 32, 10 and 21 in the Northern\'s three, 11, 10, 7 and 11 in the Eastern\'s four, 4 and 5 in the Central\'s first two');
-foreach ([1 => 12, 2 => 9, 3 => 9, 4 => 28, 5 => 11, 6 => 22, 7 => 18, 8 => 32, 9 => 10, 10 => 21, 11 => 11, 12 => 10, 13 => 7, 14 => 11, 15 => 4, 16 => 5] as $range => $count) {
+same(233, count($beasts), 'the beasts: 12, 9 and 9 over the Southern Mountains\' three ranges, 28, 11, 22 and 18 over the Western\'s four, 32, 10 and 21 in the Northern\'s three, 11, 10, 7 and 11 in the Eastern\'s four, 4, 5, 6, 3, 2 and 2 in the Central\'s first six');
+foreach ([1 => 12, 2 => 9, 3 => 9, 4 => 28, 5 => 11, 6 => 22, 7 => 18, 8 => 32, 9 => 10, 10 => 21, 11 => 11, 12 => 10, 13 => 7, 14 => 11, 15 => 4, 16 => 5, 17 => 6, 18 => 3, 19 => 2, 20 => 2] as $range => $count) {
     same($count, count(array_filter($beasts, fn(array $b) => $b['range'] === $range)), "range $range");
 }
 same(['guanguan', 'lushu', 'xuangui'], (function () use ($beasts) {
@@ -388,6 +388,7 @@ foreach ($gods as $id => $g) {
 same(\Shanhai\Atlas::render(), file_get_contents(Data::DIR . '/../docs/atlas.md'), 'docs/atlas.md is up to date: php tools/atlas.php writes it');
 $leaders = [1 => [7, 9], 2 => [14, 14, 16], 3 => [18, 20], 4 => [21, 21, 23, 25], 5 => [27, 30], 6 => [30, 30, 35], 7 => [27, 29, 31], 8 => [37, 37, 37, 40],
     9 => [40, 40, 40, 44, 46], 10 => [46, 46, 48], 11 => [41, 42, 46, 46], 12 => [33, 36, 36, 36, 39], 13 => [42, 42, 44, 47], 14 => [41, 41, 42, 42, 44], 15 => [45, 45, 50], 16 => [54, 56, 56, 58, 58, 58]];
+$ours = [17 => 62, 18 => 66, 19 => 70, 20 => 75, 21 => 79, 22 => 83, 23 => 87, 24 => 92, 25 => 96, 26 => 100];
 $trials = 0;
 foreach ($scripts as $where => $script) {
     foreach ($script as $cmd) {
@@ -413,7 +414,11 @@ foreach ($scripts as $where => $script) {
             same($leaders[$gym], $theirs, "$where: its levels are those of the reference's gym $gym");
         }
         // and in the reference's first half the last is 1.65 to 2.55 times the mean level of the wild beasts before it
-        if ($gym <= 8) {
+        // past the sixteenth the levels are ours (docs/numbers.md 14): the last by a table, and the same measure kept
+        if ($gym > 16) {
+            same($ours[$gym] ?? null, $ace, "$where: its last is at the level set for range $gym");
+        }
+        if ($gym <= 8 || $gym > 16) {
             check($ace / $mean >= 1.65 && $ace / $mean <= 2.55, sprintf('%s: its last, at level %d, is 1.65 to 2.55 times the range\'s wild beasts\' mean of %.1f: %.2f', $where, $ace, $mean, $ace / $mean));
         }
         foreach (array_slice($cmd[2], 0, -1) as [$id, $level]) {
@@ -456,7 +461,7 @@ foreach ($foes['at'] as $id => $list) {
     }
 }
 ksort($counts);
-same([1 => [12, 25], 2 => [23, 43], 3 => [22, 44], 4 => [9, 20], 5 => [35, 72], 7 => [23, 46], 8 => [12, 22], 9 => [21, 45], 10 => [9, 20], 11 => [11, 24], 12 => [18, 50], 13 => [18, 35], 14 => [11, 20], 15 => [12, 28]], $counts, 'by range, how many are met and how many beasts they send: the reference\'s before each gym');
+same([1 => [12, 25], 2 => [23, 43], 3 => [22, 44], 4 => [9, 20], 5 => [35, 72], 7 => [23, 46], 8 => [12, 22], 9 => [21, 45], 10 => [9, 20], 11 => [11, 24], 12 => [18, 50], 13 => [18, 35], 14 => [11, 20], 15 => [12, 28], 17 => [5, 9], 18 => [9, 17], 19 => [14, 27], 20 => [13, 25]], $counts, 'by range, how many are met and how many beasts they send: the reference\'s before each gym');
 foreach ($foes['says'] as $says) {
     check(count($says) === 3 && !in_array('', $says, true), 'what an opponent says is three lines: before, beaten, met again');
 }

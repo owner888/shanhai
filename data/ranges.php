@@ -25,4 +25,8 @@ return [
     14 => ['book' => '东山经', 'name' => '东次四经', 'gym' => 14, 'toward' => 'right', 'compass' => ['left' => '北', 'right' => '南']],
     15 => ['book' => '中山经', 'name' => '中山经之首（薄山）', 'gym' => 15, 'toward' => 'right', 'compass' => ['left' => '西', 'right' => '东']],
     16 => ['book' => '中山经', 'name' => '中次二经（济山）', 'gym' => 16, 'toward' => 'right', 'compass' => ['left' => '东', 'right' => '西']],
+    17 => ['book' => '中山经', 'name' => '中次三经（萯山）', 'gym' => 17, 'toward' => 'right', 'compass' => ['left' => '西', 'right' => '东']],
+    18 => ['book' => '中山经', 'name' => '中次四经（釐山）', 'gym' => 18, 'toward' => 'right', 'compass' => ['left' => '东', 'right' => '西']],
+    19 => ['book' => '中山经', 'name' => '中次五经（薄山）', 'gym' => 19, 'toward' => 'right', 'compass' => ['left' => '西', 'right' => '东']],
+    20 => ['book' => '中山经', 'name' => '中次六经（缟羝山）', 'gym' => 20, 'toward' => 'right', 'compass' => ['left' => '西', 'right' => '东']],
 ];

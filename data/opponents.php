@@ -4,7 +4,8 @@
 //
 // How many there are in a range, how many beasts each sends, at what levels, and how far each sees, are the
 // reference's own, trainer for trainer in the order its routes and gym are walked, before the gym of the range's
-// number. Which beasts they send is ours: for each of the reference's, one of this range or an earlier whose base
+// number. Past its sixteenth gym there are none to count, and the numbers are ours, by what its first half
+// measures (docs/numbers.md 15). Which beasts they send is ours: for each of the reference's, one of this range or an earlier whose base
 // stats add up nearest to its own, those as near taken in turn.
 // Where they stand is ours: beside the road, looking across it.
 //   needs    the flag without which they do not fight: the player has a beast
@@ -613,6 +614,129 @@ return [
         ],
         'yinshanzhong' => [
             [10, 6, 'down', 2, '巫祝弟子', [['guaishe', 38], ['zhuyan', 38]]],
+        ],
+        'aoan' => [
+            [10, 6, 'down', 3, '行商', [['guaishe', 31]]],
+        ],
+        'qingyao' => [
+            [10, 6, 'down', 1, '采玉人', [['baiye', 35], ['nafu', 36]]],
+        ],
+        'guishanzhong' => [
+            [10, 6, 'down', 3, '牧人', [['haozhi', 39], ['xiao', 40], ['pi', 41]]],
+        ],
+        'yisu' => [
+            [10, 6, 'down', 2, '巫祝弟子', [['dangkang', 44], ['feifei', 45]]],
+        ],
+        'heshan' => [
+            [10, 6, 'down', 3, '行商', [['renmianxiao', 50]]],
+        ],
+        'luti' => [
+            [10, 6, 'down', 3, '猎户', [['juji', 33]]],
+        ],
+        'fuzhushan' => [
+            [10, 6, 'down', 1, '樵夫', [['huayu', 34], ['bailu', 35]]],
+        ],
+        'lishanzhong' => [
+            [10, 6, 'down', 3, '采药人', [['nafu', 37], ['zaoyu', 38], ['yiyu', 39]]],
+        ],
+        'jiweizhong' => [
+            [10, 6, 'down', 2, '行商', [['youyan', 39], ['nafu', 40]]],
+        ],
+        'bingshan' => [
+            [10, 6, 'down', 3, '猎户', [['feiyutun', 43]]],
+        ],
+        'baibian' => [
+            [10, 6, 'down', 4, '樵夫', [['zuzi', 44], ['changshe', 45]]],
+        ],
+        'xionger' => [
+            [10, 6, 'down', 3, '采药人', [['xiao', 47], ['tuofei', 48], ['xibian', 49]]],
+        ],
+        'mushan' => [
+            [10, 6, 'down', 1, '行商', [['congcong', 49], ['chaishou', 50]]],
+        ],
+        'huanju' => [
+            [10, 6, 'down', 2, '猎户', [['tianma', 53]]],
+        ],
+        'goulin' => [
+            [10, 6, 'down', 3, '采玉人', [['shiyu', 35]]],
+        ],
+        'shoushan' => [
+            [10, 6, 'down', 1, '渔人', [['huangniao', 36], ['shiyu', 37]]],
+        ],
+        'xianzhu' => [
+            [10, 6, 'down', 3, '巫祝弟子', [['conglong', 37], ['bangyu', 38], ['mengbao', 39]]],
+        ],
+        'conglongwu' => [
+            [10, 6, 'down', 2, '猎户', [['yaoniao', 39], ['yinmo', 40]]],
+        ],
+        'tiaogu' => [
+            [10, 6, 'down', 3, '采玉人', [['xiang', 41]]],
+        ],
+        'chaoshan' => [
+            [10, 6, 'down', 4, '渔人', [['chi', 42], ['bailu', 43]]],
+        ],
+        'chenghou' => [
+            [10, 6, 'down', 3, '巫祝弟子', [['haozhi', 44], ['xiao', 45], ['xiong', 46]]],
+        ],
+        'zhaoge' => [
+            [10, 6, 'down', 1, '猎户', [['manman', 45], ['baihu', 46]]],
+        ],
+        'huaishan' => [
+            [10, 6, 'down', 2, '采玉人', [['lihu', 48]]],
+        ],
+        'lishanwu' => [
+            [10, 6, 'down', 3, '渔人', [['feiyutun', 49], ['dainiao', 50]]],
+        ],
+        'shishanwu' => [
+            [10, 6, 'down', 3, '巫祝弟子', [['huanshou', 50], ['qitu', 51], ['shenchi', 52]]],
+        ],
+        'liangyu' => [
+            [10, 6, 'down', 1, '猎户', [['xiangshe', 52], ['suanyu', 53]]],
+        ],
+        'guwei' => [
+            [10, 6, 'down', 3, '采玉人', [['jueru', 54]]],
+        ],
+        'shengshan' => [
+            [10, 6, 'down', 2, '渔人', [['luoluo', 55], ['junniao', 56]]],
+        ],
+        'yanghua' => [
+            [10, 6, 'down', 3, '牧人', [['baihao', 38]]],
+        ],
+        'kuafu' => [
+            [10, 6, 'down', 1, '巫祝弟子', [['quru', 38], ['zuoniu', 39]]],
+        ],
+        'changzheng' => [
+            [10, 6, 'down', 3, '采玉人', [['huayub', 40], ['yuniao', 41], ['ershu', 42]]],
+        ],
+        'tuoshan' => [
+            [10, 6, 'down', 2, '渔人', [['chunniao', 42], ['huayu', 43]]],
+        ],
+        'fushanliu' => [
+            [10, 6, 'down', 3, '牧人', [['ciyu', 45]]],
+        ],
+        'changshi' => [
+            [10, 6, 'down', 4, '巫祝弟子', [['xigui', 46], ['ciyu', 47]]],
+        ],
+        'mishanliu' => [
+            [10, 6, 'down', 3, '采玉人', [['xie', 48], ['dainiao', 49], ['zhu', 50]]],
+        ],
+        'gushan' => [
+            [10, 6, 'down', 1, '渔人', [['shuima', 50], ['yongyong', 51]]],
+        ],
+        'baishi' => [
+            [10, 6, 'down', 2, '牧人', [['lihu', 52]]],
+        ],
+        'louzhuo' => [
+            [10, 6, 'down', 3, '巫祝弟子', [['yao', 53], ['banmao', 54]]],
+        ],
+        'zhanzhu' => [
+            [10, 6, 'down', 3, '采玉人', [['fuzhu', 55], ['lingyao', 56], ['lushu', 57]]],
+        ],
+        'guishanliu' => [
+            [10, 6, 'down', 1, '渔人', [['luoyu', 57], ['saoyu', 58]]],
+        ],
+        'gaodi' => [
+            [10, 6, 'down', 3, '牧人', [['renmianxiao', 60]]],
         ],
     ],
 ];
