@@ -578,5 +578,41 @@ return [
         'taishandong' => [
             [10, 6, 'down', 3, '樵夫', [['huahuai', 37]]],
         ],
+        'ganzao' => [
+            [10, 6, 'down', 0, '渔人', [['youyou', 34]]],
+        ],
+        'lier' => [
+            [10, 6, 'down', 3, '采药人', [['wenbei', 32], ['gudiao', 30]]],
+        ],
+        'quzhu' => [
+            [10, 6, 'down', 3, '采玉人', [['tuanyu', 26], ['baidi', 28], ['jingwei', 30], ['liu', 28]]],
+        ],
+        'conglong' => [
+            [10, 6, 'down', 0, '渔人', [['meng', 30], ['bibi', 34]]],
+        ],
+        'tuohu' => [
+            [10, 6, 'down', 3, '巫祝弟子', [['meibei', 29], ['fuchong', 29], ['dae', 32]]],
+        ],
+        'jinxing' => [
+            [10, 6, 'down', 3, '猎户', [['zheng', 32], ['bifang', 32]]],
+        ],
+        'taiwei' => [
+            [10, 6, 'down', 3, '采玉人', [['fuchong', 34]]],
+        ],
+        'jianggu' => [
+            [10, 6, 'down', 3, '牧人', [['xibian', 29], ['paoxiao', 29], ['hu', 32]]],
+        ],
+        'niushou' => [
+            [10, 6, 'down', 4, '猎户', [['yelu', 28], ['luomu', 28], ['jishe', 28], ['hui', 28]]],
+        ],
+        'huoshan' => [
+            [10, 6, 'down', 1, '采玉人', [['jingwei', 34]]],
+        ],
+        'hegu' => [
+            [10, 6, 'down', 4, '牧人', [['xuangui', 31], ['chaishou', 31], ['bibi', 31]]],
+        ],
+        'yinshanzhong' => [
+            [10, 6, 'down', 2, '巫祝弟子', [['guaishe', 38], ['zhuyan', 38]]],
+        ],
     ],
 ];

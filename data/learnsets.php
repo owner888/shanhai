@@ -221,4 +221,13 @@ return [
     'huayudong' => [[1, 'ram'], [1, 'spark'], [8, 'breeze'], [14, 'backeyes'], [20, 'drought'], [25, 'flame'], [30, 'feathers'], [36, 'drywind'], [41, 'sleepless'], [46, 'blaze'], [51, 'scorch']],
     'heyu' => [[1, 'bite'], [1, 'splash'], [10, 'infantcry'], [15, 'foam'], [20, 'flood'], [25, 'pebble'], [30, 'surge'], [35, 'grapple'], [40, 'burrow'], [45, 'whirl'], [50, 'billow'], [55, 'deluge']],
     'fei' => [[1, 'ram'], [1, 'spark'], [10, 'lowing'], [15, 'redtail'], [20, 'drought'], [25, 'venom'], [30, 'flame'], [36, 'fearless'], [41, 'drywind'], [47, 'bewilder'], [52, 'blaze'], [58, 'scorch']],
+    'na' => [[1, 'ram'], [1, 'pebble'], [6, 'chant'], [12, 'dust'], [17, 'swift'], [23, 'burrow'], [29, 'fearless'], [34, 'hillcharge'], [40, 'rockfall']],
+    'haoyu' => [[1, 'ram'], [1, 'splash'], [7, 'peck'], [13, 'foam'], [18, 'chant'], [24, 'surge'], [29, 'backeyes'], [34, 'feathers'], [39, 'whirl']],
+    'feiyu' => [[1, 'ram'], [1, 'splash'], [8, 'swift'], [13, 'foam'], [19, 'backeyes'], [25, 'surge'], [31, 'breeze'], [37, 'whirl'], [43, 'billow']],
+    'feifei' => [[1, 'bite'], [1, 'pebble'], [7, 'chant'], [12, 'dust'], [17, 'swift'], [22, 'burrow'], [28, 'revive'], [33, 'hillcharge'], [38, 'undeaf'], [43, 'rockfall'], [48, 'cliffbreak']],
+    'he' => [[1, 'ram'], [1, 'breeze'], [7, 'rebuke'], [13, 'feathers'], [18, 'peck'], [24, 'swift'], [30, 'cassia'], [35, 'fearless'], [41, 'gale']],
+    'mingshe' => [[1, 'bite'], [1, 'spark'], [9, 'breeze'], [14, 'backeyes'], [20, 'drought'], [26, 'flame'], [31, 'feathers'], [36, 'drywind'], [42, 'sleepless'], [48, 'blaze'], [53, 'scorch']],
+    'huashe' => [[1, 'bite'], [1, 'splash'], [10, 'rebuke'], [16, 'foam'], [21, 'flood'], [26, 'pebble'], [31, 'surge'], [36, 'backeyes'], [41, 'whirl'], [46, 'undeaf'], [51, 'billow'], [56, 'deluge']],
+    'longchi' => [[1, 'ram'], [1, 'claw'], [8, 'lowing'], [13, 'peck'], [18, 'fearless'], [23, 'spur'], [28, 'trample'], [34, 'fang'], [39, 'undeaf'], [45, 'gore'], [50, 'onehorn']],
+    'mafu' => [[1, 'bite'], [1, 'pebble'], [11, 'infantcry'], [16, 'claw'], [21, 'stripes'], [27, 'burrow'], [32, 'fang'], [37, 'hillcharge'], [42, 'fearless'], [48, 'rockfall'], [53, 'pounce'], [58, 'cliffbreak']],
 ];

@@ -1,6 +1,6 @@
 <?php
 // The beasts of the Classic of Mountains and Seas: the Southern Mountains (南山经), all three ranges, and the first
-// four ranges of the Western (西山经), which are all it has, the three of the Northern (北山经), and the four of the Eastern (东山经).
+// four ranges of the Western (西山经), which are all it has, the three of the Northern (北山经), the four of the Eastern (东山经), and the first two of the Central (中山经之首, 中次二经).
 //
 // Every field here restates what the classic says, checked against its text (zh.wikisource.org/wiki/山海經/南山經 and
 // /西山經, which carry Guo Pu's commentary; the names and wording cross-checked with a second edition where one could
@@ -553,7 +553,7 @@ return [
         'unchecked' => '原文只有名字；「豹一类」是通行的解释，所查版本这一节没有注，待查注本。',
     ],
     'mi' => [
-        'name' => '麋', 'kind' => 'common', 'range' => 5, 'mountain' => '西皇之山、县雍之山、孟子之山',
+        'name' => '麋', 'kind' => 'common', 'range' => 5, 'mountain' => '西皇之山、县雍之山、孟子之山、煇诸之山',
         'elements' => ['metal'], 'why' => '原文没有别的依据，取西山经的本地属性。',
         'tier' => 2, 'stats' => ['hp' => 90, 'atk' => 70, 'def' => 75, 'spa' => 40, 'spd' => 60, 'spe' => 55],
         'catch' => 120, 'exp' => 96, 'growth' => 'mediumFast',
@@ -1165,7 +1165,7 @@ return [
     ],
     // 北次二经: 管涔之山 to 敦题之山
     'lyu' => [
-        'name' => '闾', 'kind' => 'common', 'range' => 9, 'mountain' => '县雍之山',
+        'name' => '闾', 'kind' => 'common', 'range' => 9, 'mountain' => '县雍之山、煇诸之山',
         'elements' => ['water'], 'why' => '原文没有别的依据，取北山经的本地属性。',
         'tier' => 2, 'stats' => ['hp' => 80, 'atk' => 65, 'def' => 65, 'spa' => 65, 'spd' => 60, 'spe' => 75],
         'catch' => 90, 'exp' => 112, 'growth' => 'mediumFast',
@@ -1742,5 +1742,84 @@ return [
         'looks' => '形如牛而白首，一目而蛇尾。',
         'omen' => '见则天下大疫。',
         'lore' => '行水则竭，行草则死。',
+    ],
+    // 中山经之首（薄山）: 甘枣之山 to 鼓镫之山
+    'na' => [
+        'name' => '㔮', 'kind' => 'strange', 'range' => 15, 'mountain' => '甘枣之山',
+        'elements' => ['earth'], 'why' => '原文没有别的依据，取中山经的本地属性。',
+        'tier' => 2, 'stats' => ['hp' => 70, 'atk' => 85, 'def' => 70, 'spa' => 50, 'spd' => 65, 'spe' => 60],
+        'catch' => 90, 'exp' => 108, 'growth' => 'mediumFast',
+        'looks' => '形如𤠢鼠而文题。',
+        'lore' => '食之已瘿。',
+        'unchecked' => '名字各本作「㔮」或「𤢺」。',
+    ],
+    'haoyu' => [
+        'name' => '豪鱼', 'kind' => 'strange', 'range' => 15, 'mountain' => '渠猪之山',
+        'elements' => ['water'], 'why' => '生于渠猪之水中。',
+        'tier' => 2, 'stats' => ['hp' => 65, 'atk' => 55, 'def' => 60, 'spa' => 75, 'spd' => 60, 'spe' => 55],
+        'catch' => 90, 'exp' => 102, 'growth' => 'mediumFast',
+        'looks' => '渠猪之水中的鱼，形如鲔，赤喙，尾赤羽。',
+        'lore' => '食之已白癣。',
+    ],
+    'feiyu' => [
+        'name' => '飞鱼（形如鲋）', 'kind' => 'strange', 'range' => 15, 'mountain' => '牛首之山',
+        'elements' => ['water'], 'why' => '生于劳水中。',
+        'tier' => 2, 'stats' => ['hp' => 60, 'atk' => 55, 'def' => 55, 'spa' => 85, 'spd' => 60, 'spe' => 75],
+        'catch' => 90, 'exp' => 106, 'growth' => 'mediumFast',
+        'looks' => '劳水中的鱼，形如鲋鱼。',
+        'lore' => '食之已痔衕。',
+    ],
+    'feifei' => [
+        'name' => '朏朏', 'kind' => 'strange', 'range' => 15, 'mountain' => '霍山',
+        'elements' => ['earth'], 'why' => '原文没有别的依据，取中山经的本地属性。',
+        'tier' => 3, 'stats' => ['hp' => 75, 'atk' => 95, 'def' => 70, 'spa' => 60, 'spd' => 75, 'spe' => 75],
+        'catch' => 60, 'exp' => 152, 'growth' => 'mediumSlow',
+        'looks' => '形如狸而白尾，有鬣。',
+        'lore' => '养之可以已忧。',
+    ],
+    // 中次二经（济山）: 煇诸之山 to 蔓渠之山
+    'he' => [
+        'name' => '鹖', 'kind' => 'common', 'range' => 16, 'mountain' => '煇诸之山',
+        'elements' => ['wood'], 'why' => '鸟。',
+        'tier' => 2, 'stats' => ['hp' => 60, 'atk' => 60, 'def' => 50, 'spa' => 75, 'spd' => 55, 'spe' => 60],
+        'catch' => 120, 'exp' => 84, 'growth' => 'mediumFast',
+        'looks' => '鸟，原文只有名字。',
+        'unchecked' => '形貌出自郭璞注（似雉而大，青色有毛角，斗死乃止），原文没有写。',
+    ],
+    'mingshe' => [
+        'name' => '鸣蛇', 'kind' => 'strange', 'range' => 16, 'mountain' => '鲜山',
+        'elements' => ['fire'], 'why' => '见则其邑大旱。',
+        'tier' => 3, 'stats' => ['hp' => 75, 'atk' => 65, 'def' => 70, 'spa' => 110, 'spd' => 80, 'spe' => 80],
+        'catch' => 45, 'exp' => 172, 'growth' => 'mediumSlow',
+        'looks' => '鲜水中的蛇，形如蛇而四翼。',
+        'sound' => '如磬。',
+        'omen' => '见则其邑大旱。',
+    ],
+    'huashe' => [
+        'name' => '化蛇', 'kind' => 'strange', 'range' => 16, 'mountain' => '阳山',
+        'elements' => ['water', 'earth'], 'why' => '见则其邑大水；人面。',
+        'tier' => 3, 'stats' => ['hp' => 85, 'atk' => 75, 'def' => 75, 'spa' => 105, 'spd' => 85, 'spe' => 70],
+        'catch' => 45, 'exp' => 176, 'growth' => 'mediumSlow',
+        'looks' => '阳水中，人面而豺身，鸟翼而蛇行。',
+        'sound' => '如叱呼。',
+        'omen' => '见则其邑大水。',
+    ],
+    'longchi' => [
+        'name' => '蠪蚳', 'kind' => 'strange', 'range' => 16, 'mountain' => '昆吾之山',
+        'elements' => ['metal'], 'why' => '有角。',
+        'tier' => 3, 'stats' => ['hp' => 85, 'atk' => 100, 'def' => 80, 'spa' => 50, 'spd' => 75, 'spe' => 80],
+        'catch' => 60, 'exp' => 160, 'growth' => 'mediumSlow',
+        'looks' => '形如彘而有角。',
+        'sound' => '如号。',
+        'lore' => '食之不眯。',
+    ],
+    'mafu' => [
+        'name' => '马腹', 'kind' => 'strange', 'range' => 16, 'mountain' => '蔓渠之山',
+        'elements' => ['earth', 'metal'], 'why' => '人面；虎身。',
+        'tier' => 4, 'stats' => ['hp' => 95, 'atk' => 120, 'def' => 85, 'spa' => 60, 'spd' => 80, 'spe' => 90],
+        'catch' => 45, 'exp' => 186, 'growth' => 'slow',
+        'looks' => '人面而虎身。',
+        'sound' => '如婴儿。',
+        'lore' => '是食人。',
     ],
 ];
