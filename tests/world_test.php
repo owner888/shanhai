@@ -470,3 +470,45 @@ $w->run([['battle', 'xingxing', 20]]);
 [$mine, $wild] = [$w->party[0], $w->battle->battle->fighter(1)];
 same([['atk' => 15, 'def' => 15, 'spe' => 15, 'spc' => 15], ['atk' => 0, 'def' => 0, 'spe' => 0, 'spc' => 0]], [$mine->state()['dvs'], $wild->state()['dvs']], 'each has the values its bytes make');
 check($mine->maxHp > $wild->maxHp && $mine->stats['atk'] > $wild->stats['atk'], 'and of two of a kind and a level, the one with the higher values is the stronger');
+
+// The rites (docs/numbers.md 27): asked of a god, a common beast of the level, with the jade in the bag, receives one.
+$w = Data::newWorld(1);
+$w->join('lushu', 40);   // no common beast: it receives none
+$w->join('baiyuan', 24); // a common beast of the first tier, a level short
+$w->join('si', 36);      // one of the second tier, which begins at the second rite
+$w->run([['give', 'yuzhang', 1], ['rite'], ['say', 'after']]);
+same([[], \Shanhai\Script\Vm::NO_RITE, null], [$w->rites(), $w->dialog, $w->choices], 'with none that could, the god says what it takes');
+$w->step(new Controls(null, true));
+$w->step(new Controls());
+same('after', $w->dialog, 'and the script goes on');
+$w->step(new Controls(null, true));
+$w->step(new Controls());
+$young = $w->party[1];
+[$young->level, $w->items['yubi']] = [25, 2];
+$most = [$young->maxHp, $young->stats, $w->party[2]->stats['atk']];
+same([[1, 1], [2, 2]], $w->rites(), 'at 25 the first can receive the first rite, and at 36 the other the second');
+$w->run([['rite'], ['say', 'after']]);
+same(['「让哪一只受祭？」', ['白猿 受璋礼', '兕 受璧礼', '不用']], [$w->dialog, $w->choices], 'the god asks which');
+$w->step(new Controls(null, true));
+same(['白猿受了璋礼，成了白猿·璋！六项能力都长了。', 1, '白猿·璋', ['yubi' => 2]], [$w->dialog, $young->rank, $young->species['name'], array_intersect_key($w->items, ['yuzhang' => 0, 'yubi' => 0])], 'the one chosen receives it, and the jade is spent');
+check($young->maxHp > $most[0] && $young->hp === $young->maxHp && $young->stats['spe'] > $most[1]['spe'], 'its stats rise, and its hp by as much as its most did');
+$w->step(new Controls());
+$w->step(new Controls(null, true));
+$w->step(new Controls());
+same('after', $w->dialog, 'and the script goes on');
+$w->step(new Controls(null, true));
+$w->step(new Controls());
+same([[2, 2]], $w->rites(), 'the first is not yet 36');
+$w->run([['rite']]);
+$w->step(new Controls(Dir::Down));
+$w->step(new Controls());
+$w->step(new Controls(null, true));
+same([null, 0, 2], [$w->dialog, $w->party[2]->rank, $w->items['yubi']], 'the last choice is none: nothing is received, nothing spent');
+$w->step(new Controls());
+[$young->level, $young->bond] = [36, 219];
+$w->rite(1, 2);
+$w->items['yugui'] = 1;
+same([[2, 2]], $w->rites(), 'the last rite asks a bond of 220');
+$young->bond = 220;
+same(['白猿·璧受了圭礼，成了白猿·圭！它的同心更强了。', 3], [$w->rite(1, 3), $young->rank], 'which then is received');
+check(throws(fn() => $w->rite(0, 1)) && throws(fn() => $young->rite(3)), 'a rite that cannot be received is refused');

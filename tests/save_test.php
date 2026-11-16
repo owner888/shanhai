@@ -85,7 +85,7 @@ same([array_fill(0, Pen::BOXES, []), 0], [$state['boxes'], $state['box']], 'a ga
 file_put_contents($file, json_encode(['version' => 2, 'state' => array_diff_key($state, ['boxes' => 0, 'box' => 0, 'money' => 0, 'seen' => 0, 'caught' => 0, 'steps' => 0])]));
 same($state, Save::read($file), 'a file of format 2 is read as having nothing in the pen');
 // What a beast holds is kept. A file of the fourth format, in which nothing was held, is read as beasts holding nothing.
-file_put_contents($file, json_encode(['version' => 4, 'state' => array_replace(array_diff_key($state, ['steps' => 0]), ['party' => array_map(fn(array $f) => array_diff_key($f, ['item' => 0, 'bond' => 0, 'offered' => 0]), $state['party'])])]));
+file_put_contents($file, json_encode(['version' => 4, 'state' => array_replace(array_diff_key($state, ['steps' => 0]), ['party' => array_map(fn(array $f) => array_diff_key($f, ['item' => 0, 'bond' => 0, 'offered' => 0, 'rank' => 0]), $state['party'])])]));
 same($state, Save::read($file), 'a file of format 4 is read as beasts holding nothing');
 $holding = new World($maps, 'hut', 0, 0, Dir::Down, $book, Rng::seeded(2));
 $holding->restore(array_replace($state, ['party' => array_map(fn(array $f) => array_replace($f, ['item' => 'tongxiu']), $state['party'])]));
@@ -97,14 +97,25 @@ file_put_contents($file, json_encode(['version' => 5, 'state' => array_diff_key(
 same($state, Save::read($file), 'a file of format 5 is read as having seen and bound what it has with it');
 check(throws(fn() => $holding->restore(array_replace($state, ['seen' => ['nothing']]))) && throws(fn() => $holding->restore(array_replace($state, ['caught' => ['lushu']]))), 'a kind there is none of, or one bound and not seen, is refused');
 // A beast's bond is kept. A file of the sixth format, which had none, is read as beasts with the bond one begins with.
-file_put_contents($file, json_encode(['version' => 6, 'state' => array_replace(array_diff_key($state, ['steps' => 0]), ['party' => array_map(fn(array $f) => array_diff_key($f, ['bond' => 0, 'offered' => 0]), $state['party'])])]));
+file_put_contents($file, json_encode(['version' => 6, 'state' => array_replace(array_diff_key($state, ['steps' => 0]), ['party' => array_map(fn(array $f) => array_diff_key($f, ['bond' => 0, 'offered' => 0, 'rank' => 0]), $state['party'])])]));
 same([Formulas::BOND_BASE, false], [Save::read($file)['party'][0]['bond'], Save::read($file)['party'][0]['offered']], 'a file of format 6 is read as beasts with the bond one begins with');
 $holding->restore(array_replace($state, ['party' => array_map(fn(array $f) => array_replace($f, ['bond' => 231, 'offered' => true]), $state['party'])]));
 same([231, true], [$holding->party[0]->bond, $holding->party[0]->offered], 'a bond comes back');
 same(0, Save::read($file)['steps'], 'and with no steps walked toward the next');
 $holding->steps = 300;
 same(300, $holding->state()['steps'], 'the steps walked toward the next are kept');
-throws(fn() => $holding->restore(array_replace($state, ['steps' => Formulas::BOND_STEPS])), 'the saved game is not as a game can be', 'steps that would already have counted are refused');
+check(throws(fn() => $holding->restore(array_replace($state, ['steps' => Formulas::BOND_STEPS]))), 'steps that would already have counted are refused');
+// A rite received is kept (docs/numbers.md 27). A file of the seventh format, which had none, is read as beasts that have received none.
+file_put_contents($file, json_encode(['version' => 7, 'state' => array_replace($state, ['party' => array_map(fn(array $f) => array_diff_key($f, ['rank' => 0]), $state['party'])])]));
+same(0, Save::read($file)['party'][0]['rank'], 'a file of format 7 is read as beasts that have received no rite');
+$risen = Data::newWorld(1);
+$risen->join('baiyuan', 30);
+$risen->party[0]->rite(1);
+$kept = $risen->state();
+$again = Data::newWorld(1);
+$again->restore($kept);
+same([1, '白猿·璋', $risen->party[0]->stats], [$again->party[0]->rank, $again->party[0]->species['name'], $again->party[0]->stats], 'a rite comes back, with the name and the stats it gives');
+check(throws(fn() => (function () use ($kept) { $w = Data::newWorld(1); $kept['party'][0]['rank'] = 1; $kept['party'][0]['id'] = 'lushu'; $kept['party'][0]['moves'] = [['id' => 'ram', 'pp' => 1]]; $w->restore($kept); })()), 'a rite on a kind that receives none is refused');
 // The money is kept. A file of the third format, which had none, is read as having what a new game begins with.
 same(Formulas::START_MONEY, $state['money'], 'a game that has spent and won nothing keeps what it began with');
 file_put_contents($file, json_encode(['version' => 3, 'state' => array_diff_key($state, ['money' => 0, 'seen' => 0, 'caught' => 0, 'steps' => 0])]));

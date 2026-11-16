@@ -244,10 +244,44 @@ final class Formulas
         }
     }
 
-    /** 25: the power of the move of the bond: the bond times ten over twenty-five, and 1 at least. */
-    public static function bondPower(int $bond): int
+    /** 25, 27: the power of the move of the bond: the bond times ten over twenty-five, twelve for one of the last rite, and 1 at least. */
+    public static function bondPower(int $bond, bool $last = false): int
     {
-        return max(1, intdiv($bond * 10, 25));
+        return max(1, intdiv($bond * ($last ? 12 : 10), 25));
+    }
+
+    /**
+     * 27: the rites a common beast receives, in their order: the jade each takes, the level and the bond it asks, and
+     * how many hundredths of each base stat it leaves. The numbers are the reference's evolutions', measured: a first
+     * at 25 and a second at 36 by the medians, 1.31 and 1.32 times by the chains of three, the bond of its evolutions by happiness.
+     */
+    public const RITES = [
+        1 => ['name' => '璋', 'thing' => 'yuzhang', 'level' => 25, 'bond' => 0, 'times' => 131],
+        2 => ['name' => '璧', 'thing' => 'yubi', 'level' => 36, 'bond' => 0, 'times' => 132],
+        3 => ['name' => '圭', 'thing' => 'yugui', 'level' => 1, 'bond' => 220, 'times' => 100],
+    ];
+    public const LAST_RITE = 3, MAX_BASE = 255;
+
+    /** 27: the rite a beast of this kind and tier that has had $rank would receive next; null for one that receives none, or no more. A common beast of the second tier begins at the second. */
+    public static function nextRite(string $kind, int $tier, int $rank): ?int
+    {
+        if ($kind !== 'common' || $rank >= self::LAST_RITE) {
+            return null;
+        }
+        return $rank === 0 && $tier >= 2 ? 2 : $rank + 1;
+    }
+
+    /** 27: a species' entry as the rites up to $rank leave it: each base stat times each rite's hundredths, rounded down, and its name with the rite's after it. */
+    public static function risen(array $species, int $rank): array
+    {
+        if ($rank === 0) {
+            return $species;
+        }
+        for ($r = self::nextRite($species['kind'], $species['tier'], 0) ?? throw new \InvalidArgumentException("{$species['name']} receives no rite"); $r <= $rank; $r++) {
+            $species['stats'] = array_map(fn(int $n) => min(self::MAX_BASE, intdiv($n * self::RITES[$r]['times'], 100)), $species['stats']);
+        }
+        $species['name'] .= '·' . self::RITES[$rank]['name'];
+        return $species;
     }
 
     /** 20: a wild beast holds nothing on a byte under the first; else its kind's second thing on a byte under the second, its first on any other. */

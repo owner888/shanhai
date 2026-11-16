@@ -34,13 +34,14 @@ foreach ($items as $id => $item) {
         check(!isset($item['grows']) || isset($item['price']) || array_intersect_key($found, $there) !== [], "the thing $id is found on the mountain it grows on");
     }
     check(($item['name'] ?? '') !== '' && ($item['from'] ?? '') !== '', "the thing $id has a name and where it comes from");
-    check(array_diff(array_keys($item), ['name', 'use', 'hold', 'by', 'grows', 'price', 'from']) === [] && in_array($item['use'] ?? null, [null, 'catch', ...\Shanhai\Battle\Medicine::USES], true), "the thing $id has only the fields there are, and a use there is");
+    check(array_diff(array_keys($item), ['name', 'use', 'hold', 'by', 'grows', 'price', 'from']) === [] && in_array($item['use'] ?? null, [null, 'catch', 'rite', ...\Shanhai\Battle\Medicine::USES], true), "the thing $id has only the fields there are, and a use there is");
     check(!isset($item['price']) || (is_int($item['price']) && $item['price'] >= 1), "the thing $id, if it is sold, has a price of one or more");
     // docs/numbers.md 21, 22: what a thing used on a beast does it by; a seal's hundredths of the catch rate
     $by = $item['by'] ?? null;
     if (!isset($item['hold'])) {
         check(match ($item['use'] ?? null) { 'heal' => $by === 'all' || (is_int($by) && $by >= 1), 'cure' => in_array($by, ['poison', 'burn', 'paralyze', 'sleep', 'confuse', 'any'], true),
-            'catch' => $by === null || (is_int($by) && $by > 100) || in_array($by, ['level', 'water', 'bond', 'sure'], true), default => $by === null }, "the thing $id is used by a number or a kind that fits its use");
+            'catch' => $by === null || (is_int($by) && $by > 100) || in_array($by, ['level', 'water', 'bond', 'sure'], true),
+            'rite' => isset(\Shanhai\Battle\Formulas::RITES[$by]) && \Shanhai\Battle\Formulas::RITES[$by]['thing'] === $id, default => $by === null }, "the thing $id is used by a number or a kind that fits its use");
     } else {
         check(!isset($item['use']) || $item['use'] === $item['hold'], "the thing $id, used from the bag, does what it does held");
     }

@@ -10,6 +10,10 @@ final class Fighter
     public const STAT_EXP = ['hp', 'atk', 'def', 'spe', 'spc'];
     public const MAX_STAT_EXP = 65535, MOVES = 4;
 
+    /** Its entry of data/beasts.php as the rites it has received leave it (docs/numbers.md 27): its name and its base stats. */
+    public array $species;
+    /** The last rite it has received, a key of Formulas::RITES; 0 with none. */
+    public int $rank = 0;
     public int $level;
     /** Its experience in all. */
     public int $exp;
@@ -37,7 +41,7 @@ final class Fighter
     public array $stages = ['atk' => 0, 'def' => 0, 'spa' => 0, 'spd' => 0, 'spe' => 0, 'acc' => 0, 'eva' => 0];
 
     /**
-     * @param array $species its entry of data/beasts.php
+     * @param array $born its entry of data/beasts.php
      * @param int $level the level it is made at, with the experience that level begins at
      * @param list<array{0: int, 1: string}> $learnset its moves by level; it knows the last four it has learned,
      *        unless $keeps says which four of those it has learned it kept
@@ -46,7 +50,7 @@ final class Fighter
      */
     public function __construct(
         public readonly string $id,
-        public readonly array $species,
+        private readonly array $born,
         int $level,
         private readonly array $learnset,
         array $moves,
@@ -54,8 +58,9 @@ final class Fighter
         int $statExp = 0,
         ?array $keeps = null,
     ) {
+        $this->species = $born;
         $this->level = $level;
-        $this->exp = Formulas::expAtLevel($species['growth'], $level);
+        $this->exp = Formulas::expAtLevel($born['growth'], $level);
         $this->statExp = array_fill_keys(self::STAT_EXP, $statExp);
         $this->measure();
         $this->hp = $this->maxHp;
@@ -77,7 +82,19 @@ final class Fighter
     public function state(): array
     {
         return ['id' => $this->id, 'level' => $this->level, 'exp' => $this->exp, 'statExp' => $this->statExp, 'dvs' => $this->dvs,
-            'hp' => $this->hp, 'status' => $this->status, 'sleep' => $this->sleep, 'moves' => $this->moves, 'item' => $this->item, 'bond' => $this->bond, 'offered' => $this->offered];
+            'hp' => $this->hp, 'status' => $this->status, 'sleep' => $this->sleep, 'moves' => $this->moves, 'item' => $this->item, 'bond' => $this->bond, 'offered' => $this->offered, 'rank' => $this->rank];
+    }
+
+    /** It receives the rite $rank (docs/numbers.md 27): its base stats rise, and its hp by as much as its most does. */
+    public function rite(int $rank): void
+    {
+        if (Formulas::nextRite($this->born['kind'], $this->born['tier'], $this->rank) !== $rank) {
+            throw new \LogicException("{$this->id} does not receive the rite $rank now");
+        }
+        $most = $this->maxHp;
+        [$this->rank, $this->species] = [$rank, Formulas::risen($this->born, $rank)];
+        $this->measure();
+        $this->hp += $this->fainted() ? 0 : $this->maxHp - $most;
     }
 
     /**
@@ -91,6 +108,13 @@ final class Fighter
         $species = $beasts[$s['id']] ?? throw new \InvalidArgumentException("the saved game has a beast there is none of: '{$s['id']}'");
         $f = new self($s['id'], $species, $s['level'], $learnsets[$s['id']], $moves, $s['dvs']);
         [$f->exp, $f->statExp] = [$s['exp'], $s['statExp']];
+        if ($s['rank'] !== 0) { // one that had no rite to receive, or not this one, is refused by risen()
+            $first = Formulas::nextRite($species['kind'], $species['tier'], 0);
+            if (!is_int($s['rank']) || $first === null || $s['rank'] < $first || $s['rank'] > Formulas::LAST_RITE) {
+                throw new \InvalidArgumentException("the saved game's {$s['id']} has received a rite it cannot have");
+            }
+            [$f->rank, $f->species] = [$s['rank'], Formulas::risen($species, $s['rank'])];
+        }
         $f->measure();
         if ($s['hp'] < 0 || $s['hp'] > $f->maxHp || $s['moves'] === [] || count($s['moves']) > self::MOVES) {
             throw new \InvalidArgumentException("the saved game's {$s['id']} is not as a beast can be");

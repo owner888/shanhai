@@ -363,7 +363,7 @@ final class Battle
         $raw = $critical && $t->stages[$def] >= $u->stages[$atk];
         // 19: a held thing that strengthens the move's element, or the moves of none, adds a tenth
         $boost = ($this->holds($u, 'boost')['by'] ?? null) === ($m['element'] ?? 'none') ? self::BOOST : 0;
-        $power = ($m['bond'] ?? false) ? Formulas::bondPower($u->bond) : $m['power']; // 25
+        $power = ($m['bond'] ?? false) ? Formulas::bondPower($u->bond, $u->rank === Formulas::LAST_RITE) : $m['power']; // 25, 27
         $damage = Formulas::damage($u->level, $power, $raw ? $u->stats[$atk] : $u->stat($atk), $raw ? $t->stats[$def] : $t->stat($def), $critical, $boost);
         $tenths = [];
         if ($m['element'] !== null) {

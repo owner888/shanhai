@@ -26,6 +26,10 @@ return [
     'sealLevel' => ['name' => '威契印', 'use' => 'catch', 'by' => 'level', 'from' => '野生异兽的等级比你场上的那只低，就更容易成契：低于它两倍，低过一半四倍，低过四分之一八倍。游戏自己的设定。'],
     'sealWater' => ['name' => '水契印', 'use' => 'catch', 'by' => 'water', 'from' => '在水面上遇到的异兽，三倍容易成契。游戏自己的设定。'],
     'sealKin' => ['name' => '亲契印', 'use' => 'catch', 'by' => 'bond', 'from' => '用它结契的异兽，一上来就和你十分亲近。游戏自己的设定。'],
+    // docs/numbers.md 27: the jades of the rites a common beast receives from a god whose trial is passed.
+    'yuzhang' => ['name' => '璋玉', 'use' => 'rite', 'by' => 1, 'price' => 2100, 'from' => '南山经之首祠神之礼：「毛用一璋玉瘞」。常兽二十五级起，凭它受璋礼。'],
+    'yubi' => ['name' => '璧玉', 'use' => 'rite', 'by' => 2, 'price' => 2100, 'from' => '南次二经祠神之礼：「毛用一璧瘞」。受过璋礼的常兽、或本就不弱的常兽，三十六级起，凭它受璧礼。'],
+    'yugui' => ['name' => '圭玉', 'use' => 'rite', 'by' => 3, 'price' => 2100, 'from' => '中次八经祠神之礼：「用一藻圭」。受过璧礼、又与你十分亲近的，凭它受圭礼。'],
     'sealSure' => ['name' => '天契印', 'use' => 'catch', 'by' => 'sure', 'from' => '一定成契。全天下只有一枚。游戏自己的设定。'],
     'seal3' => ['name' => '金契印', 'use' => 'catch', 'by' => 200, 'price' => 1200, 'from' => '嵌金的契印，最容易成契。游戏自己的设定。'],
     // What a beast can hold (docs/numbers.md 19): each the classic's own, named with its mountain and what the classic says of

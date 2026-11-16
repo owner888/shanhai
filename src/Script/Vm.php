@@ -5,7 +5,7 @@ namespace Shanhai\Script;
 
 use InvalidArgumentException;
 use RuntimeException;
-use Shanhai\Battle\Ai;
+use Shanhai\Battle\{Ai, Formulas};
 use Shanhai\World\{Dir, World};
 
 /**
@@ -29,6 +29,7 @@ use Shanhai\World\{Dir, World};
  *     ['rest']                   the party's beasts are whole again, and here is where a battle lost wakes the player
  *     ['pen']                    opens the pen, where beasts are left and taken; the script goes on when it is closed
  *     ['shop', [item, ...]]      opens buying those things; the script goes on when the player leaves
+ *     ['rite']                   asks which of the party's beasts receives a rite it could now (docs/numbers.md 27), and gives it; says so when none could
  *     ['float']                  the player goes onto the water faced, carried by a beast of the party
  *     ['load']                   the saved game takes the world's place
  *     ['end']
@@ -38,7 +39,7 @@ final class Vm
     /** command => how many arguments */
     public const ARGS = [
         'say' => 1, 'setFlag' => 1, 'clearFlag' => 1, 'ifFlag' => 2, 'ifNotFlag' => 2, 'goto' => 1, 'label' => 1,
-        'face' => 2, 'move' => 3, 'warp' => 4, 'give' => 2, 'giveBeast' => 2, 'ask' => 2, 'battle' => 2, 'trial' => 2, 'duel' => 2, 'rest' => 0, 'pen' => 0, 'shop' => 1, 'float' => 0, 'load' => 0, 'end' => 0,
+        'face' => 2, 'move' => 3, 'warp' => 4, 'give' => 2, 'giveBeast' => 2, 'ask' => 2, 'battle' => 2, 'trial' => 2, 'duel' => 2, 'rest' => 0, 'pen' => 0, 'shop' => 1, 'rite' => 0, 'float' => 0, 'load' => 0, 'end' => 0,
     ];
 
     public bool $done = false;
@@ -50,6 +51,9 @@ final class Vm
     private int $moveLeft = 0;
     /** @var ?list<string> the labels of the choices asked, while the answer is awaited */
     private ?array $asked = null;
+    /** @var ?list<array{0: int, 1: int}> the rites asked among, while the answer is awaited; the choice after the last is none */
+    private ?array $rites = null;
+    public const NO_RITE = '「眼下没有哪一只能受祭。常兽二十五级，带璋玉来；受过璋礼的、或本就不弱的常兽三十六级，带璧玉来；受过璧礼又与你十分亲近的，带圭玉来。」';
 
     /** @param list<array> $script */
     public function __construct(private readonly array $script)
@@ -126,6 +130,13 @@ final class Vm
             if ($w->dialog !== null || $w->battle !== null || $w->pen !== null || $w->shop !== null) {
                 return;
             }
+            if ($this->rites !== null) {
+                [$rites, $this->rites] = [$this->rites, null];
+                if (isset($rites[$w->chosen])) {
+                    $w->dialog = $w->rite(...$rites[$w->chosen]);
+                    continue;
+                }
+            }
             if ($this->asked !== null) {
                 $this->pc = $this->labels[$this->asked[$w->chosen]];
                 $this->asked = null;
@@ -165,6 +176,15 @@ final class Vm
                 case 'rest': $w->rest(); break;
                 case 'pen': $w->pen(); break;
                 case 'shop': $w->shop($cmd[1]); break;
+                case 'rite':
+                    $rites = $w->rites();
+                    if ($rites === []) {
+                        $w->dialog = self::NO_RITE;
+                    } else {
+                        $w->ask('「让哪一只受祭？」', [...array_map(fn(array $r) => $w->party[$r[0]]->species['name'] . ' 受' . Formulas::RITES[$r[1]]['name'] . '礼', $rites), '不用']);
+                        $this->rites = $rites;
+                    }
+                    break;
                 case 'float': $w->float(); break;
                 case 'load': $w->load(); break;
                 case 'ask': $w->ask($cmd[1], array_column($cmd[2], 0)); $this->asked = array_column($cmd[2], 1); break;

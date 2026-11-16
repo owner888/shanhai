@@ -11,7 +11,7 @@ use Shanhai\World\Pen;
 final class Save
 {
     /** The file's format: one written by another is refused, not guessed at; an older one is read by what is known to have changed. */
-    public const VERSION = 7;
+    public const VERSION = 8;
 
     /** Writes $state to $file, whole or not at all: to a file beside it first, which then takes its place. */
     public static function write(string $file, array $state): void
@@ -34,7 +34,7 @@ final class Save
             throw new RuntimeException("the saved game $file could not be read");
         }
         $data = json_decode($json, true, 64, JSON_THROW_ON_ERROR);
-        if (!is_array($data) || !in_array($data['version'] ?? null, [1, 2, 3, 4, 5, 6, self::VERSION], true) || !is_array($data['state'] ?? null)) {
+        if (!is_array($data) || !in_array($data['version'] ?? null, range(1, self::VERSION), true) || !is_array($data['state'] ?? null)) {
             throw new RuntimeException("$file is not a saved game of format " . self::VERSION);
         }
         // Format 1 had no place of rest: a game saved in it had rested nowhere the world would wake it but the game's own.
@@ -55,6 +55,10 @@ final class Save
             $new = fn(array $beasts) => array_map(fn(array $f) => $f + ['bond' => Formulas::BOND_BASE, 'offered' => false], $beasts);
             [$state['party'], $state['boxes']] = [$new($state['party']), array_map($new, $state['boxes'])];
             $state += ['steps' => 0];
+        }
+        if ($data['version'] < 8) { // formats 1 to 7 had no rites: their beasts have received none
+            $new = fn(array $beasts) => array_map(fn(array $f) => $f + ['rank' => 0], $beasts);
+            [$state['party'], $state['boxes']] = [$new($state['party']), array_map($new, $state['boxes'])];
         }
         return $state;
     }

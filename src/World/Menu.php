@@ -61,7 +61,7 @@ final class Menu
             sprintf('攻击 %d  防御 %d  特攻 %d  特防 %d  速度 %d', $f->stats['atk'], $f->stats['def'], $f->stats['spa'], $f->stats['spd'], $f->stats['spe']),
             '经验 ' . $f->exp . '，' . $next . '  ' . ($f->item === null ? '空手' : '持：' . $book['items'][$f->item]['name']),
             '招式：' . implode('、', array_map(fn(array $m) => $book['moves'][$m['id']]['name'] . ' ' . $m['pp'] . '/' . $book['moves'][$m['id']]['pp'], $f->moves)),
-            '天分：' . Formulas::talent($f->state()['dvs']) . '  和你：' . Formulas::bondWord($f->bond),
+            '天分：' . Formulas::talent($f->state()['dvs']) . '  和你：' . Formulas::bondWord($f->bond) . ($f->rank === 0 ? '' : '  已受' . Formulas::RITES[$f->rank]['name'] . '礼'),
         ];
     }
 

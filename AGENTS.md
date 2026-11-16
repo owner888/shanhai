@@ -143,6 +143,8 @@ docs/elements.md   the elements' table and how a beast's elements are settled
   the classic's herbs, trees and stones (`data/items.php`'s `hold` and `by`; `Battle::holds`): found once by their mountain's sign, or sold; a wild beast may hold what grows on its mountain (20).
 - **A beast's bond** (亲密度, `Fighter::$bond`, docs/numbers.md 25) is the reference's happiness, number for number; it changes no stat, only
   the power of 同心, which a beast close enough comes to of itself, once (`Fighter::$offered`).
+- **The rites** (受祭, docs/numbers.md 27) stand where the reference's evolutions do: a common beast, at a god whose trial is passed,
+  with the jade, keeps its kind and has its base stats raised (`Fighter::$rank`, `Formulas::risen`); a strange one receives none.
 - **Money** (贝, `World::$money`, docs/numbers.md 17): a trial or one on the road, beaten, pays by the level of their last
   beast; a battle lost takes half; a script's `shop` opens buying (`Shop`), where each range's place of rest is.
 - **A saved game** is `World::state()`: the map and place, flags, bag, money, where it last rested, the pen, the record of beasts, and each beast's `Fighter::state()`. What does not

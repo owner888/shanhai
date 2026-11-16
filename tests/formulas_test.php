@@ -116,3 +116,15 @@ same([71, 200, 73, 201, 69, 0, 65, 190, 71], [Formulas::bond(70, 'move'), Formul
     'a move learned, a trial gone into, a fall, a fall to one far stronger, and the steps walked');
 same([28, 88, 102, 1], [Formulas::bondPower(70), Formulas::bondPower(220), Formulas::bondPower(255), Formulas::bondPower(0)], 'the move of the bond: the bond times ten over twenty-five, 1 at least');
 same(['疏远', '还生分', '渐渐熟了', '亲近', '十分亲近', '形影不离'], array_map(Formulas::bondWord(...), [49, 50, 100, 150, 200, 250]), 'the word for a bond, by the grades of 50, 100, 150, 200 and 250');
+
+// 27: the rites. A common beast of the first tier receives the three in order, one of the second begins at the second; no other kind receives any.
+same([1, 2, 3, null, 2, 3, null, null], [Formulas::nextRite('common', 1, 0), Formulas::nextRite('common', 1, 1), Formulas::nextRite('common', 1, 2), Formulas::nextRite('common', 1, 3),
+    Formulas::nextRite('common', 2, 0), Formulas::nextRite('common', 2, 2), Formulas::nextRite('strange', 1, 0), Formulas::nextRite('strange', 3, 0)], 'which rite comes next');
+$plain = ['name' => '白猿', 'kind' => 'common', 'tier' => 1, 'stats' => ['hp' => 45, 'atk' => 45, 'def' => 35, 'spa' => 50, 'spd' => 45, 'spe' => 70]];
+same([$plain, ['hp' => 58, 'atk' => 58, 'def' => 45, 'spa' => 65, 'spd' => 58, 'spe' => 91], '白猿·璋'], [Formulas::risen($plain, 0), Formulas::risen($plain, 1)['stats'], Formulas::risen($plain, 1)['name']], 'the first leaves 131 hundredths of each base stat: 290 in all becomes 375');
+same([['hp' => 76, 'atk' => 76, 'def' => 59, 'spa' => 85, 'spd' => 76, 'spe' => 120], '白猿·璧', 492], [Formulas::risen($plain, 2)['stats'], Formulas::risen($plain, 2)['name'], array_sum(Formulas::risen($plain, 3)['stats'])], 'the second 132 of that; the third leaves the stats');
+$strong = ['name' => '兕', 'kind' => 'common', 'tier' => 2, 'stats' => ['hp' => 90, 'atk' => 90, 'def' => 75, 'spa' => 30, 'spd' => 45, 'spe' => 45]];
+same(['hp' => 118, 'atk' => 118, 'def' => 99, 'spa' => 39, 'spd' => 59, 'spe' => 59], Formulas::risen($strong, 2)['stats'], 'one of the second tier has only the second\'s 132');
+same(255, Formulas::risen(['name' => 'x', 'kind' => 'common', 'tier' => 2, 'stats' => ['hp' => 250]], 2)['stats']['hp'], 'a base stat is 255 at most');
+check(throws(fn() => Formulas::risen(['name' => '鹿蜀', 'kind' => 'strange', 'tier' => 3, 'stats' => []], 1)), 'a kind that receives none is refused');
+same([102, 122, 105], [Formulas::bondPower(255), Formulas::bondPower(255, true), Formulas::bondPower(220, true)], 'after the last rite the move of the bond is the bond times twelve over twenty-five');

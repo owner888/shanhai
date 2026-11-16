@@ -530,6 +530,39 @@ final class World
         $this->restore(Save::read($file) ?? throw new LogicException("there is no saved game at $file"));
     }
 
+    /**
+     * The rites the party's beasts could receive now (docs/numbers.md 27): for each that has one to receive, the jade
+     * for it being in the bag and its level and bond enough. @return list<array{0: int, 1: int}> [place in the party, rite]
+     */
+    public function rites(): array
+    {
+        $out = [];
+        foreach ($this->party as $i => $f) {
+            $kind = $this->book['beasts'][$f->id] ?? null;
+            $rite = $kind === null ? null : Formulas::nextRite($kind['kind'], $kind['tier'], $f->rank);
+            if ($rite !== null && ($this->items[Formulas::RITES[$rite]['thing']] ?? 0) > 0 && $f->level >= Formulas::RITES[$rite]['level'] && $f->bond >= Formulas::RITES[$rite]['bond']) {
+                $out[] = [$i, $rite];
+            }
+        }
+        return $out;
+    }
+
+    /** The beast at $which of the party receives $rite, which takes the jade. The line that tells it. */
+    public function rite(int $which, int $rite): string
+    {
+        if (!in_array([$which, $rite], $this->rites(), true)) {
+            throw new LogicException("the party's beast $which cannot receive the rite $rite now");
+        }
+        $thing = Formulas::RITES[$rite]['thing'];
+        if (--$this->items[$thing] === 0) {
+            unset($this->items[$thing]);
+        }
+        $f = $this->party[$which];
+        $was = $f->species['name'];
+        $f->rite($rite);
+        return $was . '受了' . Formulas::RITES[$rite]['name'] . '礼，成了' . $f->species['name'] . '！' . ($rite === Formulas::LAST_RITE ? '它的同心更强了。' : '六项能力都长了。');
+    }
+
     /** A script asks: $line shows, with $choices to choose among. */
     public function ask(string $line, array $choices): void
     {
