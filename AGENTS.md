@@ -59,7 +59,7 @@ src/Battle/        the battle, with no drawing: Rng (bytes, from a seed or a tes
                    Simulator (battles with no player, to weigh the tables)
 src/Text.php       the dialog box's measures and line breaking
 src/Cursor.php     a list's cursor: moves on a press, not while held
-src/Journey.php    a player with no hands: plays a game through every trial by World::step alone (tools/journey.php, its test)
+src/Journey.php    a player with no hands, with a full party as a person keeps one: plays a game through every trial by World::step alone (tools/journey.php, its test)
 src/Save.php       the one saved game, a file of JSON in the app's own folder: World::state() written and read
 src/Data.php       reads data/
 src/Elements.php   what a move of one element does against a beast of others (double, even, half, in tenths)

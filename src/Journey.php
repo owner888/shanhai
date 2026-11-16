@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Shanhai;
 
 use RuntimeException;
+use Shanhai\Battle\Formulas;
 use Shanhai\World\{Controls, Dir, Map, Tile, World};
 
 /**
@@ -11,11 +12,17 @@ use Shanhai\World\{Controls, Dir, Map, Tile, World};
  * same Controls a person's keys make, so that what it meets is what a person would. It walks the roads, takes the
  * first of what it is offered (but what a question must be answered to be taken somewhere or to rest), fights those
  * on the road who see it and every wild beast that comes, with the move that would do most, and goes to a trial when
- * its first beast is at the level it wants: 0 at first, so it tries at once, and two more than it had each time it
+ * its beasts' mean level is what it wants: 0 at first, so it tries at once, and two more than it had each time it
  * fails. Before a trial it has its beasts made whole at the nearest place that does so.
  *
+ * It keeps a party as a person does, of $size beasts (six, all there is room for): with the seals it is given it
+ * goes looking for wild beasts of kinds it has not that a seal is likely to hold, and binds them, wearing each down
+ * first, and goes back for more seals when it has none; in the wild and on the roads it
+ * sends its weakest first, and calls it back for its strongest when the other is of a higher level, so that both
+ * grow; in a trial its strongest goes first. A party of one is the player it was before.
+ *
  * It is for knowing that the game can be played through and what that takes (tools/journey.php), not for playing well:
- * it binds no beast, uses no move that does no damage, and never flees.
+ * it uses no move that does no damage, and never flees.
  */
 final class Journey
 {
@@ -26,12 +33,12 @@ final class Journey
     public int $wild = 0;
     public int $lost = 0;
     /**
-     * A line a trial passed: the level its first beast went into it at, counting from the start how often trials were
-     * tried, wild battles, battles lost and updates.
-     * @var list<array{range: int, who: string, tries: int, level: int, wild: int, lost: int, updates: int}>
+     * A line a trial passed: the mean level its beasts went into it at, the lowest and the highest of them and how many
+     * they were, counting from the start how often trials were tried, wild battles, battles lost and updates.
+     * @var list<array{range: int, who: string, tries: int, level: float, low: int, high: int, size: int, wild: int, lost: int, updates: int}>
      */
     public array $passed = [];
-    /** @var array<int, int> by range: the level its first beast is to be at before the trial is tried */
+    /** @var array<int, int> by range: the mean level its beasts are to be at before the trial is tried */
     private array $want = [];
     /** @var array<int, int> by range: how often its trial was tried */
     private array $tries = [];
@@ -44,8 +51,9 @@ final class Journey
      * @param array<string, Map> $maps
      * @param array<string, array> $moves data/moves.php
      * @param int $starter which of the three it takes
+     * @param int $size how many beasts it keeps: 1 binds none
      */
-    public function __construct(public readonly World $w, private readonly array $maps, private readonly array $moves, private readonly array $gods, private readonly int $starter = 0)
+    public function __construct(public readonly World $w, private readonly array $maps, private readonly array $moves, private readonly array $gods, private readonly int $starter = 0, private readonly int $size = World::PARTY)
     {
         foreach ($maps as $map) {
             foreach ($map->npcs as $npc) {
@@ -73,13 +81,13 @@ final class Journey
             } catch (Woke) {
                 // a battle was lost: the player is where the game wakes them, and what was being done is begun again
                 if ($this->trying !== null) {
-                    $this->want[$this->trying] = $this->w->party[0]->level + 2;
+                    $this->want[$this->trying] = min(Formulas::MAX_LEVEL, (int)$this->level() + 2);
                     $this->trying = null;
                 } elseif ($this->roadLost) {
                     // to one met on the road, who will be there again: a level more first, in the wild of the range being walked
                     foreach ($this->trials as $t) {
                         if (!isset($this->w->flags[$t['flag']])) {
-                            $this->want[$t['range']] = max($this->want[$t['range']] ?? 0, $this->w->party[0]->level + 1);
+                            $this->want[$t['range']] = min(Formulas::MAX_LEVEL, max($this->want[$t['range']] ?? 0, (int)$this->level() + 1));
                             break;
                         }
                     }
@@ -98,6 +106,12 @@ final class Journey
             $this->talk($w->actor('shaman')->x, $w->actor('shaman')->y, [$this->starter, 0]);
             return true;
         }
+        if (count($w->party) < $this->size && ($w->items['seal'] ?? 0) === 0 && $this->supply()) {
+            return true;
+        }
+        if (count($w->party) < $this->size && $this->seek()) {
+            return true;
+        }
         $next = null;
         foreach ($this->trials as $t) {
             if (!isset($w->flags[$t['flag']])) {
@@ -109,24 +123,78 @@ final class Journey
             return false;
         }
         $r = $next['range'];
-        if ($w->party[0]->level < ($this->want[$r] ?? 0)) {
+        if ($this->level() < ($this->want[$r] ?? 0)) {
+            if ($this->spent()) {
+                $this->mend();
+            }
             $this->grind($r);
             return true;
         }
         $this->mend();
         $this->travel($next['map']);
+        $this->arrange(false);
         $god = $w->actor($next['npc']);
-        [$this->trying, $this->tries[$r], $level] = [$r, ($this->tries[$r] ?? 0) + 1, $w->party[0]->level];
+        $levels = array_map(fn($f) => $f->level, $w->party);
+        [$this->trying, $this->tries[$r], $level] = [$r, ($this->tries[$r] ?? 0) + 1, $this->level()];
         $this->talk($god->x, $god->y, []);
         $this->trying = null;
         if (!isset($w->flags[$next['flag']])) {
             throw new RuntimeException("the trial of range $r was talked through and neither passed nor lost");
         }
-        $this->passed[] = ['range' => $r, 'who' => $next['who'], 'tries' => $this->tries[$r], 'level' => $level, 'wild' => $this->wild, 'lost' => $this->lost, 'updates' => $this->updates];
+        $this->passed[] = ['range' => $r, 'who' => $next['who'], 'tries' => $this->tries[$r], 'level' => $level, 'low' => min($levels), 'high' => max($levels), 'size' => count($levels), 'wild' => $this->wild, 'lost' => $this->lost, 'updates' => $this->updates];
         return true;
     }
 
-    /** Fights in the wild of range $r until the first beast is at the level wanted. */
+    /** The mean level of the party. */
+    private function level(): float
+    {
+        return array_sum(array_map(fn($f) => $f->level, $this->w->party)) / count($this->w->party);
+    }
+
+    /** Whether the party is too worn to go on in the wild: its strongest has fallen, or fewer than half can fight. */
+    private function spent(): bool
+    {
+        $able = array_filter($this->w->party, fn($f) => !$f->fainted());
+        $top = max(array_map(fn($f) => $f->level, $this->w->party));
+        return 2 * count($able) < count($this->w->party) || array_filter($able, fn($f) => $f->level === $top) === [];
+    }
+
+    /**
+     * Puts the party in order by the menu's own screen, as a person would: those that can fight before those that
+     * cannot, and among them the weakest first, or the strongest.
+     */
+    private function arrange(bool $weakFirst): void
+    {
+        $w = $this->w;
+        $want = $w->party;
+        usort($want, fn($a, $b) => [$a->fainted(), $weakFirst ? $a->level : -$a->level] <=> [$b->fainted(), $weakFirst ? $b->level : -$b->level]);
+        if ($want === $w->party) {
+            return;
+        }
+        $this->tick(menu: true);
+        $menu = $w->menu ?? throw new RuntimeException('the menu button opened no menu');
+        $this->cursorTo(array_search(\Shanhai\World\Menu::ENTRIES['party'], $menu->items($w->party, $w->items, []), true), fn() => $w->menu->at());
+        $this->tick(confirm: true);
+        foreach ($want as $i => $f) {
+            $j = array_search($f, $w->party, true);
+            if ($j !== $i) {
+                $this->cursorTo($i, fn() => $w->menu->at());
+                $this->tick(confirm: true);
+                $this->cursorTo($j, fn() => $w->menu->at());
+                $this->tick(confirm: true);
+            }
+        }
+        if ($want !== $w->party) {
+            throw new RuntimeException('the party was put in order and is not in it');
+        }
+        $this->tick(cancel: true);
+        $this->tick(menu: true);
+        if ($w->menu !== null) {
+            throw new RuntimeException('the menu was closed and is still open');
+        }
+    }
+
+    /** Fights in the wild of range $r until the party's mean level is the level wanted, or it is too worn to go on. */
     private function grind(int $r): void
     {
         $best = null;
@@ -142,6 +210,40 @@ final class Journey
             throw new RuntimeException("range $r has no wild beasts that can be come to");
         }
         $this->travel($best[0]);
+        $this->pace(fn() => $this->level() < $this->want[$r]);
+    }
+
+    /**
+     * Goes looking for a beast to bind while there is room for one: to the nearest map whose wild holds a kind it has
+     * not and has not found a seal unlikely to hold, and through one battle there. A map it has fought on three times
+     * for each of its seven places without filling the party, it leaves. False when there is nowhere to look.
+     */
+    private function seek(): bool
+    {
+        $had = array_map(fn($f) => $f->id, $this->w->party);
+        $near = null;
+        foreach ($this->maps as $map) {
+            $kinds = array_diff(array_column($map->wild['slots'] ?? [], 1), $had, $this->passedOver);
+            if ($kinds !== [] && ($this->sought[$map->id] ?? 0) < 3 * count($map->wild['slots']) && ($route = $this->route($map->id)) !== null && ($near === null || count($route) < $near[1])) {
+                $near = [$map->id, count($route)];
+            }
+        }
+        if ($near === null) {
+            return false;
+        }
+        if ($this->spent()) {
+            $this->mend();
+        }
+        $this->travel($near[0]);
+        $fought = $this->wild;
+        $this->pace(fn() => $this->wild === $fought);
+        $this->sought[$near[0]] = ($this->sought[$near[0]] ?? 0) + 1;
+        return true;
+    }
+
+    /** Walks between two tiles of the wild of the map it is on, its weakest first, while $goes says to and the party is not too worn. */
+    private function pace(callable $goes): void
+    {
         $map = $this->w->map;
         // two tiles side by side where wild beasts are, to walk between
         $pair = null;
@@ -156,11 +258,16 @@ final class Journey
         if ($pair === null) {
             throw new RuntimeException("{$map->id}: no two tiles of its wild side by side can be come to");
         }
+        $this->arrange(true);
         $this->goTile($pair[0], $pair[1], false);
-        while ($this->w->party[0]->level < $this->want[$r]) {
+        while ($goes() && !$this->spent()) {
+            $fought = $this->wild;
             $this->stepDir($this->w->player->x === $pair[0] ? Dir::Right : Dir::Left);
             if ($this->w->map !== $map) {
                 throw new RuntimeException('left the map while walking between two of its tiles');
+            }
+            if ($this->wild !== $fought) {
+                $this->arrange(true);
             }
         }
     }
@@ -175,22 +282,36 @@ final class Journey
         if ($whole) {
             return;
         }
-        // who rests the party when talked to as the game stands: [map, x, y]
+        if (!$this->visit('rest')) {
+            throw new RuntimeException('nowhere that can be come to makes the party whole');
+        }
+    }
+
+    /** Goes for seals to the nearest who gives them; false when no one that can be come to does. */
+    private function supply(): bool
+    {
+        return $this->visit('give');
+    }
+
+    /** Goes to the nearest person or sign whose script, as the game stands, comes to a command of $kind, and talks it there. */
+    private function visit(string $kind): bool
+    {
         $places = [];
         foreach ($this->maps as $map) {
             foreach ([...array_map(fn(array $n) => [$n[1], $n[2], $n[5]], $map->npcs), ...array_map(fn(array $s) => [$s[0], $s[1], $s[2]], $map->signs)] as [$x, $y, $script]) {
-                if (($rest = $this->reaches($script, 'rest')) !== null && ($route = $this->route($map->id)) !== null) {
-                    $places[] = [count($route), $map->id, $x, $y, $rest[1]];
+                if (($found = $this->reaches($script, $kind)) !== null && ($route = $this->route($map->id)) !== null) {
+                    $places[] = [count($route), $map->id, $x, $y, $found[1]];
                 }
             }
         }
         if ($places === []) {
-            throw new RuntimeException('nowhere that can be come to makes the party whole');
+            return false;
         }
         sort($places);
         [, $map, $x, $y, $answers] = $places[0];
         $this->travel($map);
         $this->talk($x, $y, $answers);
+        return true;
     }
 
     // ---- the maps between ----
@@ -281,6 +402,9 @@ final class Journey
 
     private function travel(string $to): void
     {
+        if ($this->w->party !== [] && $this->w->map->id !== $to) {
+            $this->arrange(true); // those on the road are met as the wild are, so that all the party grows by them
+        }
         while ($this->w->map->id !== $to) {
             $route = $this->route($to) ?? throw new RuntimeException("no way from {$this->w->map->id} to $to");
             [$next, $how] = $route[0];
@@ -403,6 +527,13 @@ final class Journey
 
     // ---- what holds the controls ----
 
+    /** @var list<string> the kinds met that a seal would not likely hold even worn down: not looked for */
+    private array $passedOver = [];
+    /** @var array<string, int> by map: how often it has gone there looking for a beast to bind */
+    private array $sought = [];
+    /** The battle in which the beast first sent has been called back for the strongest already. */
+    private ?object $relieved = null;
+
     /** @var list<int> the choices to make at the questions to come */
     private array $answers = [];
 
@@ -429,21 +560,55 @@ final class Journey
         $s = $this->w->battle;
         $b = $s->battle;
         $trial = $s->trial !== null;
-        if ($s->phase === 'moves') {
-            [$me, $foe, $pick] = [$b->fighter(0), $b->fighter(1), null];
-            foreach ($b->usable(0) as $i) {
+        [$me, $foe] = [$b->fighter(0), $b->fighter(1)];
+        // the strongest of the others that can fight, to send in
+        $relief = null;
+        foreach ($b->parties[0] as $i => $f) {
+            if (!$f->fainted() && $i !== $b->active[0] && ($relief === null || $f->level > $b->parties[0][$relief]->level)) {
+                $relief = $i;
+            }
+        }
+        // a wild beast to bind: of a kind not had, while there is room and a seal, and one that worn down to a third
+        // a seal would more likely hold than not (docs/numbers.md 8): the seals are few
+        $odds = fn(int $hp) => Formulas::catchValue($foe->species['catch'], $foe->maxHp, $hp, $foe->status) >= 128;
+        $binds = !$trial && count($b->parties[0]) < $this->size && ($this->w->items['seal'] ?? 0) > 0
+            && !in_array($foe->id, array_map(fn($f) => $f->id, $b->parties[0]), true) && $odds(max(1, intdiv($foe->maxHp, 3)));
+        // the hardest blow that would leave it standing, to wear it down
+        $gentle = null;
+        foreach ($b->usable(0) as $i) {
+            $e = $b->estimate($me, $foe, $i);
+            if ($e > 0 && $e < $foe->hp && ($gentle === null || $e > $b->estimate($me, $foe, $gentle))) {
+                $gentle = $i;
+            }
+        }
+        if (!$trial && !$odds(max(1, intdiv($foe->maxHp, 3))) && !in_array($foe->id, $this->passedOver, true)) {
+            $this->passedOver[] = $foe->id;
+        }
+        $throws = $binds && (3 * $foe->hp <= $foe->maxHp || $gentle === null); // one it cannot wear down without felling it, it tries as it is
+        if ($s->phase === 'menu') {
+            $keys = array_keys($s::MENU);
+            if ($throws) {
+                $this->cursorTo(array_search('bag', $keys, true), fn() => $s->cursor->at);
+            } elseif (!$binds && $this->relieved !== $s && $relief !== null && $me->level < $foe->level && $b->parties[0][$relief]->level > $me->level) {
+                // outmatched: it is called back for the strongest, and both will have fought
+                $this->relieved = $s;
+                $this->cursorTo(array_search('party', $keys, true), fn() => $s->cursor->at);
+            }
+        } elseif ($s->phase === 'moves') {
+            $pick = $binds ? $gentle : null;
+            foreach ($pick === null ? $b->usable(0) : [] as $i) {
                 if ($pick === null || $b->estimate($me, $foe, $i) > $b->estimate($me, $foe, $pick)) {
                     $pick = $i;
                 }
             }
             $this->cursorTo($pick ?? 0, fn() => $s->cursor->at);
         } elseif ($s->phase === 'party') {
-            foreach ($b->parties[0] as $i => $f) {
-                if (!$f->fainted() && $i !== $b->active[0]) {
-                    $this->cursorTo($i, fn() => $s->cursor->at);
-                    break;
-                }
+            $this->cursorTo($relief ?? throw new RuntimeException('the party\'s list is open in a battle and no other beast can fight'), fn() => $s->cursor->at);
+        } elseif ($s->phase === 'bag') {
+            if (!$throws) {
+                throw new RuntimeException('the bag was opened in a battle with nothing to bind');
             }
+            $this->cursorTo(array_search('seal', array_keys($this->w->items), true), fn() => $s->cursor->at);
         } elseif ($s->phase === 'forget') {
             // the new move takes the place of the weakest known, when it is stronger than that
             $items = $s->items();
@@ -455,8 +620,6 @@ final class Journey
             $powers = array_map(fn(string $name) => array_values(array_filter($this->moves, fn(array $m) => $m['name'] === $name))[0]['power'], $known);
             $weakest = array_search(min($powers), $powers, true);
             $this->cursorTo($new > $powers[$weakest] ? $weakest : count($known), fn() => $s->cursor->at);
-        } elseif ($s->phase === 'bag') {
-            throw new RuntimeException('the bag was opened in a battle, which this player never does');
         }
         $this->tick(confirm: true);
         if ($this->w->battle === null) {
@@ -481,12 +644,12 @@ final class Journey
         }
     }
 
-    private function tick(?Dir $dir = null, bool $confirm = false): void
+    private function tick(?Dir $dir = null, bool $confirm = false, bool $cancel = false, bool $menu = false): void
     {
         if (++$this->updates > self::LIMIT) {
             throw new RuntimeException('the journey goes on past any it should: at ' . $this->w->map->id);
         }
-        $this->w->step(new Controls($dir, $confirm));
+        $this->w->step(new Controls($dir, $confirm, $cancel, $menu));
     }
 }
 

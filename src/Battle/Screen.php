@@ -148,7 +148,7 @@ final class Screen
         } elseif ($what === 'flee') {
             $this->flee();
         } elseif ($this->battle->usable(0) === []) {
-            $this->turn(['move', 0]); // with none left the beast can only fail to move (the battle says so)
+            $this->turn(['move', 0]); // with none left the beast struggles (docs/numbers.md 11.6), whatever is named
         } else {
             $this->open('moves');
         }
