@@ -15,11 +15,12 @@ $beasts = Data::beasts();
 $starters = array_keys(array_filter($beasts, fn(array $b) => $b['starter'] ?? false));
 foreach ([0, 1, 2] as $starter) {
     $sum = [];
-    $swaps = 0;
+    $swaps = $rites = 0;
     for ($seed = 1; $seed <= $seeds; $seed++) {
         $j = new Journey(Data::newWorld($seed), Data::maps(), Data::moves(), Data::gods(), $starter);
         $j->play();
         $swaps += $j->swapped;
+        $rites += $j->rites;
         $name = $beasts[$starters[$starter]]['name'];
         foreach ($j->passed as $p) {
             foreach (['tries', 'level', 'low', 'high', 'size', 'wild', 'lost', 'updates', 'money'] as $k) {
@@ -28,8 +29,8 @@ foreach ([0, 1, 2] as $starter) {
             $sum[$p['range']]['who'] = $p['who'];
         }
     }
-    printf("%s first, the mean of %d games (wild battles, battles lost and time are counted from the start); %.1f times a beast was left in the pen for a better one; the last game's party at the end: %s\n",
-        $name, $seeds, $swaps / $seeds, implode('、', array_map(fn($f) => $f->species['name'] . ' ' . $f->level, $j->w->party)));
+    printf("%s first, the mean of %d games (wild battles, battles lost and time are counted from the start); %.1f times a beast was left in the pen for a better one, %.1f rites received; the last game's party at the end: %s\n",
+        $name, $seeds, $swaps / $seeds, $rites / $seeds, implode('、', array_map(fn($f) => $f->species['name'] . ' ' . $f->level, $j->w->party)));
     foreach ($sum as $range => $s) {
         printf("  range %d %s: passed with %.1f beasts at level %.1f (%.0f to %.0f) on try %.1f, after %.0f wild battles, %.1f lost, %.0f minutes, with %.0f in money\n",
             $range, $s['who'], $s['size'] / $seeds, $s['level'] / $seeds, $s['low'] / $seeds, $s['high'] / $seeds, $s['tries'] / $seeds, $s['wild'] / $seeds, $s['lost'] / $seeds, $s['updates'] / $seeds / 3600, $s['money'] / $seeds);

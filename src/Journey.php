@@ -27,6 +27,10 @@ use Shanhai\World\{Controls, Dir, Map, Pen, Tile, World};
  * what a fallen beast gives, a beast's worth is its kind's alone, for its level will come: it has the lowest of its
  * party hold the thing, and looks for a kind better than its least only when the party's levels are close again.
  *
+ * A common beast that could receive a rite (docs/numbers.md 27) is taken to the nearest god that gives it, the jade
+ * bought first when it has none and can pay; and a common beast's worth is what the rites whose jades can be had by
+ * then would make it, so that it keeps one for what it will be.
+ *
  * It is for knowing that the game can be played through and what that takes (tools/journey.php), not for playing well:
  * it uses no move that does no damage, and never flees.
  */
@@ -125,6 +129,25 @@ final class Journey
             return true;
         }
         $this->hold();
+        if ($w->rites() !== []) { // docs/numbers.md 27: one that can receive a rite is taken to the nearest god that gives it
+            $had = array_sum(array_map(fn(Fighter $f) => $f->rank, $w->party));
+            if (!$this->visit('rite') || array_sum(array_map(fn(Fighter $f) => $f->rank, $w->party)) <= $had) {
+                throw new RuntimeException('a beast could receive a rite and no god that can be come to gave it');
+            }
+            $this->rites++;
+            return true;
+        }
+        if (($thing = $this->jade()) !== null && $w->money >= Data::items()[$thing]['price']) {
+            [$had, $this->shopping] = [$w->items[$thing] ?? 0, $thing];
+            $went = $this->visit('shop', fn(array $cmd) => in_array($thing, $cmd[1], true));
+            $this->shopping = null;
+            if ($went && ($w->items[$thing] ?? 0) <= $had) {
+                throw new RuntimeException("it went to buy '$thing' and came back without");
+            }
+            if ($went) {
+                return true;
+            }
+        }
         $near = $this->near();
         if ($near !== null && ($w->items['seal'] ?? 0) === 0 && $this->supply()) {
             return true;
@@ -241,10 +264,48 @@ final class Journey
      * What a beast of $level is worth beside another: its level times what its kind's base stats add up to, as its
      * stats go by the two; with the thing that shares, what its kind's base stats add up to alone.
      */
-    private function worth(int $level, array $species): int
+    private function worth(int $level, string $id, int $rank = 0): int
     {
-        return ($this->shares() ? 1 : $level) * array_sum($species['stats']);
+        return ($this->shares() ? 1 : $level) * $this->total($id, $rank);
     }
+
+    /** The trials passed after which each rite's jade is given and sold (docs/numbers.md 27). */
+    private const JADES = [1 => 4, 2 => 11];
+
+    /** What the base stats of a beast of kind $id that has received $rank add up to, or would with the rites whose jades can be had by now. */
+    private function total(string $id, int $rank): int
+    {
+        $kind = $this->beasts()[$id];
+        while (($next = Formulas::nextRite($kind['kind'], $kind['tier'], $rank)) !== null && count($this->passed) >= (self::JADES[$next] ?? PHP_INT_MAX)) {
+            $rank = $next;
+        }
+        return array_sum(Formulas::risen($kind, $rank)['stats']);
+    }
+
+    /** How often a beast of the party received a rite. */
+    public int $rites = 0;
+
+    /** The jade a beast of the party would receive a rite with now, its level and bond being enough, that the bag has too few of; null with none. */
+    private function jade(): ?string
+    {
+        $need = [];
+        foreach ($this->w->party as $f) {
+            $kind = $this->beasts()[$f->id] ?? null;
+            $rite = $kind === null ? null : Formulas::nextRite($kind['kind'], $kind['tier'], $f->rank);
+            if ($rite !== null && $f->level >= Formulas::RITES[$rite]['level'] && $f->bond >= Formulas::RITES[$rite]['bond']) {
+                $need[Formulas::RITES[$rite]['thing']] = ($need[Formulas::RITES[$rite]['thing']] ?? 0) + 1;
+            }
+        }
+        foreach ($need as $thing => $n) {
+            if (($this->w->items[$thing] ?? 0) < $n) {
+                return $thing;
+            }
+        }
+        return null;
+    }
+
+    /** The thing it has gone to buy, other than seals; null for seals. */
+    private ?string $shopping = null;
 
     /** The id of the thing that, held, shares what a fallen beast gives. */
     private function share(): string
@@ -305,7 +366,7 @@ final class Journey
     /** Where in the party its weakest is, by worth. */
     private function weakest(): int
     {
-        $worths = array_map(fn(Fighter $f) => $this->worth($f->level, $f->species), $this->w->party);
+        $worths = array_map(fn(Fighter $f) => $this->worth($f->level, $f->id, $f->rank), $this->w->party);
         return array_search(min($worths), $worths, true);
     }
 
@@ -326,7 +387,7 @@ final class Journey
         $levels = array_map(fn(Fighter $f) => $f->level, $w->party);
         // with the thing that shares: only a beast at half the party's highest level or over, and only with none of the party still catching up
         return $this->size === World::PARTY && count($w->boxes[$w->box]) < Pen::BOX
-            && $this->worth($level, $this->beasts()[$id]) > $this->worth($weak->level, $weak->species)
+            && $this->worth($level, $id) > $this->worth($weak->level, $weak->id, $weak->rank)
             && (!$this->shares() || (2 * $level >= max($levels) && max($levels) - min($levels) <= self::CLOSE));
     }
 
@@ -347,7 +408,7 @@ final class Journey
         }
         $best = null;
         foreach ($w->boxes[$w->box] as $i => $f) {
-            if ($this->wants($f->level, $f->id) && ($best === null || $this->worth($f->level, $f->species) > $this->worth($w->boxes[$w->box][$best]->level, $w->boxes[$w->box][$best]->species))) {
+            if ($this->wants($f->level, $f->id) && ($best === null || $this->worth($f->level, $f->id, $f->rank) > $this->worth($w->boxes[$w->box][$best]->level, $w->boxes[$w->box][$best]->id, $w->boxes[$w->box][$best]->rank))) {
                 $best = $i;
             }
         }
@@ -482,10 +543,31 @@ final class Journey
         return $this->price ??= Data::items()['seal']['price'];
     }
 
-    /** Buying is open: it buys the seals it can pay for, SEALS at most, and leaves. */
+    /** The thing it has just bought one of, on its way out. */
+    private ?string $bought = null;
+
+    /** Buying is open: it buys the seals it can pay for, SEALS at most, and leaves; or, come for another thing, one of that. */
     private function buy(): void
     {
         $shop = $this->w->shop;
+        if ($this->shopping !== null) { // one of the thing it came for, then it leaves
+            $at = array_search($this->shopping, $shop->sells, true);
+            if ($shop->note !== null) {
+                [$this->shopping, $this->bought] = [null, $this->shopping];
+                $this->tick(confirm: true);
+            } elseif ($shop->phase === 'list' && $shop->at < $at) {
+                $this->tick(Dir::Down);
+                $this->tick();
+            } else {
+                $this->tick(confirm: true);
+            }
+            return;
+        }
+        if ($this->bought !== null) {
+            $this->bought = null;
+            $this->tick(cancel: true);
+            return;
+        }
         $n = min(self::SEALS, intdiv($this->w->money, $this->price()));
         if ($shop->note !== null || $n === 0 || ($this->w->items['seal'] ?? 0) > 0) {
             $this->tick(confirm: $shop->note !== null, cancel: $shop->note === null);
@@ -500,12 +582,12 @@ final class Journey
     }
 
     /** Goes to the nearest person or sign whose script, as the game stands, comes to a command of $kind, and talks it there. */
-    private function visit(string $kind): bool
+    private function visit(string $kind, ?\Closure $fits = null): bool
     {
         $places = [];
         foreach ($this->maps as $map) {
             foreach ([...array_map(fn(array $n) => [$n[1], $n[2], $n[5]], $map->npcs), ...array_map(fn(array $s) => [$s[0], $s[1], $s[2]], $map->signs)] as [$x, $y, $script]) {
-                if (($found = $this->reaches($script, $kind)) !== null && ($route = $this->route($map->id)) !== null) {
+                if (($found = $this->reaches($script, $kind, 0, [], 0, $fits)) !== null && ($route = $this->route($map->id)) !== null) {
                     $places[] = [count($route), $map->id, $x, $y, $found[1]];
                 }
             }
@@ -527,7 +609,7 @@ final class Journey
      * that lead there; null when none do before it ends or begins a battle.
      * @return ?array{0: array, 1: list<int>} the command, and the answers
      */
-    private function reaches(array $script, string $kind, int $pc = 0, array $answers = [], int $depth = 0): ?array
+    private function reaches(array $script, string $kind, int $pc = 0, array $answers = [], int $depth = 0, ?\Closure $fits = null): ?array
     {
         $labels = [];
         foreach ($script as $i => $cmd) {
@@ -537,12 +619,12 @@ final class Journey
         }
         for ($n = 0; $pc < count($script) && $n < 200; $pc++, $n++) {
             $cmd = $script[$pc];
-            if ($cmd[0] === $kind) {
+            if ($cmd[0] === $kind && ($fits === null || $fits($cmd))) {
                 return [$cmd, $answers];
             }
             if ($cmd[0] === 'ask') {
                 foreach ($depth < 6 ? $cmd[2] : [] as $i => [, $label]) {
-                    if (($found = $this->reaches($script, $kind, $labels[$label], [...$answers, $i], $depth + 1)) !== null) {
+                    if (($found = $this->reaches($script, $kind, $labels[$label], [...$answers, $i], $depth + 1, $fits)) !== null) {
                         return $found;
                     }
                 }
