@@ -1,20 +1,28 @@
 <?php
 // The pixel sprites of art/sprites/ (Render\Sprites) and how the Stage shows them: frames, the outline, the right
-// turned over from the left, the step a walker shows; and the ground's grain and the shadow's dither. Needs no window.
+// turned over from the left, the step a walker shows; the grounds' textures and how a tile takes one; the shadow's
+// dither. Needs no window.
 declare(strict_types=1);
 
 namespace Shanhai\Tests;
 
 use Shanhai\Render\{Sprites, Stage};
-use Shanhai\World\{Actor, Dir, World};
+use Shanhai\World\{Actor, Dir, Map, World};
 
 /** A frame's pixel at x, y: [r, g, b, a]. */
 $at = fn(string $rgba, int $w, int $x, int $y) => array_values(unpack('C4', substr($rgba, ($y * $w + $x) * 4, 4)));
 
-// Every sprite reads, and every frame of it, every way, comes out its size, robed in every look.
-foreach (glob(Sprites::DIR . '/*.php') as $file) {
-    $name = basename($file, '.php');
+// Every sprite reads, and every frame of it, every way, comes out its size, robed in every look; it is a person who
+// turns and walks, or a thing or a ground that never turns.
+$names = array_map(fn(string $f) => substr($f, strlen(Sprites::DIR) + 1, -4), glob(Sprites::DIR . '/*/*.php'));
+foreach (['people/person', 'things/tree', 'ground/grass'] as $name) {
+    check(in_array($name, $names, true), "art/sprites has $name");
+}
+foreach ($names as $name) {
     $s = Sprites::load($name);
+    $folder = explode('/', $name)[0];
+    check(in_array($folder, ['people', 'things', 'ground'], true), "$name: in a folder of art/sprites'");
+    same($folder === 'people', Sprites::turns($name), "$name: turns if a person");
     [$w, $h] = $s['size'];
     foreach ([...Sprites::VIEWS, 'right'] as $dir) {
         for ($f = 0; $f < Sprites::frames($name); $f++) {
@@ -23,14 +31,22 @@ foreach (glob(Sprites::DIR . '/*.php') as $file) {
             }
         }
     }
-    check(Sprites::frames($name) === 3, "$name: a standing frame and a walk's two steps");
+    same($folder === 'people' ? 3 : 1, Sprites::frames($name), "$name: a person stands and steps with either foot; a thing is still");
+    if ($folder === 'ground') {
+        same([Sprites::PER_TILE, Sprites::PER_TILE], $s['size'], "$name: a tile's side each way");
+        same(null, $s['outline'], "$name: no outline");
+        check(!str_contains(implode('', $s['views']['down'][0]), '.'), "$name: no pixel of it empty");
+    }
+}
+foreach (Stage::THINGS as $kind => [$sprite]) {
+    check(Sprites::has($sprite), "the stage's $kind is a sprite of art/sprites");
 }
 
 // The person: its robe is the look's, given when drawn; facing right is facing left turned over, pixel for pixel.
-[$w, $h] = Sprites::load('person')['size'];
-check(throws(fn() => Sprites::rgba('person', 'down', 0)), 'a person drawn with no robe throws');
-$left = Sprites::rgba('person', 'left', 1, ['r' => '#d94040']);
-$right = Sprites::rgba('person', 'right', 1, ['r' => '#d94040']);
+[$w, $h] = Sprites::load('people/person')['size'];
+check(throws(fn() => Sprites::rgba('people/person', 'down', 0)), 'a person drawn with no robe throws');
+$left = Sprites::rgba('people/person', 'left', 1, ['r' => '#d94040']);
+$right = Sprites::rgba('people/person', 'right', 1, ['r' => '#d94040']);
 $mirrored = true;
 for ($y = 0; $y < $h; $y++) {
     for ($x = 0; $x < $w; $x++) {
@@ -39,10 +55,10 @@ for ($y = 0; $y < $h; $y++) {
 }
 check($mirrored, 'the person facing right is the left turned over');
 $robes = fn(string $rgba) => substr_count(bin2hex($rgba), 'd94040ff');
-check($robes(Sprites::rgba('person', 'down', 0, ['r' => '#d94040'])) > 100, 'the robe is the look\'s color');
+check($robes(Sprites::rgba('people/person', 'down', 0, ['r' => '#d94040'])) > 100, 'the robe is the look\'s color');
 // the outline: the top of the knot has one over it, and the pixels at the corner, far from the figure, are empty
-$down = Sprites::rgba('person', 'down', 0, ['r' => '#d94040']);
-same(Sprites::load('person')['outline'], vsprintf('#%02x%02x%02x', array_slice($at($down, $w, 11, 0), 0, 3)), 'above the knot, the outline');
+$down = Sprites::rgba('people/person', 'down', 0, ['r' => '#d94040']);
+same(Sprites::load('people/person')['outline'], vsprintf('#%02x%02x%02x', array_slice($at($down, $w, 11, 0), 0, 3)), 'above the knot, the outline');
 same([0, 0, 0, 0], $at($down, $w, 0, 0), 'a corner is empty');
 
 // Sprites that are wrong throw where they are read.
@@ -54,7 +70,7 @@ $bad = [
 ];
 $check = new \ReflectionMethod(Sprites::class, 'check');
 foreach ($bad as $what => $make) {
-    check(throws(fn() => $check->invoke(null, $make(Sprites::load('person')), 'person')), "a sprite with $what throws");
+    check(throws(fn() => $check->invoke(null, $make(Sprites::load('people/person')), 'people/person')), "a sprite with $what throws");
 }
 
 // The frame a walker shows: standing still the standing one; the first half of a step a foot forward, the other
@@ -72,21 +88,28 @@ same(2, Stage::step($a, 0.0), 'off the next tile: the other foot');
 $slant = atan2(Stage::CAMERA_HEIGHT, Stage::CAMERA_BACK);
 check(abs(Stage::stretch() * cos($slant) - 1.0) < 1e-9, 'stood stretch() taller, an actor shows as tall as written');
 
-// The grain: a tile's side of pixels, grays and opaque, the same each time; a tile's top turned one of eight ways.
-$grain = Stage::grain();
-same(Sprites::PER_TILE ** 2 * 4, strlen($grain), 'the grain is a tile\'s side of pixels each way');
-same($grain, Stage::grain(), 'the same each time');
-$opaque = true;
-foreach (str_split($grain, 4) as $px) {
-    $opaque = $opaque && $px[0] === $px[1] && $px[1] === $px[2] && $px[3] === "\xff";
-}
-check($opaque, 'every pixel of it gray and opaque');
+// A sprite painted by code is the same each time.
+same(Sprites::rgba('things/tree', 'down', 0), Sprites::rgba('things/tree', 'down', 0), 'a painted sprite is the same each time');
+
+// A tile's top takes its texture turned over one of four ways, never turned round: its corners' u and v are each
+// 0 and 1, the two of each side's ends alike in one of them.
 $ways = [];
 for ($i = 0; $i < 64; $i++) {
-    $ways[json_encode(Stage::turned($i, 2 * $i))] = true;
+    $uv = Stage::turned($i, 2 * $i);
+    $ways[json_encode($uv)] = true;
+    check($uv[0][1] === $uv[1][1] && $uv[1][0] === $uv[2][0], "tile $i: turned over, not round");
 }
-same(8, count($ways), 'tiles take the grain eight ways');
+same(4, count($ways), 'tiles take their texture four ways');
 same(Stage::turned(3, 4), Stage::turned(3, 4), 'a tile the same way each time');
+
+// The faces of the ground go to the texture of the tile they belong to: a top its tile's, a bank its tile's, not the water's.
+$m = Map::fromArray(['id' => 'm', 'name' => 'M', 'rows' => ['.~', '..']]);
+$by = Stage::byTexture($m, Stage::faces($m, Stage::ground(...)));
+$keys = array_keys($by);
+sort($keys);
+same(['grass', 'water'], $keys, 'grass and water');
+same(1, count(array_filter($by['water'], fn(array $f) => $f[1] === [0.0, 1.0, 0.0])), 'one top of water');
+check(count(array_filter($by['grass'], fn(array $f) => $f[1] !== [0.0, 1.0, 0.0] && min(array_column($f[0], 1)) === Stage::WATER_TOP)) === 2, 'its two banks are the grass\'s');
 
 // The shadow under an actor: a dither, no pixel beside another; some, none at the corners.
 $shadow = Stage::shadow();

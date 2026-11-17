@@ -20,9 +20,9 @@ use MyPHP\Plugins\Scene\Math\Vec3;
  * A model's origin is the ground under its middle, y up; it is built facing south (+z), as the actors are.
  * What is wrong with one throws where it is read.
  *
- * faces() is PHP alone, so the tests read every model with no window; mesh(), solid() and entity() make MyPHP's.
- * A model's vertices are worked out once and kept, packed, for each set of colors it is drawn in: a map's things and
- * people are built again each time the map changes, and working them out again is what made the change stop a moment.
+ * Only the battle's beasts are models now; the maps draw sprites (Sprites), and mesh() makes the Stage's meshes of faces.
+ * faces() is PHP alone, so the tests read every model with no window; mesh() and entity() make MyPHP's.
+ * A model's vertices are worked out once and kept, packed, for each set of colors it is drawn in.
  */
 final class Voxels
 {
@@ -203,22 +203,6 @@ final class Voxels
     private static function packed(string $name, array $colors): array
     {
         return self::$packed[$name . json_encode($colors)] ??= array_map(self::pack(...), self::faces(self::load($name), $colors));
-    }
-
-    /** Works a model out in these colors ahead of its first drawing, so that drawing it later takes no time. */
-    public static function prepare(string $name, array $colors = []): void
-    {
-        self::packed($name, $colors);
-    }
-
-    /** A model of a body alone, as one mesh: what a map draws many of at once. */
-    public static function solid(string $name): Mesh
-    {
-        $parts = self::packed($name, []);
-        if (array_keys($parts) !== ['body']) {
-            throw new \InvalidArgumentException("$name has parts that move: it is not drawn as one mesh");
-        }
-        return new Mesh(...$parts['body']);
     }
 
     /**

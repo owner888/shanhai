@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Shanhai\Tests;
 
 use Shanhai\{Data, Elements, Text};
-use Shanhai\Render\{Arena, Stage};
+use Shanhai\Render\{Arena, Sprites, Stage};
 use Shanhai\World\Tile;
 use Shanhai\Script\Vm;
 use Shanhai\World\Dir;
@@ -307,7 +307,7 @@ foreach (['start' => 'a new game starts', 'rest' => 'the player wakes after losi
 check($maps[$game['rest']['map']]->warpAt($game['rest']['x'], $game['rest']['y']) === null, 'not on a warp');
 
 foreach (Tile::KINDS as [$kind]) {
-    check(isset(Stage::GROUND[$kind]), "the stage has a ground color for $kind");
+    check(isset(Stage::GROUND[$kind]) && Sprites::has('ground/' . Stage::GROUND[$kind]), "the stage has a ground's texture for $kind");
 }
 check(isset(Stage::LOOKS['player']), 'the stage draws the player');
 same(array_keys($elements), array_keys(Arena::ELEMENTS), 'the arena has a color for a beast of each element');

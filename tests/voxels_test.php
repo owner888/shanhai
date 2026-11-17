@@ -56,20 +56,17 @@ same(Voxels::shade([0.5, 0.5, 0.5, 1.0], 3, 4), Voxels::shade([0.5, 0.5, 0.5, 1.
 $shades = array_map(fn(int $i) => Voxels::shade([0.5, 0.5, 0.5, 1.0], $i, 0)[0], range(0, 99));
 check(min($shades) >= 0.5 * (1 - Voxels::GRAIN) && max($shades) <= 0.5 * (1 + Voxels::GRAIN) && max($shades) > min($shades), 'the grain stays within GRAIN, and varies');
 
-// Every model of art/: read and checked, each part's faces facing out; a thing is one body, for one draw of many;
-// a beast's is one of data/beasts.php, drawn from its passage.
+// Every model of art/: read and checked, each part's faces facing out; a beast's is one of data/beasts.php, drawn from
+// its passage. (The maps' things and people are sprites now: art/sprites, tests/sprites_test.php.)
 $beasts = Data::beasts();
 $names = Voxels::names();
-check(in_array('people/person', $names, true) && in_array('things/tree', $names, true), 'art/ has the person and the things a map draws');
+check(in_array('beasts/lushu', $names, true), 'art/ has the beasts drawn so far');
 foreach ($names as $name) {
     $m = Voxels::load($name);
     $faces = Voxels::faces($m, ['r' => [1.0, 1.0, 1.0, 1.0]]);
     same(0, array_sum(array_map($inward, $faces)), "$name: every face facing out");
     [$folder, $id] = explode('/', $name);
-    check(in_array($folder, ['beasts', 'people', 'things'], true), "$name: in a folder of art/'s");
-    if ($folder === 'things') {
-        same(['body'], array_keys($faces), "$name: a thing has no part that moves");
-    }
+    check($folder === 'beasts', "$name: in art/beasts");
     if ($folder === 'beasts') {
         check(isset($beasts[$id]), "$name: a beast of data/beasts.php");
         same($beasts[$id]['looks'] ?? null, $m['looks'] ?? null, "$name: drawn from the passage the beast's entry has");
