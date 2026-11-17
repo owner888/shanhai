@@ -35,7 +35,7 @@ return [
             ['say', '彘身人首的神立在路的尽头，山上的香草被风吹得伏下去。'],
             ['ask', '「自翼望至几山，四十八山，是山经里最长的一段。要受我的试炼吗？」', [['接受试炼', 'go'], ['再等等', 'wait']]],
             ['label', 'go'],
-            ['trial', '中次十一经之神', [['qinggeng', 92], ['yonghe', 94], ['yiji', 94], ['wenlin', 96], ['liangqushou', 96], ['zhongcishiyi', 96]], ['dixiu', 'dixiu']],
+            ['trial', '中次十一经之神', [['qinggeng', 75], ['yonghe', 77], ['yiji', 77], ['wenlin', 79], ['liangqushou', 79], ['zhongcishiyi', 79]], ['dixiu', 'dixiu']],
             ['setFlag', 'passedZhongcishiyi'],
             ['say', '「好。只剩洞庭山了。想去时再来找我。」'],
             ['give', 'sealLevel', 1],
@@ -62,5 +62,5 @@ return [
     ],
     // Its wild ground. The range is past the reference's sixteen gyms: its levels are ours, about half its trial's last (docs/numbers.md 14).
     // The frequent places are the common beasts' of the range (docs/numbers.md 28): 豹、虎、鸩、豹 come here from its other mountains; the rare places are the mountain's own.
-    'wild' => ['rate' => 10, 'slots' => [[46, 'bao'], [47, 'hu'], [47, 'zhenniao'], [49, 'bao'], [48, 'wenlin'], [50, 'wenlin'], [50, 'wenlin']]],
+    'wild' => ['rate' => 10, 'slots' => [[38, 'bao'], [39, 'hu'], [39, 'zhenniao'], [41, 'bao'], [40, 'wenlin'], [42, 'wenlin'], [42, 'wenlin']]],
 ];

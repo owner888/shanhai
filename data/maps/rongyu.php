@@ -35,7 +35,7 @@ return [
             ['say', '鸟身龙首的神立在路的尽头，山下的铜与银在暮色里发着光。'],
             ['ask', '「自篇遇至荣余，十五山。这是山经里最后一段路。要受我的试炼吗？」', [['接受试炼', 'go'], ['再等等', 'wait']]],
             ['label', 'go'],
-            ['trial', '中次十二经之神', [['jiuniao', 96], ['feishe', 98], ['guainiao', 98], ['jilu', 100], ['guigui', 100], ['zhongcishier', 100]], ['dixiu', 'dixiu']],
+            ['trial', '中次十二经之神', [['jiuniao', 77], ['feishe', 79], ['guainiao', 79], ['jilu', 81], ['guigui', 81], ['zhongcishier', 81]], ['dixiu', 'dixiu']],
             ['setFlag', 'passedZhongcishier'],
             ['say', '「好。南西北东中，二十六个山系，你都走过了。」'],
             ['give', 'sealLevel', 1],
@@ -59,5 +59,5 @@ return [
         ]],
     ],
     // Its wild ground. The range is past the reference's sixteen gyms: its levels are ours, about half its trial's last (docs/numbers.md 14).
-    'wild' => ['rate' => 10, 'slots' => [[48, 'guaishe'], [49, 'guaichong'], [49, 'guaishe'], [51, 'guaichong'], [50, 'guaishe'], [52, 'guaichong'], [52, 'guaishe']]],
+    'wild' => ['rate' => 10, 'slots' => [[39, 'guaishe'], [40, 'guaichong'], [40, 'guaishe'], [42, 'guaichong'], [41, 'guaishe'], [43, 'guaichong'], [43, 'guaishe']]],
 ];

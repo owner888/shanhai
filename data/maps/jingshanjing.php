@@ -33,5 +33,5 @@ return [
     // Its water.
     'water' => ['rate' => 2, 'slots' => [[20, 'jiaoyu'], [15, 'jiaoyu'], [20, 'jiaoyu']]],
     // Its wild ground. The range is past the reference's sixteen gyms: its levels are ours, about half its trial's last (docs/numbers.md 14).
-    'wild' => ['rate' => 10, 'slots' => [[40, 'maoniu'], [41, 'bao'], [41, 'hu'], [43, 'lyu'], [42, 'mi'], [44, 'maoniu'], [44, 'bao']]],
+    'wild' => ['rate' => 10, 'slots' => [[34, 'maoniu'], [35, 'bao'], [35, 'hu'], [37, 'lyu'], [36, 'mi'], [38, 'maoniu'], [38, 'bao']]],
 ];

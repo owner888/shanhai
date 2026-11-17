@@ -35,7 +35,7 @@ return [
             ['say', '豕身人面的神立在路的尽头。'],
             ['ask', '「自休与至大騩，十九山，苦山、少室、太室都在其中。要受我的试炼吗？」', [['接受试炼', 'go'], ['再等等', 'wait']]],
             ['label', 'go'],
-            ['trial', '中次七经之神', [['wenwen', 75], ['sanzugui', 77], ['tiyu', 77], ['shangao', 79], ['zhongciqi', 79]], ['dixiu', 'dixiu']],
+            ['trial', '中次七经之神', [['wenwen', 66], ['sanzugui', 68], ['tiyu', 68], ['shangao', 70], ['zhongciqi', 70]], ['dixiu', 'dixiu']],
             ['setFlag', 'passedZhongciqi'],
             ['say', '「好。往南是荆山。想去时再来找我。」'],
             ['give', 'sealLevel', 1],

@@ -35,7 +35,7 @@ return [
             ['say', '马身龙首的神立在路的尽头。'],
             ['ask', '「自女几至贾超，十六山，江水从这里出去。要受我的试炼吗？」', [['接受试炼', 'go'], ['再等等', 'wait']]],
             ['label', 'go'],
-            ['trial', '中次九经之神', [['kuiniu', 83], ['tuo', 85], ['qiezhi', 85], ['yilang', 87], ['zhongcijiu', 87]], ['dixiu', 'dixiu']],
+            ['trial', '中次九经之神', [['kuiniu', 70], ['tuo', 72], ['qiezhi', 72], ['yilang', 74], ['zhongcijiu', 74]], ['dixiu', 'dixiu']],
             ['setFlag', 'passedZhongcijiu'],
             ['say', '「好。首阳山不远，只有九座。想去时再来找我。」'],
             ['give', 'sealLevel', 1],

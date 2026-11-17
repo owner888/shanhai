@@ -30,5 +30,5 @@ return [
         ]],
     ],
     // Its wild ground. The range is past the reference's sixteen gyms: its levels are ours, about half its trial's last (docs/numbers.md 14).
-    'wild' => ['rate' => 10, 'slots' => [[48, 'yeshi'], [49, 'yelu'], [49, 'yeshi'], [51, 'yelu'], [50, 'yeshi'], [52, 'yelu'], [52, 'yeshi']]],
+    'wild' => ['rate' => 10, 'slots' => [[39, 'yeshi'], [40, 'yelu'], [40, 'yeshi'], [42, 'yelu'], [41, 'yeshi'], [43, 'yelu'], [43, 'yeshi']]],
 ];

@@ -36,7 +36,7 @@ return [
             ['say', '路的尽头站着一个人，身后拖着一条虎尾。他走动的时候，身上有光。'],
             ['ask', '「我是泰逢。自敖岸至和山，五山，都在河边。要受我的试炼吗？」', [['接受试炼', 'go'], ['再等等', 'wait']]],
             ['label', 'go'],
-            ['trial', '泰逢', [['fuzhu', 58], ['yaoniao', 60], ['feiyutun', 60], ['taifeng', 62]], ['dixiu', 'dixiu']],
+            ['trial', '泰逢', [['fuzhu', 56], ['yaoniao', 58], ['feiyutun', 58], ['taifeng', 60]], ['dixiu', 'dixiu']],
             ['setFlag', 'passedZhongcisan'],
             ['say', '「好。往西是釐山。想去时再来找我。」'],
             ['give', 'sealLevel', 1],
