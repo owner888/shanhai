@@ -81,6 +81,18 @@ foreach ($maps as $map) {
         check($map->walkable($x, $y) && !isset($taken["$x,$y"]), "{$map->id}: the trigger at $x,$y can be stepped on");
         check($flag !== '', "{$map->id}: the trigger at $x,$y has a flag");
         $scripts["{$map->id}: the trigger at $x,$y"] = $script;
+        $taken["$x,$y"] = true;
+    }
+    foreach ($map->stops as [$x, $y, $flag, $script]) {
+        check($map->walkable($x, $y) && !isset($taken["$x,$y"]), "{$map->id}: what turns the player back at $x,$y can be stepped on, and has the tile to itself");
+        check($flag !== '', "{$map->id}: what turns the player back at $x,$y ends with a flag");
+        $last = end($script);
+        check($last[0] === 'move' && $last[1] === 'player' && $last[3] === 1, "{$map->id}: what turns the player back at $x,$y ends by walking the player a tile off it");
+        $off = Dir::tryFrom((string)($last[2] ?? ''));
+        check($off !== null && $map->walkable($x + $off->dx(), $y + $off->dy()) && $map->stopAt($x + $off->dx(), $y + $off->dy()) === null,
+            "{$map->id}: what turns the player back at $x,$y walks them onto a tile that can be walked, and turns no one back");
+        $scripts["{$map->id}: what turns the player back at $x,$y"] = $script;
+        $taken["$x,$y"] = true;
     }
 }
 // Exits: walking off an edge leads onto the other map's opposite edge, and walking back leads back.
@@ -104,12 +116,14 @@ foreach ($maps as $map) {
 }
 
 // Every map can be walked to from where a new game starts: over walkable tiles, through warps and exits.
+// $walk is where the player can go from there, never onto the tiles of $wall ("map x,y").
 $game = require Data::DIR . '/game.php';
+$walk = function (array $wall) use ($maps, $game): array {
 $seen = $sent = [];
 $queue = [[$game['start']['map'], $game['start']['x'], $game['start']['y']]];
 while ($queue !== []) {
     [$id, $x, $y] = array_pop($queue);
-    if (isset($seen[$id][$y][$x]) || !$maps[$id]->walkable($x, $y)) {
+    if (isset($seen[$id][$y][$x]) || !$maps[$id]->walkable($x, $y) || isset($wall["$id $x,$y"])) {
         continue;
     }
     $seen[$id][$y][$x] = true;
@@ -139,6 +153,48 @@ while ($queue !== []) {
         }
     }
 }
+return $seen;
+};
+$seen = $walk([]);
+
+// As the reference turns the player back from leaving town with no beast: until a script has given the first one
+// (and set its flag), what turns the player back keeps them from every ground of wild beasts and from every other map.
+$given = [];
+foreach ($maps as $map) {
+    foreach ([...$map->npcs, ...$map->signs, ...$map->triggers] as $who) {
+        $script = end($who);
+        foreach ($script as $i => $cmd) {
+            if ($cmd[0] === 'giveBeast') {
+                foreach (array_slice($script, $i) as $later) {
+                    if ($later[0] === 'setFlag') {
+                        $given[$later[1]] = true;
+                    }
+                }
+            }
+        }
+    }
+}
+$wall = [];
+foreach ($maps as $map) {
+    foreach ($map->stops as [$x, $y, $flag]) {
+        if (isset($given[$flag])) {
+            $wall["{$map->id} $x,$y"] = true;
+        }
+    }
+}
+$before = $walk($wall);
+same([], array_values(array_filter(array_keys($before), fn(string $id) => $id !== $game['start']['map'] && !$maps[$id]->indoor)),
+    'with no beast yet, the player stays on the map where the game starts, and the rooms of it');
+$wild = 0;
+foreach ($before as $id => $rows) {
+    foreach ($rows as $y => $row) {
+        foreach ($row as $x => $_) {
+            $wild += Tile::wild($maps[$id]->tile($x, $y)) ? 1 : 0;
+        }
+    }
+}
+same(0, $wild, 'with no beast yet, no ground of wild beasts can be walked onto');
+
 foreach ($maps as $map) {
     check(isset($seen[$map->id]), "{$map->id} can be walked to from where the game starts");
     $onWild = array_filter(str_split(implode('', $map->rows)), Tile::wild(...)) !== [];
@@ -207,7 +263,6 @@ foreach ($maps as $map) {
     check($strange === [] || count($strange) < count($kinds) || $lends === [], "{$map->id}: where the range has common beasts, a mountain's strange ones are not all that is met");
 }
 $scripts['data/game.php: waking after a battle lost'] = (require Data::DIR . '/game.php')['rest']['script'];
-$scripts['data/game.php: asking at the start'] = (require Data::DIR . '/game.php')['resume'];
 foreach ($scripts as $where => $script) {
     check(!throws(fn() => Vm::check($script)), "$where: its script is well formed");
     foreach ($script as $cmd) {

@@ -33,7 +33,6 @@ use Shanhai\World\{Dir, World};
  *                                                    script, one after another with no rest between, and to lose to any is to begin again
  *     ['rite']                   asks which of the party's beasts receives a rite it could now (docs/numbers.md 27), and gives it; says so when none could
  *     ['float']                  the player goes onto the water faced, carried by a beast of the party
- *     ['load']                   the saved game takes the world's place
  *     ['end']
  */
 final class Vm
@@ -41,7 +40,7 @@ final class Vm
     /** command => how many arguments */
     public const ARGS = [
         'say' => 1, 'setFlag' => 1, 'clearFlag' => 1, 'ifFlag' => 2, 'ifNotFlag' => 2, 'goto' => 1, 'label' => 1,
-        'face' => 2, 'move' => 3, 'warp' => 4, 'give' => 2, 'giveBeast' => 2, 'ask' => 2, 'battle' => 2, 'trial' => 2, 'league' => 2, 'duel' => 2, 'rest' => 0, 'pen' => 0, 'shop' => 1, 'rite' => 0, 'float' => 0, 'load' => 0, 'end' => 0,
+        'face' => 2, 'move' => 3, 'warp' => 4, 'give' => 2, 'giveBeast' => 2, 'ask' => 2, 'battle' => 2, 'trial' => 2, 'league' => 2, 'duel' => 2, 'rest' => 0, 'pen' => 0, 'shop' => 1, 'rite' => 0, 'float' => 0, 'end' => 0,
     ];
 
     public bool $done = false;
@@ -188,7 +187,6 @@ final class Vm
                     }
                     break;
                 case 'float': $w->float(); break;
-                case 'load': $w->load(); break;
                 case 'ask': $w->ask($cmd[1], array_column($cmd[2], 0)); $this->asked = array_column($cmd[2], 1); break;
                 case 'battle': $w->fight($cmd[1], $cmd[2]); break;
                 case 'trial':

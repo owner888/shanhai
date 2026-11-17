@@ -47,6 +47,8 @@ final class World
     public ?Pen $pen = null;
     /** The menu the menu button opens; null when it is not open. */
     public ?Menu $menu = null;
+    /** The title's list, which a new game with saves to go on with begins at (Data::newWorld); null when it is not showing. */
+    public ?Title $title = null;
     /** The line the dialog box shows, which confirm closes; null when there is none. */
     public ?string $dialog = null;
     /** @var ?list<string> what a script asks the player to choose among, shown with the dialog's line; null when it asks nothing */
@@ -76,19 +78,20 @@ final class World
      * @param array{beasts: array, learnsets: array, moves: array, elements: array, items: array, gods: array, float: string, rest: array}|null $book data/'s tables, which
      *        beasts and battles need, and where the player wakes after losing (data/game.php's rest)
      * @param ?Rng $rng the battles' dice
-     * @param ?string $saveFile the file the game is saved to and loaded from; null for a game that cannot be saved
+     * @param ?string $saveDir the folder the game's saves are in (Save); null for a game that cannot be saved
      */
-    public function __construct(private readonly array $maps, string $map, int $x, int $y, Dir $dir, private readonly ?array $book = null, private readonly ?Rng $rng = null, private readonly ?string $saveFile = null)
+    public function __construct(private readonly array $maps, string $map, int $x, int $y, Dir $dir, private readonly ?array $book = null, private readonly ?Rng $rng = null, private readonly ?string $saveDir = null)
     {
         $this->player = new Actor('player', $x, $y, $dir, 'player');
         $this->boxes = Pen::emptied();
         $this->dex = new Dex();
-        $this->enter($map, $x, $y, $dir);
+        $this->enter($map, $x, $y, $dir, autosave: false);
     }
 
+    /** Whether a script, or the title's list, holds the controls. */
     public function busy(): bool
     {
-        return $this->vm !== null;
+        return $this->vm !== null || $this->title !== null;
     }
 
     public function actor(string $id): Actor
@@ -147,16 +150,26 @@ final class World
             }
             return;
         }
+        if ($this->title !== null) {
+            $this->title->step($c);
+            if ($this->title->done) {
+                [$slot, $this->title] = [$this->title->load, null];
+                if ($slot !== null) {
+                    $this->load($slot);
+                }
+            }
+            return;
+        }
         if ($this->menu !== null) {
             $this->menu->step($c, $this->party, $this->items, $this->book['items'] ?? [], $this->dex, $this->book ?? []);
             if ($this->menu->done) {
-                $saves = $this->menu->saves;
+                $slot = $this->menu->saves;
                 $this->menu = null;
-                if ($saves && $this->afloat) {
+                if ($slot !== null && $this->afloat) {
                     $this->run([['say', '在水面上不能存档。']]);
-                } elseif ($saves) {
-                    $this->save();
-                    $this->run([['say', '存档完成。']]);
+                } elseif ($slot !== null) {
+                    $this->save($slot);
+                    $this->run([['say', '已存入' . Save::NAMES[$slot] . '。']]);
                 }
             }
             return;
@@ -176,7 +189,7 @@ final class World
             }
         } elseif (!$this->player->moving) {
             if ($c->menu) {
-                $this->menu = new Menu($this->saveFile !== null);
+                $this->menu = new Menu($this->saveDir === null ? [] : array_intersect_key($this->slots(), array_flip(Save::SLOTS)));
             } elseif ($c->confirm) {
                 $this->interact();
             } elseif ($c->dir === null) {
@@ -260,9 +273,10 @@ final class World
         return true;
     }
 
-    /** Puts the player on another map, or elsewhere on this one. */
-    public function enter(string $map, int $x, int $y, Dir $dir): void
+    /** Puts the player on another map, or elsewhere on this one; onto another map, the game saves itself there (autosave()). */
+    public function enter(string $map, int $x, int $y, Dir $dir, bool $autosave = true): void
     {
+        $another = !isset($this->map) || $map !== $this->map->id;
         $this->map = $this->maps[$map] ?? throw new InvalidArgumentException("no map '$map'");
         [$this->player->x, $this->player->y, $this->player->dir] = [$x, $y, $dir];
         [$this->player->moving, $this->player->progress] = [false, 0];
@@ -273,6 +287,9 @@ final class World
         }
         $this->mapChanges++;
         $this->wildWait = Formulas::WILD_WAIT;
+        if ($autosave && $another) {
+            $this->autosave();
+        }
     }
 
     /**
@@ -350,6 +367,7 @@ final class World
      */
     public function trial(string $who, array $theirs, array $uses = []): void
     {
+        $this->autosave();
         $this->begin(array_map(fn(array $t) => $this->beast($t[0], $t[1], $t[2] ?? null), $theirs), $who, false, $uses);
     }
 
@@ -411,7 +429,7 @@ final class World
         $this->mend();
         $r = $this->book['rest'];
         [$map, $x, $y, $dir] = $this->restAt ?? [$r['map'], $r['x'], $r['y'], $r['dir']];
-        $this->enter($map, $x, $y, Dir::from($dir));
+        $this->enter($map, $x, $y, Dir::from($dir), autosave: false); // what was saved before the battle is kept
         $lost = $this->money - intdiv($this->money, 2);
         $this->money -= $lost;
         $this->run([...$r['script'], ...($lost > 0 ? [['say', '慌乱之中丢了' . $lost . '贝。']] : [])]);
@@ -514,20 +532,54 @@ final class World
         }
         [$this->flags, $this->items, $this->party, $this->restAt, $this->boxes, $this->box, $this->money] = [array_fill_keys($s['flags'], true), $s['items'], $party, $rest, $boxes, $s['box'], $s['money']];
         [$this->dex->seen, $this->dex->caught, $this->steps] = [array_fill_keys($s['seen'], true), array_fill_keys($s['caught'], true), $s['steps']];
-        $this->enter($s['map'], $s['x'], $s['y'], Dir::from($s['dir']));
+        $this->enter($s['map'], $s['x'], $s['y'], Dir::from($s['dir']), autosave: false);
     }
 
-    /** Saves the game to its file. */
-    public function save(): void
+    /** Saves the game to a slot of its folder (Save::SLOTS, Save::AUTO). */
+    public function save(string $slot): void
     {
-        Save::write($this->saveFile ?? throw new LogicException('this world has no file to save to'), $this->state());
+        if (!isset(Save::NAMES[$slot])) {
+            throw new InvalidArgumentException("no slot '$slot'");
+        }
+        Save::write(Save::file($this->saveDir ?? throw new LogicException('this world has no folder to save to'), $slot), $this->state());
     }
 
-    /** Loads the game its file keeps. */
-    public function load(): void
+    /** The game saves itself to Save::AUTO, when it has a folder to and is not on water. */
+    private function autosave(): void
     {
-        $file = $this->saveFile ?? throw new LogicException('this world has no file to load from');
+        if ($this->saveDir !== null && !$this->afloat) {
+            $this->save(Save::AUTO);
+        }
+    }
+
+    /** Loads the game a slot keeps. */
+    public function load(string $slot): void
+    {
+        $file = Save::file($this->saveDir ?? throw new LogicException('this world has no folder to load from'), $slot);
         $this->restore(Save::read($file) ?? throw new LogicException("there is no saved game at $file"));
+    }
+
+    /**
+     * Each slot's save, the game's own first: where, who leads the party, how many kinds are bound, and when, a line;
+     * null for an empty one. @return array<string, ?array{0: string, 1: int}> slot => [line, when saved]
+     */
+    public function slots(): array
+    {
+        $out = [];
+        foreach ([Save::AUTO, ...Save::SLOTS] as $slot) {
+            $file = Save::file($this->saveDir ?? throw new LogicException('this world has no folder of saves'), $slot);
+            $s = Save::read($file);
+            if ($s === null) {
+                $out[$slot] = null;
+                continue;
+            }
+            $at = Save::saved($file);
+            $lead = $s['party'][0] ?? null;
+            $out[$slot] = [implode('  ', [($this->maps[$s['map']] ?? null)?->name ?? $s['map'],
+                ...($lead === null ? [] : [$this->book['beasts'][$lead['id']]['name'] . ' Lv' . $lead['level']]),
+                '图鉴 ' . count($s['caught']), date('m-d H:i', $at)]), $at];
+        }
+        return $out;
     }
 
     /**
@@ -579,7 +631,7 @@ final class World
         }
     }
 
-    /** The player has stepped onto a tile: its warp, else its trigger, else what its grass may hold. */
+    /** The player has stepped onto a tile: its warp, else what turns the player back, else its trigger, else what its grass may hold. */
     /** The steps walked since the party last grew closer (docs/numbers.md 25). */
     public int $steps = 0;
 
@@ -595,6 +647,10 @@ final class World
         $this->afloat = $this->water($this->map, $x, $y); // ashore, when the step was onto land
         if (($w = $this->map->warpAt($x, $y)) !== null) {
             $this->enter($w[2], $w[3], $w[4], Dir::from($w[5]));
+            return;
+        }
+        if (($s = $this->map->stopAt($x, $y)) !== null && !isset($this->flags[$s[2]])) {
+            $this->run($s[3]);
             return;
         }
         if (($t = $this->map->triggerAt($x, $y)) !== null && !isset($this->flags[$t[2]])) {

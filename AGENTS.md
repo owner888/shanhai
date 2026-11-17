@@ -54,8 +54,8 @@ src/load.php       the autoloader of Shanhai\ (src/)
 src/World/         the game outside battle, with no drawing: Dir, Tile (the characters maps are written in), Map,
                    Actor, Controls, World (step(): walking, turning, what blocks, warps, triggers, talking; the party,
                    its battles, rest), Menu (what the menu button opens: the party's screen, the bag), PartyMenu (the beasts in
-                   order, two change places), Pen (the boxes where beasts not taken along are kept), Shop (buying), Dex (the kinds seen and bound)
-src/Script/Vm.php  the event script interpreter: say, ask (a line with choices), flags, jumps, face, move, warp, give, battle, trial, league, duel, rest, pen, shop, load; check()
+                   order, two change places), Pen (the boxes where beasts not taken along are kept), Shop (buying), Dex (the kinds seen and bound), Title (the title's list)
+src/Script/Vm.php  the event script interpreter: say, ask (a line with choices), flags, jumps, face, move, warp, give, battle, trial, league, duel, rest, pen, shop; check()
 src/Battle/        the battle, with no drawing: Rng (bytes, from a seed or a test's script), Formulas (docs/numbers.md as code,
                    a function a rule), Fighter, Battle (turn(): order, what stops a beast, a move, statuses, weather, switching),
                    Screen (a wild battle as the player goes through it: lines, the menu, its lists, the bag's seals and medicines,
@@ -65,17 +65,19 @@ src/Battle/        the battle, with no drawing: Rng (bytes, from a seed or a tes
 src/Text.php       the dialog box's measures and line breaking
 src/Cursor.php     a list's cursor: moves on a press, not while held
 src/Journey.php    a player with no hands, with a full party as a person keeps one, changed for better beasts at the pen: plays a game through every trial by World::step alone (tools/journey.php, its test)
-src/Save.php       the one saved game, a file of JSON in the app's own folder: World::state() written and read
+src/Save.php       the saved games, files of JSON in the app's own folder: three slots the player saves to, one the game saves itself to
 src/Data.php       reads data/
 src/Elements.php   what a move of one element does against a beast of others (double, even, half, in tenths)
 src/Render/Stage.php  a map's 3D scene: the ground and the walls as meshes of the faces that can be seen (faces()),
                    instanced trees, grass, rocks, signs, the actors' figures, the fixed camera
 src/Render/Arena.php  a battle's 3D scene: the ground, the two beasts' figures on MyPHP's Animator3D, its camera shake
                    and particles for what the Screen's cue tells of; a camera that does not otherwise move
+src/Render/Voxels.php the models of art/ (boxes of voxels, thirty-two to a tile) read, checked and made meshes; the format is its doc comment
+art/               the models: beasts/ (each from its `looks`, carried in the file), people/, things/ (what a map draws many of)
 src/Play.php       MyPHP's Game: keys and gamepad into Controls, World::step, draws the Stage and the dialog box,
                    or a battle's Arena, boxes, line and lists; MyPHP's ScreenTransition between them, its VirtualPad,
                    its GameAudio's tones
-data/game.php      where a new game starts, where the player wakes after a battle is lost, what is asked when a game is saved
+data/game.php      where a new game starts, where the player wakes after a battle is lost, the flag that lets water be crossed
 data/ranges.php    the ranges of mountains by number: the classic's book and name, the reference's gym they are measured from
 data/opponents.php those met on the roads: where each stands, how far they see, what they send and what those hold (the reference's numbers)
 data/gods.php      the gods that keep the ranges: what a beast's entry has to fight with, and the classic's line
@@ -95,7 +97,7 @@ tools/             simulate.php (every beast against every other: win rates by b
                    at what level and after how many battles each trial is passed)
 docs/balance.md    what the simulator shows, what was changed for it, what is still open
 tests/             php tests/run.php [name]: world, script, data, formulas (each rule against a value worked out by hand),
-                   battle (turns with scripted rolls), screen (a battle played through), stage (the faces of ground and walls), save, journey (a game played through with each beast to choose from); check()/same(), no PHPUnit;
+                   battle (turns with scripted rolls), screen (a battle played through), stage (the faces of ground and walls), voxels (every model of art/), save, journey (a game played through with each beast to choose from); check()/same(), no PHPUnit;
                    each file runs in a scope of its own
 docs/rules.md      the rule of the game
 docs/roadmap.md    the order of the work, and when each step is done
@@ -154,8 +156,13 @@ docs/art.md        the look: what is decided (our own, modern voxels, not the re
   `league` battles (a trial by another name, so nothing counts it as a range's) with no rest between, the flag set after the last.
 - **Money** (贝, `World::$money`, docs/numbers.md 17): a trial or one on the road, beaten, pays by the level of their last
   beast; a battle lost takes half; a script's `shop` opens buying (`Shop`), where each range's place of rest is.
+- **Saves**: the menu's 存档 lists the three slots (asking once before writing over one); the game saves itself to
+  `Save::AUTO` onto another map and before a god's trial, not when a lost battle wakes the player. With any save, a new
+  world begins at `World\Title`: 继续 (the latest), 读取记录, 新游戏.
 - **A saved game** is `World::state()`: the map and place, flags, bag, money, where it last rested, the pen, the record of beasts, and each beast's `Fighter::state()`. What does not
   fit the data it is read with throws; a new field means a new `Save::VERSION`.
+- **Turned back** (a map's `stops`): the reference's events that turn the player back, run each time the tile is
+  stepped on until their flag is set; with no beast yet, the grass and the road out of the first map (a test walks it).
 - **A map change** is counted in `World::$mapChanges`; Play builds a new Stage when it sees one.
 - **Drawing interpolates**: `Actor::place($alpha)` is between two updates' places, so motion is smoother than its steps.
 

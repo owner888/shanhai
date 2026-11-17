@@ -16,7 +16,8 @@ MyPHP draws SwiftUI-style declarative views directly on the GPU (Metal on macOS/
 | `ForEach(items, id: \.id) { … }` | `Each($items, id: 'id')(fn(array $item, int $i) => …)` |
 | `List { … }` | `ListView($items, id: 'id')(fn($item) => …)` or `ListView()(Section()(…))` |
 | `Link("Docs", destination: url)` | `WebLink('Docs', destination: $url)` (or `Link(...)`) |
-| `@State var x` / `$x` binding | State class property; pass by reference: `Toggle('Wi-Fi', isOn: $this->wifi)` |
+| `@State var x` / `$x` binding | `$x = State(false)` or PHP 8.4 Property Hooks (`Observer::get` / `Observer::set`) or state property: `Toggle('Wi-Fi', isOn: $this->wifi)` |
+| `@Observable` / fine-grained subtree | Plain `public int $count = 0;` + child closure `fn() => Text("Count: {$this->count}")` (auto-tracks closure's `$this->prop` reads; retains subtree and skips build/layout/paint when clean) |
 | `.font(.largeTitle)` | `->font(Font::largeTitle)`, `->foregroundStyle(Color::secondary)` |
 | `URLSession.shared` | `URLSession::shared()->data(for: $req)`, `->json()`, `->decode()`, `->upload()` |
 | `AsyncImage(url:)` | `AsyncImage($url, content: fn($img) => $img->resizable()->scaledToFill(), placeholder: fn() => …)` |

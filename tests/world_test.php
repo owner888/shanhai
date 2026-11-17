@@ -135,6 +135,21 @@ $confirm($w);
 check($go($w, Dir::Right, 4, 10), 'steps off');
 check($go($w, Dir::Left, 3, 10) && !$w->busy(), 'it does not run a second time');
 
+// With no beast yet, the elder calls the player back from the tall grass, each time, until the shaman has given one.
+$g = Data::newWorld(1);
+check($go($g, Dir::Up, 9, 3) && $go($g, Dir::Right, 15, 3), 'a new game: up and over to the tall grass');
+same('「等一等！」', $g->dialog, 'stepping into it, the player is called back');
+for ($i = 0; $i < 600 && $g->busy(); $i++) {
+    $g->step(new Controls(confirm: $g->dialog !== null));
+}
+same([14, 3, false], [$g->player->x, $g->player->y, $g->busy()], 'and walked a tile back out of it');
+check($go($g, Dir::Right, 15, 3) && $g->dialog === '「等一等！」', 'again the next time');
+for ($i = 0; $i < 600 && $g->busy(); $i++) {
+    $g->step(new Controls(confirm: $g->dialog !== null));
+}
+$g->flags['metShaman'] = true;
+check($go($g, Dir::Right, 15, 3) && !$g->busy(), 'with a beast from the shaman, the grass is the player\'s');
+
 // Wild beasts in tall grass (docs/numbers.md 13), with the rolls scripted.
 $book = ['beasts' => Data::beasts(), 'learnsets' => Data::learnsets(), 'moves' => Data::moves(), 'elements' => Data::elements(), 'items' => Data::items()];
 $field = \Shanhai\World\Map::fromArray(['id' => 'field', 'name' => 'Field', 'rows' => [',,,,,,,,,,,,', '............'],
@@ -244,7 +259,9 @@ $lake = \Shanhai\World\Map::fromArray(['id' => 'lake', 'name' => 'Lake', 'rows' 
     'water' => ['rate' => 6, 'slots' => [[10, 'xuangui'], [12, 'chiru'], [14, 'jiyu']]], 'exits' => ['up' => ['sea', 0]]]);
 $sea = \Shanhai\World\Map::fromArray(['id' => 'sea', 'name' => 'Sea', 'rows' => ['~~~~~', '~~~~.'], 'exits' => ['down' => ['lake', 0]]]);
 $rng = \Shanhai\Battle\Rng::scripted([]);
-$w = new World(['lake' => $lake, 'sea' => $sea], 'lake', 0, 0, Dir::Right, $book + ['float' => 'mayFloat'], $rng, sys_get_temp_dir() . '/shanhai-afloat-test.json');
+$afloatSaves = sys_get_temp_dir() . '/shanhai-afloat-test-' . getmypid();
+is_dir($afloatSaves) || mkdir($afloatSaves);
+$w = new World(['lake' => $lake, 'sea' => $sea], 'lake', 0, 0, Dir::Right, $book + ['float' => 'mayFloat'], $rng, $afloatSaves); // a folder to save to, which the water keeps it from
 $press = new Controls(confirm: true);
 $rng->more([136, 136, 136, 136]);
 $w->join('xingxing', 30);
@@ -273,7 +290,7 @@ for ($i = 1; $i < World::WALK_STEPS; $i++) {
 }
 same([1, 0, true, 0], [$w->player->x, $w->player->y, $w->afloat, $rng->left()], 'and is afloat; the first steps on a map meet nothing');
 $w->step(new Controls(menu: true));
-foreach ([new Controls(Dir::Down), new Controls(), new Controls(Dir::Down), new Controls(), new Controls(Dir::Down), new Controls(), new Controls(Dir::Down), $press] as $c) { // past the bag, the look at a beast and the record
+foreach ([new Controls(Dir::Down), new Controls(), new Controls(Dir::Down), new Controls(), new Controls(Dir::Down), new Controls(), new Controls(Dir::Down), $press, $press] as $c) { // past the bag, the look at a beast and the record; to the first slot
     $w->step($c);
 }
 same('在水面上不能存档。', $w->dialog, 'the game is not saved on water');
@@ -528,3 +545,6 @@ $w = Data::newWorld(5);
 $w->join('xingxing', 50);
 $w->run([['league', '英招', [['yingzhan', 40]], ['youmu']], ['setFlag', 'after']]);
 check($w->battle !== null && !$w->battle->battle->wild && !isset($w->flags['after']), 'it begins a battle that is no wild one, and the script waits on it');
+
+array_map('unlink', glob("$afloatSaves/*"));
+rmdir($afloatSaves);

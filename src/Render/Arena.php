@@ -10,9 +10,10 @@ use Shanhai\Battle\{Fighter, Screen};
 /**
  * The 3D scene of a battle (MyPHP's Plugins\Scene): a round of ground, the player's beast near and to the left with
  * its back to the camera, the other far and to the right, facing it; the camera does not move. sync() shows the
- * beasts the Screen shows, and none for a side whose beast has fallen. A beast's figure is a body of its first
- * element's color, a head and a tail, until the beasts have models (roadmap phase 4). What moves is MyPHP's: each
- * figure has an Animator3D (it breathes, nods, lunges with its move, recoils when struck), cue() shakes the camera
+ * beasts the Screen shows, and none for a side whose beast has fallen. A beast's figure is its model of art/beasts;
+ * one that has none yet (docs/art.md says how many do) is a body of its first element's color, a head and a tail.
+ * What moves is MyPHP's: each figure has an Animator3D (it breathes, its parts swing as its model says, it lunges
+ * with its move, recoils when struck), cue() shakes the camera
  * and bursts a ParticleEmitter3D with what the Screen's line tells of.
  */
 final class Arena
@@ -25,7 +26,7 @@ final class Arena
         'metal' => [0.78, 0.78, 0.82, 1.0],
         'water' => [0.25, 0.48, 0.80, 1.0],
     ];
-    private const GROUND = [0.42, 0.60, 0.36, 1.0];
+    private const GROUND = [0.45, 0.66, 0.42, 1.0];
     /** Where each side's beast stands, and the turn about the vertical axis that faces it to the other. */
     private const PLACE = [[-1.6, 1.4, M_PI * 0.75], [1.6, -1.4, -M_PI * 0.25]];
 
@@ -82,15 +83,16 @@ final class Arena
             }
             if ($which !== null) {
                 [$x, $z, $turn] = self::PLACE[$side];
-                [$e, $head, $tail] = self::figure($s->battle->parties[$side][$which]);
-                $e->position = new Vec3($x, 0.45, $z);
+                [$e, $y, $limbs] = self::figure($s->battle->parties[$side][$which]);
+                $e->position = new Vec3($x, $y, $z);
                 $e->rotation->y = $turn;
                 $this->figures[$side] = $this->scene->add($e);
                 // made once the figure stands where it will: the animator moves it about that place
-                $this->animators[$side] = $this->scene->addAnimator(new Animator3D($e))
-                    ->addLimb($head, axis: 'x', amplitude: 0.10, frequency: 2.5)
-                    ->addLimb($tail, axis: 'z', amplitude: 0.30, frequency: 3.0)
-                    ->play(Animator3D::IDLE);
+                $animator = $this->scene->addAnimator(new Animator3D($e));
+                foreach ($limbs as [$limb, $axis, $amplitude, $frequency]) {
+                    $animator->addLimb($limb, axis: $axis, amplitude: $amplitude, frequency: $frequency);
+                }
+                $this->animators[$side] = $animator->play(Animator3D::IDLE);
             }
             $this->drawn[$side] = $which;
         }
@@ -164,12 +166,24 @@ final class Arena
     }
 
     /**
-     * A beast's figure, built facing south: a body; a head, with a snout that shows which way it faces and two eyes
-     * that the light does not dim; a tail.
-     * @return array{0: Entity, 1: Entity, 2: Entity} the figure, its head, its tail
+     * A beast's figure, built facing south: its model, its parts swinging as the model says; or, with none yet, a body;
+     * a head, with a snout that shows which way it faces and two eyes that the light does not dim; a tail.
+     * @return array{0: Entity, 1: float, 2: list<array{0: Entity, 1: string, 2: float, 3: float}>} the figure, how high it
+     *     stands (a model from its feet, the placeholder from its middle), and each limb that swings with its axis, amplitude, frequency
      */
     private static function figure(Fighter $f): array
     {
+        if (Voxels::has("beasts/{$f->id}")) {
+            $model = Voxels::load("beasts/{$f->id}");
+            [$body, $parts] = Voxels::entity("beasts/{$f->id}", name: $f->id);
+            $limbs = [];
+            foreach ($model['parts'] as $part => $p) {
+                if (isset($p['swing'])) {
+                    $limbs[] = [$parts[$part], ...$p['swing']];
+                }
+            }
+            return [$body, 0.0, $limbs];
+        }
         $color = self::ELEMENTS[$f->species['elements'][0]];
         $skin = fn() => new Material($color, shininess: 16.0);
         $body = new Entity(Mesh::sphere(0.45, 16, 12, $color), $skin(), name: $f->id);
@@ -183,6 +197,6 @@ final class Arena
         $tail->rotation->x = -M_PI / 2;
         $body->addChild($head);
         $body->addChild($tail);
-        return [$body, $head, $tail];
+        return [$body, 0.45, [[$head, 'x', 0.10, 2.5], [$tail, 'z', 0.30, 3.0]]];
     }
 }

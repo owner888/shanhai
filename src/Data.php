@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Shanhai;
 
 use Shanhai\Battle\Rng;
-use Shanhai\World\{Dir, Map, World};
+use Shanhai\World\{Dir, Map, Title, World};
 
 /** Reads the game's data files (data/). */
 final class Data
@@ -101,17 +101,20 @@ final class Data
     }
 
     /**
-     * A new game's world, the player where data/game.php starts them; its battles' dice from $seed. With $saveFile it
-     * can be saved there, and when a game is saved there already it begins by asking whether to go on with it (data/game.php's resume).
+     * A new game's world, the player where data/game.php starts them; its battles' dice from $seed. With $saveDir it
+     * can be saved there (Save), and when a game is saved there already it begins at the title's list (World\Title).
      */
-    public static function newWorld(int $seed, ?string $saveFile = null): World
+    public static function newWorld(int $seed, ?string $saveDir = null): World
     {
+        if ($saveDir !== null) {
+            Save::adopt($saveDir);
+        }
         $game = require self::DIR . '/game.php';
         $start = $game['start'];
         $book = ['beasts' => self::beasts(), 'learnsets' => self::learnsets(), 'moves' => self::moves(), 'elements' => self::elements(), 'items' => self::items(), 'gods' => self::gods(), 'float' => $game['float'], 'rest' => $game['rest']];
-        $world = new World(self::maps(), $start['map'], $start['x'], $start['y'], Dir::from($start['dir']), $book, Rng::seeded($seed), $saveFile);
-        if ($saveFile !== null && Save::read($saveFile) !== null) {
-            $world->run($game['resume']);
+        $world = new World(self::maps(), $start['map'], $start['x'], $start['y'], Dir::from($start['dir']), $book, Rng::seeded($seed), $saveDir);
+        if ($saveDir !== null && array_filter($world->slots()) !== []) {
+            $world->title = new Title($world->slots());
         }
         return $world;
     }

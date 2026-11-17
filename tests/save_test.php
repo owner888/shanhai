@@ -1,18 +1,22 @@
 <?php
-// Saving and loading: what a beast and the world keep, the file, the menu's entry, the question at the start.
+// Saving and loading: what a beast and the world keep, the file, the slots the menu saves to, the game's own save, the title's list.
 declare(strict_types=1);
 
 namespace Shanhai\Tests;
 
 use Shanhai\{Data, Save};
 use Shanhai\Battle\{Fighter, Formulas, Rng};
-use Shanhai\World\{Controls, Dir, Map, Pen, World};
+use Shanhai\World\{Controls, Dir, Map, Pen, Title, World};
 
 $book = ['beasts' => Data::beasts(), 'learnsets' => Data::learnsets(), 'moves' => Data::moves(), 'elements' => Data::elements(), 'items' => Data::items()];
-$file = sys_get_temp_dir() . '/shanhai-save-test-' . getmypid() . '.json';
-if (is_file($file)) {
-    unlink($file);
-}
+$dir = sys_get_temp_dir() . '/shanhai-save-test-' . getmypid();
+$empty = function () use ($dir): void {
+    is_dir($dir) || mkdir($dir);
+    array_map('unlink', glob("$dir/*"));
+};
+$empty();
+$file = Save::file($dir, '1');
+$cancel = new Controls(cancel: true);
 $confirm = new Controls(confirm: true);
 $down = new Controls(Dir::Down);
 $none = new Controls();
@@ -45,7 +49,7 @@ unlink($file);
 
 // The world: saved from the menu, it comes back where it was, with its flags, bag and party.
 $maps = ['field' => Map::fromArray(['id' => 'field', 'name' => 'Field', 'rows' => ['....', '....']]), 'hut' => Map::fromArray(['id' => 'hut', 'name' => 'Hut', 'rows' => ['___']])];
-$w = new World($maps, 'field', 0, 0, Dir::Down, $book, Rng::seeded(1), $file);
+$w = new World($maps, 'field', 0, 0, Dir::Down, $book, Rng::seeded(1), $dir);
 $w->join('xuangui', 9);
 $w->join('xingxing', 4);
 $w->party[0]->hp = 5;
@@ -55,16 +59,36 @@ same(['异兽', '背包', '详情', '图鉴', '存档'], $w->menu->items($w->par
 foreach ([$down, $none, $down, $none, $down, $none, $down, $confirm] as $c) {
     $w->step($c);
 }
-same([null, '存档完成。', true], [$w->menu, $w->dialog, is_file($file)], 'choosing it saves, closes the menu and says so');
+same(['记录一  （空）', '记录二  （空）', '记录三  （空）'], $w->menu->items($w->party, $w->items, $book['items']), 'choosing it lists the three slots the player saves to, empty');
+$w->step($confirm);
+same([null, '已存入记录一。', true], [$w->menu, $w->dialog, is_file($file)], 'an empty one, chosen, is saved to at once; the menu closes and says so');
 $w->step($confirm);
 check(!$w->busy(), 'and the game goes on');
+$w->step(new Controls(menu: true));
+foreach ([$down, $none, $down, $none, $down, $none, $down, $confirm] as $c) {
+    $w->step($c);
+}
+check(preg_match('/^记录一  Field  旋龟 Lv9  图鉴 2  \d\d-\d\d \d\d:\d\d$/u', $w->menu->items($w->party, $w->items, $book['items'])[0]) === 1,
+    'a slot saved to shows where, who leads, how many kinds are bound and when: ' . $w->menu->items($w->party, $w->items, $book['items'])[0]);
+$w->step($confirm);
+same(['覆盖记录一原来的内容', '不覆盖'], $w->menu->items($w->party, $w->items, $book['items']), 'one with a save, chosen, asks whether to write over it');
+$w->step($down);
+$w->step($none);
+$w->step($confirm);
+same('slots', $w->menu->phase, 'not writing over it goes back to the slots');
+$w->step($confirm);
+$w->step($cancel);
+same('slots', $w->menu->phase, 'and so does cancel');
+$w->step($cancel);
+$w->step($cancel);
+check($w->menu === null && $w->dialog === null, 'nothing is saved by going back');
 $state = $w->state();
 same(['field', 2, 1, 'left', ['seen'], ['seal' => 3], ['xuangui', 'xingxing'], 5], [$state['map'], $state['x'], $state['y'], $state['dir'], $state['flags'], $state['items'], array_column($state['party'], 'id'), $state['party'][0]['hp']], 'what the world keeps');
 same($state, Save::read($file), 'is what the file holds');
 
-$other = new World($maps, 'hut', 0, 0, Dir::Down, $book, Rng::seeded(2), $file);
+$other = new World($maps, 'hut', 0, 0, Dir::Down, $book, Rng::seeded(2), $dir);
 $changes = $other->mapChanges;
-$other->load();
+$other->load('1');
 same($state, $other->state(), 'another world, loading it, is the same');
 same($changes + 1, $other->mapChanges, 'and what draws it is told of the map');
 check(throws(fn() => $other->restore(array_replace($state, ['map' => 'nowhere']))), 'a map there is none of is refused');
@@ -139,24 +163,78 @@ file_put_contents($file, json_encode(['version' => 99, 'state' => $state]));
 check(throws(fn() => Save::read($file)), 'a file of a format not known is refused');
 Save::write($file, $state);
 check(throws(fn() => $other->restore(array_replace($state, ['items' => ['nothing' => 1]]))), 'a thing there is none of is refused');
-check(throws(fn() => (new World($maps, 'hut', 0, 0, Dir::Down, $book))->save()), 'a world with no file cannot save');
+check(throws(fn() => (new World($maps, 'hut', 0, 0, Dir::Down, $book))->save('1')), 'a world with no folder cannot save');
+check(throws(fn() => $other->save('4')), 'nor can one save to a slot there is none of');
 $w = new World($maps, 'hut', 0, 0, Dir::Down, $book);
 $w->step(new Controls(menu: true));
 same(['背包'], $w->menu->items($w->party, $w->items, $book['items']), 'nor has it saving in its menu');
 
-// At the start, with a game saved, the player is asked: to go on with it, or begin anew.
-unlink($file);
-$w = Data::newWorld(1, $file);
-check(!$w->busy(), 'with no game saved nothing is asked');
+// When a save was made: as the file says; one written before it said, as the file system does.
+Save::write($file, $state, 1700000000);
+same(1700000000, Save::saved($file), 'a save says when it was made');
+file_put_contents($file, json_encode(['version' => 8, 'state' => $state]));
+touch($file, 1600000000);
+same([1600000000, $state], [Save::saved($file), Save::read($file)], 'one of format 8, which did not, is when the file was written, its state as it was');
+same(null, Save::saved(Save::file($dir, '3')), 'an empty slot was never saved');
+
+// The game saves itself (Save::AUTO): onto another map, and before a god's trial; not elsewhere on the same map, nor
+// when a battle lost wakes the player, so what was saved before it is kept.
+$empty();
+$auto = Save::file($dir, Save::AUTO);
+$w = new World($maps, 'field', 0, 0, Dir::Down, $book, Rng::seeded(1), $dir);
+check(!is_file($auto), 'a world begun saves nothing');
+$w->join('xuangui', 9);
+$w->run([['warp', 'field', 2, 1, 'left']]);
+check(!is_file($auto), 'elsewhere on the same map, nothing');
+$w->run([['warp', 'hut', 1, 0, 'down']]);
+same('hut', Save::read($auto)['map'] ?? null, 'onto another map, the game saves itself there');
+unlink($auto);
+$g = Data::newWorld(1, $dir);
+$g->run([['giveBeast', 'xuangui', 9]]);
+$g->trial('守山神', [['xingxing', 3]]);
+same('zhaoyao', Save::read($auto)['map'] ?? null, 'before a trial it saves itself too');
+unlink($auto);
+
+// The one save kept before there were slots (save.json) becomes the first slot's.
+$empty();
+Save::write("$dir/save.json", $state);
+Data::newWorld(1, $dir);
+same([false, $state], [is_file("$dir/save.json"), Save::read($file)], 'the old save is the first slot\'s');
+
+// At the start, with a game saved, the title's list: go on with the latest, load one, or begin anew.
+$empty();
+$w = Data::newWorld(1, $dir);
+check(!$w->busy() && $w->title === null, 'with no game saved there is no title, and nothing is asked');
 $w->run([['giveBeast', 'xuangui', 9], ['warp', 'zhaoyao_hut', 3, 3, 'up']]);
-$w->save();
-$w = Data::newWorld(1, $file);
-check($w->busy() && $w->choices === ['继续旅程', '重新开始'], 'a new world with a saved game asks');
+Save::write(Save::file($dir, '2'), $w->state(), 1700000100);
+$w->run([['warp', 'zhaoyao', 9, 8, 'down']]);
+Save::write(Save::file($dir, Save::AUTO), $w->state(), 1700000000);
+$w = Data::newWorld(1, $dir);
+check($w->busy() && $w->title !== null, 'a new world with a saved game begins at the title');
+same(['继续', '读取记录', '新游戏'], $w->title->items(), 'which offers to go on, to load, or to begin anew');
 $w->step($confirm);
-same([false, 'zhaoyao_hut', ['xuangui']], [$w->busy(), $w->map->id, array_map(fn(Fighter $f) => $f->id, $w->party)], 'going on loads it');
-$w = Data::newWorld(1, $file);
+same([false, 'zhaoyao_hut', ['xuangui']], [$w->busy(), $w->map->id, array_map(fn(Fighter $f) => $f->id, $w->party)], 'going on loads the save made last, the second here');
+$w = Data::newWorld(1, $dir);
+$w->step($down);
+$w->step($none);
+$w->step($confirm);
+same(4, count($w->title->items()), 'loading lists the game\'s save and the three of the player\'s');
+check(str_starts_with($w->title->items()[0], '自动记录  招摇之山') && $w->title->items()[1] === '记录一  （空）', 'each with where, or that it is empty: ' . $w->title->items()[0]);
+$w->step($down);
+$w->step($none);
+$w->step($confirm);
+same('这里没有记录。', $w->title->note, 'an empty one cannot be loaded');
+$w->step($confirm);
 $w->step($down);
 $w->step($confirm);
-same([false, 'zhaoyao', []], [$w->busy(), $w->map->id, $w->party], 'beginning anew does not');
-check(is_file($file), 'and the saved game is kept until the next save');
-unlink($file);
+same([false, 'zhaoyao_hut', ['xuangui']], [$w->busy(), $w->map->id, array_map(fn(Fighter $f) => $f->id, $w->party)], 'one chosen is loaded');
+$w = Data::newWorld(1, $dir);
+foreach ([$down, $none, $down, $confirm] as $c) {
+    $w->step($c);
+}
+same(['开始新的旅程（记录都还留着）', '返回'], $w->title->items(), 'beginning anew is asked once more');
+$w->step($confirm);
+same([false, 'zhaoyao', []], [$w->busy(), $w->map->id, $w->party], 'and begins a new game');
+check(is_file(Save::file($dir, '2')) && is_file(Save::file($dir, Save::AUTO)), 'the saves are kept until they are saved over');
+$empty();
+rmdir($dir);

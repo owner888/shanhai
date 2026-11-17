@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Shanhai;
 
-use MyPHP\Device;
+use MyPHP\{App, Device, Logger};
 use MyPHP\Plugins\Game\{Game, GameAudio, Input, ScreenTransition, VirtualPad};
 use MyPHP\Plugins\Game\Gamepad\{Button, Gamepad, State};
 use MyPHP\UI\{Canvas, Key, Node, Painter};
@@ -76,6 +76,7 @@ final class Play extends Game
     public function __construct(public readonly World $world, private readonly array $items)
     {
         $this->viewport = new Canvas(self::VIEW_WIDTH, self::VIEW_HEIGHT);
+        Stage::prepare(); // so that no change of map stops to work out a model
         $this->stage = new Stage($world);
         $this->seenMap = $world->mapChanges;
         $this->lastPad = new State();
@@ -89,24 +90,22 @@ final class Play extends Game
 
     public function update(Input $in): void
     {
-        $this->pad->step($in);
-        $this->transition->step(1.0 / $this->rate());
+        $started = hrtime(true);
+        $this->timed('the pad', fn() => $this->pad->step($in));
+        $this->timed('the transition', fn() => $this->transition->step(1.0 / $this->rate()));
         if (!$this->transition->active) {
             $this->play($in);
         }
         $dt = 1.0 / $this->rate();
-        $this->audio->step($dt);
-        if ($this->arena !== null) {
-            $this->arena->step($dt);
-        } else {
-            $this->stage->scene->step($dt);
-        }
+        $this->timed('the sounds\' step', fn() => $this->audio->step($dt));
+        $this->timed('the scene\'s step', fn() => $this->arena !== null ? $this->arena->step($dt) : $this->stage->scene->step($dt));
+        $this->updating += hrtime(true) - $started;
     }
 
     /** A beast is struck in the Arena: the tone of it, and for a critical hit the game stops a moment. */
     private function struck(bool $critical): void
     {
-        $this->audio->playSfx($critical ? 'critical' : 'hit');
+        $this->sound($critical ? 'critical' : 'hit');
         if ($critical) {
             $this->hitStop(self::CRITICAL_STOP);
         }
@@ -119,6 +118,7 @@ final class Play extends Game
         $at = match (true) {
             $w->battle !== null => $w->battle->phase === 'text' ? null : $w->battle->phase . $w->battle->cursor->at,
             $w->choices !== null => 'ask' . $w->choiceCursor->at,
+            $w->title !== null => $w->title->note !== null ? null : 'title' . $w->title->phase . $w->title->cursor->at,
             $w->menu !== null => $w->menu->note !== null ? null : $w->menu->phase . $w->menu->at(),
             $w->pen !== null => $w->pen->note !== null ? null : 'pen' . $w->pen->phase . $w->pen->cursor->at,
             $w->shop !== null => $w->shop->note !== null ? null : 'shop' . $w->shop->phase . ($w->shop->phase === 'count' ? $w->shop->count : $w->shop->at),
@@ -126,7 +126,7 @@ final class Play extends Game
         };
         // the same list, its cursor elsewhere: a list just opened makes no sound
         if ($at !== null && $this->cursorAt !== null && $at !== $this->cursorAt && rtrim($at, '0123456789') === rtrim($this->cursorAt, '0123456789')) {
-            $this->audio->playSfx('cursor');
+            $this->sound('cursor');
         }
         $this->cursorAt = $at;
     }
@@ -172,14 +172,15 @@ final class Play extends Game
             $this->lastPad = $s;
         }
 
-        $this->world->step(new Controls($dir, $confirm, $cancel, $menu));
+        $this->timed('the world\'s step', fn() => $this->world->step(new Controls($dir, $confirm, $cancel, $menu)));
 
         $battle = $this->world->battle;
         if ($battle !== null && $this->arena === null) {
             // a battle has begun: the flashes and blinds of an encounter, the Arena behind them when they are shut
             $this->transition->start(ScreenTransition::BATTLE_BLINDS, self::ENCOUNTER_SECONDS, onMidpoint: function () use ($battle): void {
-                $this->arena = new Arena($battle, $this->struck(...));
+                $this->arena = $this->timed('building the battle\'s scene', fn() => new Arena($battle, $this->struck(...)));
                 $this->cued = $battle->lines; // the lines it opens with tell of nothing to show
+                gc_collect_cycles(); // while the screen is shut, as at the end of a battle (below)
             });
         } elseif (($battle === null && $this->arena !== null) || $this->world->mapChanges !== $this->seenMap) {
             // a battle has ended, or the map is another: a fade, the new Stage behind it when it is dark
@@ -187,8 +188,12 @@ final class Play extends Game
                 $this->arena = null;
                 if ($this->world->mapChanges !== $this->seenMap) {
                     $this->seenMap = $this->world->mapChanges;
-                    $this->stage = new Stage($this->world);
+                    $this->stage = $this->timed('building the map\'s scene', fn() => new Stage($this->world));
                 }
+                // The scene let go of holds itself (an entity and its children point at each other): PHP frees it only when
+                // it collects cycles, which, left to itself or to MyPHP's MemoryWatch, it does at some moment of play, and the
+                // game stops while the scene's meshes go. Collected here, it is while the screen is dark.
+                $this->timed('collecting cycles', gc_collect_cycles(...));
             });
         } elseif ($battle !== null) {
             if ($battle->lines !== $this->cued) {
@@ -196,7 +201,7 @@ final class Play extends Game
                 if ($battle->cue !== null) {
                     $this->arena->cue($battle->cue);
                     if (isset(self::TONES[$battle->cue['what']])) {
-                        $this->audio->playSfx($battle->cue['what']);
+                        $this->sound($battle->cue['what']);
                     }
                 }
             }
@@ -207,9 +212,58 @@ final class Play extends Game
 
     public function draw(Painter $p, array $r, float $alpha): void
     {
+        $started = hrtime(true);
         $this->frame($p, $r, $alpha);
         $this->transition->draw($p, $r);
         $this->pad->draw($p, $r);
+        $this->watch($started);
+    }
+
+    /** A frame longer than this is logged, in development, with where its time went (watch()). */
+    private const SLOW_FRAME_MS = 50.0;
+    /** When the frame before was drawn, and the time the updates since took, in nanoseconds; PHP's collector's times then. */
+    private int $drawn = 0, $updating = 0;
+    private ?array $collected = null;
+
+    /**
+     * In development, a frame that comes long after the one before is logged (subsystem "frame"), its time told out:
+     * the World's and the scene's updates, its drawing, PHP's collecting of cycles (MyPHP's MemoryWatch collects
+     * every 10 seconds, and PHP when its roots fill), and what is left, spent outside PHP's part of the frame.
+     */
+    private function watch(int $started): void
+    {
+        if (!App::isDev()) {
+            return;
+        }
+        $now = hrtime(true);
+        $gc = gc_status();
+        $seconds = fn(?array $g) => $g === null ? 0.0 : $g['collector_time'] + $g['destructor_time'] + $g['free_time'];
+        $gap = ($now - $this->drawn) / 1e6;
+        if ($this->drawn !== 0 && $gap > self::SLOW_FRAME_MS) {
+            [$updates, $drawing, $collecting] = [$this->updating / 1e6, ($now - $started) / 1e6, 1000 * ($seconds($gc) - $seconds($this->collected))];
+            Logger::warn(sprintf('a frame took %.0f ms: updates %.1f, drawing %.1f, PHP collecting cycles %.1f (%d runs), elsewhere %.1f%s',
+                $gap, $updates, $drawing, $collecting, $gc['runs'] - ($this->collected['runs'] ?? 0), $gap - $updates - $drawing - $collecting,
+                implode('', array_map(fn(string $what, float $ms) => sprintf('; of the updates, %s %.1f', $what, $ms), array_keys($this->spent), $this->spent))), 'frame');
+        }
+        [$this->drawn, $this->updating, $this->collected, $this->spent] = [$now, 0, $gc, []];
+    }
+
+    /** Plays a sound of TONES, its time kept for watch(). */
+    private function sound(string $name): void
+    {
+        $this->timed('playing a sound', fn() => $this->audio->playSfx($name));
+    }
+
+    /** What the updates since the frame before were spent on, that watch() tells of: what => ms. @var array<string, float> */
+    private array $spent = [];
+
+    /** Does $what, and keeps how long it took for watch(). @template T @param \Closure(): T $do @return T */
+    private function timed(string $what, \Closure $do): mixed
+    {
+        $started = hrtime(true);
+        $done = $do();
+        $this->spent[$what] = ($this->spent[$what] ?? 0.0) + (hrtime(true) - $started) / 1e6;
+        return $done;
     }
 
     /** The view and what is over it, before the transition and the pad. */
@@ -240,6 +294,18 @@ final class Play extends Game
             return; // the screen is closing on this map, for another or for a battle
         }
 
+        if (($title = $this->world->title) !== null) {
+            // the game's name over the map it begins on, and the title's list
+            $p->fill([$r[0], $r[1] + $r[3] * 0.18, $r[2], 96], 0x000000, 0.0, 0.45);
+            $p->text($r[0] + $r[2] / 2 - 2.5 * 48, $r[1] + $r[3] * 0.18 + 20, '山海驭兽录', 48, 0xf4f0e6);
+            if ($title->note !== null) {
+                $this->dialog($p, $r, $title->note);
+            } else {
+                $this->choices($p, $r, $title->items(), $title->cursor->at, $title->phase === 'top' ? 200.0 : 640.0);
+            }
+            return;
+        }
+
         $name = $this->world->map->name;
         $p->fill([$r[0] + 16, $r[1] + 16, mb_strwidth($name) * 8 + 24, 34], 0x000000, 8.0, 0.55);
         $p->text($r[0] + 28, $r[1] + 24, $name, 15, 0xffffff);
@@ -250,7 +316,7 @@ final class Play extends Game
                 $this->dialog($p, $r, $menu->note);
             } else {
                 [$lines, $at] = Pen::window($menu->items($this->world->party, $this->world->items, $this->items, $this->world->dex, $this->beasts ??= Data::beasts()), $menu->at());
-                $this->choices($p, $r, $lines, $at, $menu->phase === 'top' ? 200.0 : 420.0);
+                $this->choices($p, $r, $lines, $at, match ($menu->phase) { 'top' => 200.0, 'slots', 'overwrite' => 640.0, default => 420.0 });
             }
         }
         if (($shop = $this->world->shop) !== null) {

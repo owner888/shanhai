@@ -13,6 +13,9 @@ use InvalidArgumentException;
  *     signs    [[x, y, script], ...]
  *     npcs     [[id, x, y, dir, look, script], ...]
  *     triggers [[x, y, flag, script], ...]            runs once, then sets flag
+ *     stops    [[x, y, flag, script], ...]            runs each time the player arrives there, until the flag is set
+ *              (the reference's events that turn the player back, such as from leaving town with no beast); its
+ *              script walks the player off the tile
  *     watch    [[npc id, sight, flag], ...]           that one's script runs when the player comes to stand straight
  *              ahead of them within so many tiles, until the flag is set
  */
@@ -51,6 +54,8 @@ final class Map
         public readonly bool $indoor = false,
         /** @var list<array{0: string, 1: int, 2: string}> */
         public readonly array $watch = [],
+        /** @var list<array{0: int, 1: int, 2: string, 3: list<array>}> */
+        public readonly array $stops = [],
     ) {}
 
     public static function fromArray(array $a): self
@@ -68,7 +73,7 @@ final class Map
             }
         }
         return new self($a['id'], $a['name'], $rows, $width, count($rows),
-            $a['warps'] ?? [], $a['signs'] ?? [], $a['npcs'] ?? [], $a['triggers'] ?? [], $a['wild'] ?? null, $a['exits'] ?? [], $a['water'] ?? null, $a['range'] ?? null, $a['indoor'] ?? false, $a['watch'] ?? []);
+            $a['warps'] ?? [], $a['signs'] ?? [], $a['npcs'] ?? [], $a['triggers'] ?? [], $a['wild'] ?? null, $a['exits'] ?? [], $a['water'] ?? null, $a['range'] ?? null, $a['indoor'] ?? false, $a['watch'] ?? [], $a['stops'] ?? []);
     }
 
     public function inside(int $x, int $y): bool
@@ -114,6 +119,17 @@ final class Map
         foreach ($this->triggers as $t) {
             if ($t[0] === $x && $t[1] === $y) {
                 return $t;
+            }
+        }
+        return null;
+    }
+
+    /** @return ?array{0: int, 1: int, 2: string, 3: list<array>} */
+    public function stopAt(int $x, int $y): ?array
+    {
+        foreach ($this->stops as $s) {
+            if ($s[0] === $x && $s[1] === $y) {
+                return $s;
             }
         }
         return null;

@@ -48,7 +48,7 @@ foreach (Data::maps() as $m) {
                 $center = [array_sum(array_column($c, 0)) / 4, array_sum(array_column($c, 2)) / 4];
                 [$bx, $by] = [(int)round($center[0] + $n[0] / 2), (int)round($center[1] + $n[2] / 2)];
                 $inside = $bx >= 0 && $by >= 0 && $bx < $m->width && $by < $m->height;
-                $beside = $inside ? $block(Tile::name($m->tile($bx, $by))) : null;
+                $beside = $inside ? $block(Tile::name($m->tile($bx, $by)), $bx, $by) : null;
                 $hidden += $beside !== null && min(array_column($c, 1)) < $beside[0] ? 1 : 0;
             }
         }
