@@ -95,5 +95,7 @@ return [
     'tusk'      => ['name' => '象牙', 'element' => 'metal', 'power' => 110, 'accuracy' => 85, 'pp' => 5, 'from' => '象。'],
     // docs/numbers.md 25: with `bond`, its power is not the one written but the user's bond with the player times ten over twenty-five, 102 at most;
     // a beast comes to it of itself, close enough.
+    // docs/numbers.md 33: one of the other gender is taken with the user and half the time cannot act, while both stay out.
+    'mei' => ['name' => '媚', 'element' => null, 'power' => 0, 'accuracy' => 100, 'pp' => 15, 'effect' => ['charm', 100], 'from' => '姑媱之山的䔄草，帝女所化，原文说服了它的人为人所爱。'],
     'tongxin' => ['name' => '同心', 'element' => null, 'power' => 100, 'accuracy' => 100, 'pp' => 15, 'bond' => true, 'from' => '与人同心，其力自倍。游戏自己的设定。'],
 ];

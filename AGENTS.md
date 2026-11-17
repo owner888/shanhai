@@ -55,7 +55,7 @@ src/World/         the game outside battle, with no drawing: Dir, Tile (the char
                    Actor, Controls, World (step(): walking, turning, what blocks, warps, triggers, talking; the party,
                    its battles, rest), Menu (what the menu button opens: the party's screen, the bag), PartyMenu (the beasts in
                    order, two change places), Pen (the boxes where beasts not taken along are kept), Shop (buying), Dex (the kinds seen and bound)
-src/Script/Vm.php  the event script interpreter: say, ask (a line with choices), flags, jumps, face, move, warp, give, battle, trial, duel, rest, pen, shop, load; check()
+src/Script/Vm.php  the event script interpreter: say, ask (a line with choices), flags, jumps, face, move, warp, give, battle, trial, league, duel, rest, pen, shop, load; check()
 src/Battle/        the battle, with no drawing: Rng (bytes, from a seed or a test's script), Formulas (docs/numbers.md as code,
                    a function a rule), Fighter, Battle (turn(): order, what stops a beast, a move, statuses, weather, switching),
                    Screen (a wild battle as the player goes through it: lines, the menu, its lists, the bag's seals and medicines,
@@ -149,6 +149,8 @@ docs/elements.md   the elements' table and how a beast's elements are settled
   the power of 同心, which a beast close enough comes to of itself, once (`Fighter::$offered`).
 - **The rites** (受祭, docs/numbers.md 27) stand where the reference's evolutions do: a common beast, at a god whose trial is passed,
   with the jade, keeps its kind and has its base stats raised (`Fighter::$rank`, `Formulas::risen`); a strange one receives none.
+- **The Lower Capital's five** (docs/numbers.md 32) stand where the reference's league does, after the eighth range: one script of five
+  `league` battles (a trial by another name, so nothing counts it as a range's) with no rest between, the flag set after the last.
 - **Money** (贝, `World::$money`, docs/numbers.md 17): a trial or one on the road, beaten, pays by the level of their last
   beast; a battle lost takes half; a script's `shop` opens buying (`Shop`), where each range's place of rest is.
 - **A saved game** is `World::state()`: the map and place, flags, bag, money, where it last rested, the pen, the record of beasts, and each beast's `Fighter::state()`. What does not

@@ -121,6 +121,7 @@ final class Ai
                 !$sole => false,
                 $effect === 'heal' => $me->hp === $me->maxHp,
                 $effect === 'confuse' => $you->confused > 0,
+                $effect === 'charm' => $you->charmed || $me->gender() === null || $you->gender() === null || $me->gender() === $you->gender(),
                 in_array($effect, ['rain', 'sun', 'sandstorm'], true) => $b->weather === $effect,
                 in_array($effect, ['sleep', 'poison', 'paralyze'], true) => $you->status !== null,
                 default => false,

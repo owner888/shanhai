@@ -44,7 +44,7 @@ return [
             ['pen'],
             ['end'],
             ['label', 'shop'],
-            ['shop', ['seal', 'seal2', 'seal3', 'licao', 'youmu', 'yupei', 'yuzhang']],
+            ['shop', ['seal', 'seal2', 'seal3', 'licao', 'youmu', 'yupei', 'wutiao', 'huangji', 'kuxin', 'yansuan', 'yuzhang']],
             ['label', 'stay'],
         ]],
     ],

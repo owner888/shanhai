@@ -16,7 +16,10 @@ foreach ([0, 1, 2] as $starter) {
     $j = new Journey(Data::newWorld(1), $maps, Data::moves(), Data::gods(), $starter);
     $j->play();
     $who = array_values(array_filter(Data::beasts(), fn(array $b) => $b['starter'] ?? false))[$starter]['name'];
-    same($ranges, array_column($j->passed, 'range'), "with $who the trial of each range is passed, in the ranges' order");
+    $order = $ranges;
+    array_splice($order, 8, 0, [8]); // docs/numbers.md 32: the Lower Capital's five come after the eighth range's trial
+    same($order, array_column($j->passed, 'range'), "with $who the trial of each range is passed, in the ranges' order, and the Lower Capital's five after the eighth");
+    same('帝之下都', $j->passed[8]['who'], "and the ninth thing passed is the Lower Capital");
     same(\Shanhai\World\World::PARTY, count($j->w->party), "and it has bound a full party on the way");
     same(count($j->w->party), count(array_unique(array_map(fn($f) => $f->id, $j->w->party))), "each of a kind of its own");
     check(end($j->passed)['low'] > 1 && end($j->passed)['high'] > end($j->passed)['low'], "and all of them have grown");

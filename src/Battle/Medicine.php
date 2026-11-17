@@ -27,6 +27,15 @@ final class Medicine
      */
     public static function apply(array $thing, Fighter $f): bool
     {
+        $worked = self::work($thing, $f);
+        if ($worked && isset($thing['bitter'])) { // docs/numbers.md 25: a bitter medicine works, and the beast is less close for it
+            $f->bond = Formulas::bond($f->bond, $thing['bitter']);
+        }
+        return $worked;
+    }
+
+    private static function work(array $thing, Fighter $f): bool
+    {
         $by = $thing['by'] ?? null;
         switch ($thing['use'] ?? null) {
             case 'heal':
@@ -52,7 +61,7 @@ final class Medicine
                 if (!$f->fainted()) {
                     return false;
                 }
-                $f->hp = max(1, intdiv($f->maxHp, 2));
+                $f->hp = $by === 'all' ? $f->maxHp : max(1, intdiv($f->maxHp, 2));
                 return true;
             case 'restore':
                 if ($f->fainted() || ($f->hp === $f->maxHp && $f->status === null && $f->confused === 0)) {

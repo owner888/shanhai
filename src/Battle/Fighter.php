@@ -36,6 +36,8 @@ final class Fighter
     public int $sleep = 0;
     /** Turns of confusion left, counting the one it ends on. */
     public int $confused = 0;
+    /** Taken with the other side's beast (docs/numbers.md 33): half the time it cannot act, until either leaves. */
+    public bool $charmed = false;
     public bool $flinched = false;
     /** @var array<string, int> -6 to +6: what leaves with the beast when it is switched out */
     public array $stages = ['atk' => 0, 'def' => 0, 'spa' => 0, 'spd' => 0, 'spe' => 0, 'acc' => 0, 'eva' => 0];
@@ -230,11 +232,12 @@ final class Fighter
         $this->leave();
     }
 
-    /** What switching out leaves behind: stages, confusion, a flinch. The status stays. */
+    /** What switching out leaves behind: stages, confusion, being charmed, a flinch. The status stays. */
     public function leave(): void
     {
         $this->stages = array_fill_keys(array_keys($this->stages), 0);
         $this->confused = 0;
+        $this->charmed = false;
         $this->flinched = false;
     }
 }

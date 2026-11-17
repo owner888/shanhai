@@ -146,3 +146,6 @@ same([25, 45, 65, 75, 85, 1, 255], [Formulas::sealRate(45, 'heavy'), ...array_ma
     'by the weight\'s class');
 same([20, 7, 2, 23], array_map(fn(int $w) => count(array_filter(\Shanhai\Data::beasts(), fn(array $b) => ($b['weight'] ?? 0) === $w)), [4, 3, 2, 1]), 'twenty kinds as heavy as an ox, seven as a horse, two as a bear, twenty-three as a tiger, a deer or a pig');
 same([4, 3, 0], [\Shanhai\Data::beasts()['si']['weight'], \Shanhai\Data::beasts()['lushu']['weight'], \Shanhai\Data::beasts()['xingxing']['weight'] ?? 0], '兕 is like a water buffalo, 鹿蜀 like a horse, 狌狌 like an ape');
+
+// docs/numbers.md 33: the seal for one of the player's beast's kind and of the other gender.
+same([120, 15, 255], [Formulas::sealRate(15, 'mate', 0, 0, false, false, 0, true), Formulas::sealRate(15, 'mate'), Formulas::sealRate(45, 'mate', 0, 0, false, false, 0, true)], 'eight times for such a one, once for any other, 255 at most');

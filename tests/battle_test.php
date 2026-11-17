@@ -21,6 +21,7 @@ $moves = [
     'numb' => ['element' => null, 'power' => 0, 'accuracy' => 100, 'pp' => 10, 'effect' => ['paralyze', 100]],
     'bane' => ['element' => null, 'power' => 0, 'accuracy' => 100, 'pp' => 10, 'effect' => ['poison', 100]],
     'daze' => ['element' => null, 'power' => 0, 'accuracy' => 100, 'pp' => 10, 'effect' => ['confuse', 100]],
+    'lure' => ['element' => null, 'power' => 0, 'accuracy' => 100, 'pp' => 15, 'effect' => ['charm', 100]],
     'brace' => ['element' => null, 'power' => 0, 'accuracy' => 100, 'pp' => 10, 'effect' => ['up:def:2', 100]],
     'mend' => ['element' => null, 'power' => 0, 'accuracy' => 100, 'pp' => 10, 'effect' => ['heal', 100]],
     'rain' => ['element' => 'water', 'power' => 0, 'accuracy' => 100, 'pp' => 5, 'effect' => ['rain', 100]],
@@ -388,3 +389,48 @@ same(false, $b->gone, 'asleep it does not flee');
 [$rng, $b] = $fight([$beast('fire', ['tap'], 50)], [$shy('always')], [$NO, $MOST, $NO, $MOST]);
 $b->turn(['move', 0], ['move', 0]);
 same(false, $b->gone, 'nor does one that is no wild beast: of one who sets a trial');
+
+// docs/numbers.md 33: 媚 takes one of the other gender; taken, it acts on a byte under 128; it ends when either leaves.
+$of = function (string $gender, array $known, int $speed = 100) use ($moves): Fighter {
+    $species = ['elements' => ['water'], 'growth' => 'mediumFast', 'stats' => ['hp' => 100, 'atk' => 100, 'def' => 100, 'spa' => 100, 'spd' => 100, 'spe' => $speed]];
+    $species += $gender === 'none' ? ['gender' => 'none'] : [];
+    return new Fighter('water', $species, 50, array_map(fn(string $m) => [1, $m], $known), $moves, ['atk' => $gender === 'female' ? 0 : 8, 'def' => 8, 'spe' => 8, 'spc' => 8]);
+};
+same(['male', 'female', null], [$of('male', ['tap'])->gender(), $of('female', ['tap'])->gender(), $of('none', ['tap'])->gender()], 'the three there are');
+$f = $of('female', ['tap'], 50);
+[$rng, $b] = $fight([$of('male', ['lure', 'brace']), $of('male', ['tap'])], [$f], [128]);
+$b->turn(['move', 0], ['move', 0]);
+same([true, 160], [$f->charmed, $b->fighter(0)->hp], 'one of the other gender is taken, and on a byte of 128 does not act');
+check(in_array(['status', 1, 'charm'], $b->log, true) && in_array(['charmed', 1], $b->log, true) && in_array(['cant', 1, 'charm'], $b->log, true), 'and the log says each');
+$rng->more([127, $NO, $MOST]);
+$b->turn(['move', 1], ['move', 0]);
+check(in_array(['use', 1, 'tap'], $b->log, true) && $f->charmed, 'on a byte of 127 it acts, and is taken still');
+$rng->more([$NO, $MOST]);
+$b->turn(['switch', 1], ['move', 0]);
+same([false, 2], [$f->charmed, count(array_keys($b->log, ['charmed', 1], true))], 'it ends when the one that took it leaves, and no byte is rolled for it');
+foreach ([['male', 'male'], ['female', 'female'], ['none', 'female'], ['male', 'none']] as [$mine, $theirs]) {
+    $f = $of($theirs, ['brace'], 50);
+    [$rng, $b] = $fight([$of($mine, ['lure'])], [$f], []);
+    $b->turn(['move', 0], ['move', 0]);
+    same(false, $f->charmed, "one that is $mine does not take one that is $theirs");
+}
+$f = $of('female', ['brace'], 50);
+[$rng, $b] = $fight([$of('male', ['lure', 'brace'])], [$f, $of('female', ['brace'])], [255]);
+$b->turn(['move', 0], ['move', 0]);
+$b->turn(['move', 1], ['switch', 1]);
+same([false, false], [$f->charmed, $b->fighter(1)->charmed], 'and it ends when the one taken leaves: neither it nor the one that comes is');
+
+// docs/numbers.md 25: the four bitter things work as the others do, and what takes them likes the player the less for it.
+$items = Data::items();
+$f = $beast('fire', ['tap']);
+$f->hp = 100;
+same([true, 150, \Shanhai\Battle\Formulas::BOND_BASE - 5], [$use($items['wutiao'], $f), $f->hp, $f->bond], '无条 heals 50 and takes 5 from one under 100');
+$f->bond = 200;
+same([true, 160, 185], [$use($items['huangji'], $f), $f->hp, $f->bond], '黄棘 heals 200, and takes 15 from one of 200 or more');
+same([false, 185], [$use($items['huangji'], $f), $f->bond], 'one that takes none of it loses nothing');
+[$f->status, $f->bond] = ['burn', 200];
+same([true, null, 190], [$use($items['kuxin'], $f), $f->status, $f->bond], '苦辛 cures any, for 10 from such a one');
+[$f->hp, $f->bond] = [0, 200];
+same([true, 160, 180], [$use($items['yansuan'], $f), $f->hp, $f->bond], '焉酸 brings one back whole, for 20');
+same([[-5, -5, -10], [-10, -10, -15], [-15, -15, -20]], [\Shanhai\Battle\Formulas::BOND_CHANGES['bitter'], \Shanhai\Battle\Formulas::BOND_CHANGES['bitterRoot'], \Shanhai\Battle\Formulas::BOND_CHANGES['bitterHerb']], "the reference's three rows");
+same(['bitter', 'bitterRoot', 'bitter', 'bitterHerb'], array_map(fn(string $id) => $items[$id]['bitter'], ['wutiao', 'huangji', 'kuxin', 'yansuan']), 'and which thing is of which');

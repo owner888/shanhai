@@ -29,6 +29,8 @@ use Shanhai\World\{Dir, World};
  *     ['rest']                   the party's beasts are whole again, and here is where a battle lost wakes the player
  *     ['pen']                    opens the pen, where beasts are left and taken; the script goes on when it is closed
  *     ['shop', [item, ...]]      opens buying those things; the script goes on when the player leaves
+ *     ['league', who, [[beast, level], ...]]         as 'trial', for one of the five at the Lower Capital (docs/numbers.md 32): several stand in one
+ *                                                    script, one after another with no rest between, and to lose to any is to begin again
  *     ['rite']                   asks which of the party's beasts receives a rite it could now (docs/numbers.md 27), and gives it; says so when none could
  *     ['float']                  the player goes onto the water faced, carried by a beast of the party
  *     ['load']                   the saved game takes the world's place
@@ -39,7 +41,7 @@ final class Vm
     /** command => how many arguments */
     public const ARGS = [
         'say' => 1, 'setFlag' => 1, 'clearFlag' => 1, 'ifFlag' => 2, 'ifNotFlag' => 2, 'goto' => 1, 'label' => 1,
-        'face' => 2, 'move' => 3, 'warp' => 4, 'give' => 2, 'giveBeast' => 2, 'ask' => 2, 'battle' => 2, 'trial' => 2, 'duel' => 2, 'rest' => 0, 'pen' => 0, 'shop' => 1, 'rite' => 0, 'float' => 0, 'load' => 0, 'end' => 0,
+        'face' => 2, 'move' => 3, 'warp' => 4, 'give' => 2, 'giveBeast' => 2, 'ask' => 2, 'battle' => 2, 'trial' => 2, 'league' => 2, 'duel' => 2, 'rest' => 0, 'pen' => 0, 'shop' => 1, 'rite' => 0, 'float' => 0, 'load' => 0, 'end' => 0,
     ];
 
     public bool $done = false;
@@ -74,7 +76,7 @@ final class Vm
             if (!isset(self::ARGS[$name])) {
                 throw new InvalidArgumentException("script line $i: unknown command '$name'");
             }
-            if (count($cmd) - 1 !== self::ARGS[$name] && !($name === 'trial' && count($cmd) === 4)) {
+            if (count($cmd) - 1 !== self::ARGS[$name] && !(in_array($name, ['trial', 'league'], true) && count($cmd) === 4)) {
                 throw new InvalidArgumentException("script line $i: '$name' takes " . self::ARGS[$name] . ' arguments');
             }
             if ($name === 'label') {
@@ -97,11 +99,11 @@ final class Vm
             if ($cmd[0] === 'shop' && (!is_array($cmd[1]) || $cmd[1] === [] || !array_is_list($cmd[1]) || array_filter($cmd[1], fn($id) => !is_string($id)) !== [])) {
                 throw new InvalidArgumentException("script line $i: 'shop' takes the things sold");
             }
-            if ($cmd[0] === 'trial' || $cmd[0] === 'duel') {
+            if (in_array($cmd[0], ['trial', 'league', 'duel'], true)) {
                 if (!is_string($cmd[1]) || $cmd[1] === '' || !is_array($cmd[2]) || $cmd[2] === []) {
                     throw new InvalidArgumentException("script line $i: 'trial' takes who sets it and their beasts");
                 }
-                if (isset($cmd[3]) && ($cmd[0] !== 'trial' || !is_array($cmd[3]) || $cmd[3] === [] || !array_is_list($cmd[3]) || array_diff($cmd[3], Ai::THINGS) !== [])) {
+                if (isset($cmd[3]) && ($cmd[0] === 'duel' || !is_array($cmd[3]) || $cmd[3] === [] || !array_is_list($cmd[3]) || array_diff($cmd[3], Ai::THINGS) !== [])) {
                     throw new InvalidArgumentException("script line $i: what the one who sets a trial uses is a list of " . implode(', ', Ai::THINGS));
                 }
                 foreach ($cmd[2] as $theirs) {
@@ -189,7 +191,8 @@ final class Vm
                 case 'load': $w->load(); break;
                 case 'ask': $w->ask($cmd[1], array_column($cmd[2], 0)); $this->asked = array_column($cmd[2], 1); break;
                 case 'battle': $w->fight($cmd[1], $cmd[2]); break;
-                case 'trial': $w->trial($cmd[1], $cmd[2], $cmd[3] ?? []); break;
+                case 'trial':
+                case 'league': $w->trial($cmd[1], $cmd[2], $cmd[3] ?? []); break;
                 case 'duel': $w->duel($cmd[1], $cmd[2]); break;
                 case 'end': $this->done = true; break;
             }

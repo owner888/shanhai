@@ -522,3 +522,9 @@ same(['female', 'male', null], array_map(fn($f) => $f->gender(), $w->party), 'fe
 same(['狌狌（牝）', '狌狌（牡）', '类'], array_map(fn($f) => explode('  ', \Shanhai\World\Menu::detail($f, ['elements' => Data::elements(), 'items' => Data::items(), 'moves' => Data::moves()])[0])[0], $w->party), 'the details say which after the name, in the classic\'s words');
 $w->run([['trial', '山神', [['queshan', 5], ['xingxing', 5]]]]);
 same([null, 'male'], array_map(fn($f) => $f->gender(), $w->battle->battle->parties[1]), 'a god is neither; a beast of one who sets a trial, all its values 8, is male');
+
+// docs/numbers.md 32: a league battle is a trial like any, with the things its side may use.
+$w = Data::newWorld(5);
+$w->join('xingxing', 50);
+$w->run([['league', '英招', [['yingzhan', 40]], ['youmu']], ['setFlag', 'after']]);
+check($w->battle !== null && !$w->battle->battle->wild && !isset($w->flags['after']), 'it begins a battle that is no wild one, and the script waits on it');

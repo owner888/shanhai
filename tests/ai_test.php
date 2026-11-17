@@ -154,3 +154,17 @@ same(2, $ai->next($line('fire', [$beast('metal', ['tap']), $beast('metal', ['tap
 $gone = $beast('metal', ['tap']);
 $gone->hp = 0;
 same(2, $ai->next($line('fire', [$gone, $beast('water', ['wet'])]), Rng::scripted([])), 'one that has fallen is not sent');
+
+// docs/numbers.md 33: 媚 is no move to use on one it cannot take.
+$lure = ['lure' => ['element' => null, 'power' => 0, 'accuracy' => 100, 'pp' => 15, 'effect' => ['charm', 100]]];
+$of = function (?string $gender, array $known) use ($moves, $lure): Fighter {
+    $species = ['elements' => ['water'], 'growth' => 'mediumFast', 'stats' => array_fill_keys(['hp', 'atk', 'def', 'spa', 'spd', 'spe'], 100)] + ($gender === null ? ['gender' => 'none'] : []);
+    return new Fighter('water', $species, 50, array_map(fn(string $m) => [1, $m], $known), $moves + $lure, ['atk' => $gender === 'female' ? 0 : 8, 'def' => 8, 'spe' => 8, 'spc' => 8]);
+};
+$lured = function (?string $mine, ?string $theirs, bool $already = false) use ($of, $elements, $moves, $lure, $things): array {
+    $b = new Battle([[$of($mine, ['tap'])], [$of($theirs, ['lure', 'tap'])]], $elements, $moves + $lure, Rng::scripted([]));
+    $b->fighter(0)->charmed = $already;
+    return (new Ai(['basic'], $moves + $lure, $things))->scores($b, Rng::scripted([]));
+};
+same([[20, 20], [30, 20], [30, 20], [30, 20], [30, 20]], [$lured('male', 'female'), $lured('female', 'female'), $lured(null, 'female'), $lured('male', null), $lured('male', 'female', true)],
+    'it is as likely as any on one of the other gender, and much less on one of its own, one of neither, by one of neither, or one taken already');

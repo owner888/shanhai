@@ -345,7 +345,8 @@ final class Screen
             return null;
         }
         $foe = $this->battle->fighter(1);
-        $rate = Formulas::sealRate($foe->species['catch'], $by, $this->battle->fighter(0)->level, $foe->level, $this->water, isset($foe->species['flees']), $foe->species['weight'] ?? 0);
+        $rate = Formulas::sealRate($foe->species['catch'], $by, $this->battle->fighter(0)->level, $foe->level, $this->water, isset($foe->species['flees']), $foe->species['weight'] ?? 0,
+                $foe->id === $this->battle->fighter(0)->id && $foe->gender() !== null && $this->battle->fighter(0)->gender() !== null && $foe->gender() !== $this->battle->fighter(0)->gender());
         return Formulas::catchValue($rate, $foe->maxHp, $foe->hp, $foe->status);
     }
 
@@ -530,7 +531,7 @@ final class Screen
                     break;
                 case 'cant':
                     $line = $name($side) . match ($e[2]) {
-                        'sleep' => '正在沉睡。', 'flinch' => '畏缩了，动弹不得！', 'paralyze' => '身体麻痹，动弹不得！',
+                        'sleep' => '正在沉睡。', 'flinch' => '畏缩了，动弹不得！', 'paralyze' => '身体麻痹，动弹不得！', 'charm' => '被迷得出不了手！',
                     };
                     break;
                 case 'struggle':
@@ -574,6 +575,9 @@ final class Screen
                     $line = $name($side) . '恢复了体力！';
                     $cue = ['what' => 'heal', 'side' => $side];
                     break;
+                case 'charmed': // docs/numbers.md 33
+                    $this->say($name($side) . '迷恋着对手……', $shown);
+                    break;
                 case 'gone': // docs/numbers.md 30
                     $this->say($name($side) . '逃走了！', $shown);
                     break;
@@ -584,11 +588,11 @@ final class Screen
                     }
                     break;
                 case 'status':
-                    if ($e[2] !== 'confuse') {
+                    if ($e[2] !== 'confuse' && $e[2] !== 'charm') {
                         $shown[$side]['status'] = $status[$side][$shown[$side]['which']] = $e[2];
                     }
                     $line = $name($side) . match ($e[2]) {
-                        'poison' => '中毒了！', 'burn' => '被灼伤了！', 'paralyze' => '麻痹了！', 'sleep' => '睡着了！', 'confuse' => '混乱了！',
+                        'poison' => '中毒了！', 'burn' => '被灼伤了！', 'paralyze' => '麻痹了！', 'sleep' => '睡着了！', 'confuse' => '混乱了！', 'charm' => '被迷住了！',
                     };
                     break;
                 case 'weather':
@@ -606,7 +610,7 @@ final class Screen
                     $line = $name($side) . '的' . $this->things[$e[2]]['name'] . '起了作用！';
                     break;
                 case 'cured':
-                    if ($e[2] !== 'confuse') {
+                    if ($e[2] !== 'confuse' && $e[2] !== 'charm') {
                         $shown[$side]['status'] = $status[$side][$shown[$side]['which']] = null;
                     }
                     $line = $name($side) . ($e[2] === 'confuse' ? '不再混乱了！' : '恢复了正常！');

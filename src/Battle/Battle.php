@@ -16,6 +16,8 @@ final class Battle
 {
     /** 11.2, 11.1: a random byte under these — is fully paralyzed; hits itself in confusion; goes first on a speed tie. */
     public const PARALYZED = 63, HITS_ITSELF = 128, TIE_FIRST = 128;
+    /** A charmed beast acts on a byte under this (docs/numbers.md 33). */
+    public const CHARMED_ACTS = 128;
     /** The power of the blow a confused beast deals itself (docs/numbers.md 12: not read yet). */
     public const CONFUSION_POWER = 40;
     public const WEATHER_TURNS = 5;
@@ -247,6 +249,7 @@ final class Battle
             throw new InvalidArgumentException("side $side cannot switch to beast $which");
         }
         $this->fighter($side)->leave();
+        $this->fighter(1 - $side)->charmed = false; // 33: it ends when either leaves
         $this->active[$side] = $which;
         $this->log[] = ['switch', $side, $which];
     }
@@ -281,6 +284,13 @@ final class Battle
             } elseif ($this->rng->byte() < self::HITS_ITSELF) {
                 $n = $this->hurt($u, Formulas::damage($u->level, self::CONFUSION_POWER, $u->stat('atk'), $u->stat('def'), false));
                 $this->log[] = ['hurt', $side, $n, 'confusion'];
+                return;
+            }
+        }
+        if ($u->charmed) { // 33, after confusion as in the reference
+            $this->log[] = ['charmed', $side];
+            if ($this->rng->byte() >= self::CHARMED_ACTS) {
+                $this->log[] = ['cant', $side, 'charm'];
                 return;
             }
         }
@@ -452,6 +462,13 @@ final class Battle
                     $done = true;
                 }
                 break;
+            case $effect === 'charm': // 33: only one of the other gender, not already taken
+                if (!$t->fainted() && !$t->charmed && $u->gender() !== null && $t->gender() !== null && $u->gender() !== $t->gender()) {
+                    $t->charmed = true;
+                    $this->log[] = ['status', 1 - $side, 'charm'];
+                    $done = true;
+                }
+                break;
             case $effect === 'flinch':
                 $t->flinched = $foeYetToAct && !$t->fainted();
                 $done = true;
@@ -540,6 +557,7 @@ final class Battle
                 $out[] = $side;
             } elseif (!$this->chooses[$side]) {
                 $this->fighter($side)->leave();
+                $this->fighter(1 - $side)->charmed = false;
                 $this->active[$side] = $next;
                 $this->log[] = ['switch', $side, $next];
             }

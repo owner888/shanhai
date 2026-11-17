@@ -34,13 +34,15 @@ foreach ($items as $id => $item) {
         check(!isset($item['grows']) || isset($item['price']) || array_intersect_key($found, $there) !== [], "the thing $id is found on the mountain it grows on");
     }
     check(($item['name'] ?? '') !== '' && ($item['from'] ?? '') !== '', "the thing $id has a name and where it comes from");
-    check(array_diff(array_keys($item), ['name', 'use', 'hold', 'by', 'grows', 'price', 'from']) === [] && in_array($item['use'] ?? null, [null, 'catch', 'rite', ...\Shanhai\Battle\Medicine::USES], true), "the thing $id has only the fields there are, and a use there is");
+    check(array_diff(array_keys($item), ['name', 'use', 'hold', 'by', 'grows', 'price', 'bitter', 'from']) === [] && in_array($item['use'] ?? null, [null, 'catch', 'rite', ...\Shanhai\Battle\Medicine::USES], true), "the thing $id has only the fields there are, and a use there is");
     check(!isset($item['price']) || (is_int($item['price']) && $item['price'] >= 1), "the thing $id, if it is sold, has a price of one or more");
+    check(!isset($item['bitter']) || (\Shanhai\Battle\Medicine::is($item) && isset(\Shanhai\Battle\Formulas::BOND_CHANGES[$item['bitter']]) && \Shanhai\Battle\Formulas::BOND_CHANGES[$item['bitter']][0] < 0), "the thing $id, if bitter, is a medicine that leaves a beast less close");
     // docs/numbers.md 21, 22: what a thing used on a beast does it by; a seal's hundredths of the catch rate
     $by = $item['by'] ?? null;
     if (!isset($item['hold'])) {
         check(match ($item['use'] ?? null) { 'heal' => $by === 'all' || (is_int($by) && $by >= 1), 'cure' => in_array($by, ['poison', 'burn', 'paralyze', 'sleep', 'confuse', 'any'], true),
-            'catch' => $by === null || (is_int($by) && $by > 100) || in_array($by, ['level', 'water', 'bond', 'fast', 'heavy', 'sure'], true),
+            'revive' => $by === null || $by === 'all',
+            'catch' => $by === null || (is_int($by) && $by > 100) || in_array($by, ['level', 'water', 'bond', 'fast', 'heavy', 'mate', 'sure'], true),
             'rite' => isset(\Shanhai\Battle\Formulas::RITES[$by]) && \Shanhai\Battle\Formulas::RITES[$by]['thing'] === $id, default => $by === null }, "the thing $id is used by a number or a kind that fits its use");
     } else {
         check(!isset($item['use']) || $item['use'] === $item['hold'], "the thing $id, used from the bag, does what it does held");
@@ -229,7 +231,7 @@ foreach ($scripts as $where => $script) {
         if ($cmd[0] === 'give') {
             check(isset($items[$cmd[1]]) && is_int($cmd[2]) && $cmd[2] >= 1, "$where: it gives a thing there is, one or more: {$cmd[1]}");
         }
-        if ($cmd[0] === 'trial' || $cmd[0] === 'duel') {
+        if (in_array($cmd[0], ['trial', 'league', 'duel'], true)) {
             check(count($cmd[2]) <= 6, "$where: a trial is against six beasts at most");
             foreach ($cmd[2] as [$id, $level]) {
                 check((isset($beasts[$id]) || isset($gods[$id])) && $level >= 1 && $level <= 100, "$where: its trial's $id is a beast or a god there is, at a level of 1 to 100");
@@ -374,7 +376,7 @@ foreach ($moves as $id => $m) {
     check($m['pp'] % 5 === 0 && $m['pp'] >= 5 && $m['pp'] <= 40, "the move $id's uses are a multiple of five from 5 to 40");
     if (isset($m['effect'])) {
         [$what, $chance] = $m['effect'];
-        check(in_array($what, $statuses, true) || preg_match('/^(up|down):(atk|def|spa|spd|spe|acc|eva):[12]$/', $what) === 1, "the move $id's effect is one there is: $what");
+        check(in_array($what, $statuses, true) || $what === 'charm' || preg_match('/^(up|down):(atk|def|spa|spd|spe|acc|eva):[12]$/', $what) === 1, "the move $id's effect is one there is: $what");
         check(in_array($chance, [10, 20, 30, 50, 100], true), "the move $id's effect has a chance in use");
     }
     check(!isset($m['only']) || isset($beasts[$m['only']]), "the move $id is only a beast's there is");
@@ -664,3 +666,23 @@ foreach ($scripts as $script) {
 ksort($uses);
 same([1 => [], 2 => [], 3 => [], 4 => [], 5 => ['yupei'], 6 => ['licao'], 7 => ['licao'], 8 => ['yupei', 'licao'], 9 => ['licao'], 10 => ['licao'], 11 => ['licao'], 12 => [], 13 => ['yupei'], 14 => ['licao'],
     15 => ['youmu', 'yupei'], 16 => ['dixiu', 'dixiu']] + array_fill(17, 10, ['dixiu', 'dixiu']), $uses, 'what each god has to use in its trial');
+
+// docs/numbers.md 32: the Lower Capital's five, at the levels and with the things of the reference's four and its champion.
+$five = array_values(array_filter(Data::maps()['kunlun']->npcs[0][5], fn(array $c) => $c[0] === 'league'));
+same(['英招', '长乘', '蓐收', '西王母', '陆吾'], array_column($five, 1), 'who they are, in order');
+same([[40, 41, 41, 41, 42], [40, 41, 43, 42, 44], [42, 42, 42, 43, 46], [42, 42, 45, 44, 47], [44, 47, 47, 46, 46, 50]], array_map(fn(array $c) => array_column($c[2], 1), $five), "the reference's levels");
+same([['youmu'], ['yupei', 'dixiu'], ['youmu'], ['yupei', 'youmu'], ['yupei', 'dixiu']], array_column($five, 3), "and its things, by what each does");
+foreach ($five as $c) {
+    foreach ($c[2] as [$id]) {
+        check(($beasts[$id]['range'] ?? null) === 6, "{$c[1]}: $id is a beast of 西次三经, the range the place is in");
+    }
+}
+$script = Data::maps()['kunlun']->npcs[0][5];
+$at = fn(string $name) => array_keys(array_filter($script, fn(array $c) => $c[0] === $name));
+check(max($at('league')) + 1 === $at('setFlag')[0] && $script[$at('setFlag')[0]][1] === 'passedLeague', 'the flag is set after the last of the five and nowhere before: to lose to any is to begin again');
+check(['ifFlag', 'passedBeishan', 'ready'] === $script[2], 'and none of it begins before the first of the northern ranges is passed');
+$north = Data::maps()['tishan']->npcs;
+$gate = array_merge(...array_map(fn(array $n) => $n[5], $north));
+$i = array_search(['label', 'passed'], $gate, true);
+same(['ifFlag', 'passedLeague', 'open'], $gate[$i + 1], 'the road north of 隄山 opens when the five are passed');
+check($gate[$i + 2][0] === 'ask' && !in_array('send', array_column($gate[$i + 2][2], 1), true), 'and till then its god offers no way on');

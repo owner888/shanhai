@@ -168,8 +168,9 @@ final class Formulas
      * with the wild beast's level under that of the player's beast, four times under half of it, eight under a quarter.
      * By 'water', three times in a battle begun on the water. By 'bond', as it is: that seal changes what is bound, not the binding.
      * By 'fast', four times for a kind that flees (30). By 'heavy', more or less by the kind's weight (31), 1 at least.
+     * By 'mate', eight times for one of the kind of the player's beast and of the other gender (33).
      */
-    public static function sealRate(int $rate, int|string $by, int $mine = 0, int $theirs = 0, bool $water = false, bool $flees = false, int $weight = 0): int
+    public static function sealRate(int $rate, int|string $by, int $mine = 0, int $theirs = 0, bool $water = false, bool $flees = false, int $weight = 0, bool $mate = false): int
     {
         if ($by === 'heavy') {
             return max(1, min(255, $rate + self::WEIGHT[$weight]));
@@ -179,6 +180,7 @@ final class Formulas
             'water' => $water ? 3 : 1,
             'bond' => 1,
             'fast' => $flees ? 4 : 1,
+            'mate' => $mate ? 8 : 1,
             default => null,
         };
         return min(255, $times === null ? intdiv($rate * $by, 100) : $rate * $times);
@@ -242,6 +244,9 @@ final class Formulas
         'fainted' => [-1, -1, -1],  // it fell in a battle
         'outmatched' => [-5, -5, -10], // it fell to one thirty levels or more over it
         'step' => [1, 1, 1],        // the player walked BOND_STEPS with it
+        'bitter' => [-5, -5, -10],  // it was given a bitter powder
+        'bitterRoot' => [-10, -10, -15], // a bitter root
+        'bitterHerb' => [-15, -15, -20], // the bitter herb that raises the fallen
     ];
     /** 25: what is said of a bond, from what it is and over: the grades are the reference's, the words the game's own. */
     public const BOND_WORDS = [250 => '形影不离', 200 => '十分亲近', 150 => '亲近', 100 => '渐渐熟了', 50 => '还生分', 0 => '疏远'];

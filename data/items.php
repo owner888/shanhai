@@ -30,6 +30,12 @@ return [
     'yuzhang' => ['name' => '璋玉', 'use' => 'rite', 'by' => 1, 'price' => 2100, 'from' => '南山经之首祠神之礼：「毛用一璋玉瘞」。常兽二十五级起，凭它受璋礼。'],
     'yubi' => ['name' => '璧玉', 'use' => 'rite', 'by' => 2, 'price' => 2100, 'from' => '南次二经祠神之礼：「毛用一璧瘞」。受过璋礼的常兽、或本就不弱的常兽，三十六级起，凭它受璧礼。'],
     'yugui' => ['name' => '圭玉', 'use' => 'rite', 'by' => 3, 'price' => 2100, 'from' => '中次八经祠神之礼：「用一藻圭」。受过璧礼、又与你十分亲近的，凭它受圭礼。'],
+    // docs/numbers.md 25: the bitter medicines, cheap for what they do; a beast given one is less close to the player for it.
+    'wutiao' => ['name' => '无条', 'use' => 'heal', 'by' => 50, 'price' => 500, 'bitter' => 'bitter', 'from' => '苦山的草。回复 50 点体力。味苦，吃了它的异兽会和你疏远一些。苦是游戏自己的设定。'],
+    'huangji' => ['name' => '黄棘', 'use' => 'heal', 'by' => 200, 'price' => 800, 'bitter' => 'bitterRoot', 'from' => '苦山的树。回复 200 点体力。很苦，吃了它的异兽会和你疏远不少。苦是游戏自己的设定。'],
+    'kuxin' => ['name' => '苦辛', 'use' => 'cure', 'by' => 'any', 'price' => 450, 'bitter' => 'bitter', 'from' => '阳华之山的草，原文说它治疟。解一切异常。味苦，吃了它的异兽会和你疏远一些。'],
+    'yansuan' => ['name' => '焉酸', 'use' => 'revive', 'by' => 'all', 'price' => 2800, 'bitter' => 'bitterHerb', 'from' => '鼓钟之山的草。倒下的异兽站起来，体力全满。极苦，吃了它的异兽会和你疏远很多。苦是游戏自己的设定。'],
+    'sealMate' => ['name' => '偶契印', 'use' => 'catch', 'by' => 'mate', 'from' => '对和你场上那只同种、而牝牡相异的异兽，成契的机会是八倍。游戏自己的设定。'],
     'sealFast' => ['name' => '速契印', 'use' => 'catch', 'by' => 'fast', 'from' => '对见人就逃的异兽，成契的机会是四倍。游戏自己的设定。'],
     'sealHeavy' => ['name' => '重契印', 'use' => 'catch', 'by' => 'heavy', 'from' => '越重的异兽越容易成契，轻的反而更难。游戏自己的设定。'],
     'sealSure' => ['name' => '天契印', 'use' => 'catch', 'by' => 'sure', 'from' => '一定成契。全天下只有一枚。游戏自己的设定。'],

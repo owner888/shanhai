@@ -22,17 +22,17 @@ foreach ([0, 1, 2] as $starter) {
         $swaps += $j->swapped;
         $rites += $j->rites;
         $name = $beasts[$starters[$starter]]['name'];
-        foreach ($j->passed as $p) {
+        foreach ($j->passed as $at => $p) { // by its place in the order passed: the Lower Capital's five share the eighth range
             foreach (['tries', 'level', 'low', 'high', 'size', 'wild', 'lost', 'updates', 'money'] as $k) {
-                $sum[$p['range']][$k] = ($sum[$p['range']][$k] ?? 0) + $p[$k];
+                $sum[$at][$k] = ($sum[$at][$k] ?? 0) + $p[$k];
             }
-            $sum[$p['range']]['who'] = $p['who'];
+            [$sum[$at]['who'], $sum[$at]['range']] = [$p['who'], $p['range']];
         }
     }
     printf("%s first, the mean of %d games (wild battles, battles lost and time are counted from the start); %.1f times a beast was left in the pen for a better one, %.1f rites received; the last game's party at the end: %s\n",
         $name, $seeds, $swaps / $seeds, $rites / $seeds, implode('、', array_map(fn($f) => $f->species['name'] . ' ' . $f->level, $j->w->party)));
-    foreach ($sum as $range => $s) {
+    foreach ($sum as $s) {
         printf("  range %d %s: passed with %.1f beasts at level %.1f (%.0f to %.0f) on try %.1f, after %.0f wild battles, %.1f lost, %.0f minutes, with %.0f in money\n",
-            $range, $s['who'], $s['size'] / $seeds, $s['level'] / $seeds, $s['low'] / $seeds, $s['high'] / $seeds, $s['tries'] / $seeds, $s['wild'] / $seeds, $s['lost'] / $seeds, $s['updates'] / $seeds / 3600, $s['money'] / $seeds);
+            $s['range'], $s['who'], $s['size'] / $seeds, $s['level'] / $seeds, $s['low'] / $seeds, $s['high'] / $seeds, $s['tries'] / $seeds, $s['wild'] / $seeds, $s['lost'] / $seeds, $s['updates'] / $seeds / 3600, $s['money'] / $seeds);
     }
 }

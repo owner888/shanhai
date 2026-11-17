@@ -36,6 +36,9 @@ use Shanhai\World\{Controls, Dir, Map, Pen, Tile, World};
  */
 final class Journey
 {
+    /** The range whose trial comes before the Lower Capital's five (docs/numbers.md 32), in whose wild it trains for them. */
+    private const LEAGUE_AFTER = 8;
+
     /** More updates than any journey should take: one that goes on past this is stuck. */
     private const LIMIT = 40_000_000;
 
@@ -73,12 +76,16 @@ final class Journey
                 foreach ($npc[5] as $i => $cmd) {
                     if ($cmd[0] === 'trial') {
                         $flag = $npc[5][$i + 1][0] === 'setFlag' ? $npc[5][$i + 1][1] : throw new RuntimeException("{$map->id}: the trial sets no flag after it");
-                        $this->trials[] = ['range' => $gods[end($cmd[2])[0]]['range'], 'map' => $map->id, 'npc' => $npc[0], 'flag' => $flag, 'who' => $cmd[1]];
+                        $r = $gods[end($cmd[2])[0]]['range'];
+                        $this->trials[] = ['range' => $r, 'key' => 10 * $r, 'map' => $map->id, 'npc' => $npc[0], 'flag' => $flag, 'who' => $cmd[1]];
+                    } elseif ($cmd[0] === 'league' && ($npc[5][$i + 1][0] ?? null) === 'setFlag') {
+                        // docs/numbers.md 32: the five of the Lower Capital are one thing to pass, after the eighth range's trial
+                        $this->trials[] = ['range' => self::LEAGUE_AFTER, 'key' => 10 * self::LEAGUE_AFTER + 5, 'map' => $map->id, 'npc' => $npc[0], 'flag' => $npc[5][$i + 1][1], 'who' => '帝之下都'];
                     }
                 }
             }
         }
-        usort($this->trials, fn(array $a, array $b) => $a['range'] <=> $b['range']);
+        usort($this->trials, fn(array $a, array $b) => $a['key'] <=> $b['key']);
     }
 
     /** Plays until every trial is passed. */
@@ -99,7 +106,7 @@ final class Journey
                     // to one met on the road, who will be there again: a level more first, in the wild of the range being walked
                     foreach ($this->trials as $t) {
                         if (!isset($this->w->flags[$t['flag']])) {
-                            $this->want[$t['range']] = min(Formulas::MAX_LEVEL, max($this->want[$t['range']] ?? 0, (int)$this->level() + 1));
+                            $this->want[$t['key']] = min(Formulas::MAX_LEVEL, max($this->want[$t['key']] ?? 0, (int)$this->level() + 1));
                             break;
                         }
                     }
@@ -166,12 +173,12 @@ final class Journey
         if ($next === null) {
             return false;
         }
-        $r = $next['range'];
-        if ($this->level() < ($this->want[$r] ?? 0)) {
+        [$r, $k] = [$next['range'], $next['key']];
+        if ($this->level() < ($this->want[$k] ?? 0)) {
             if ($this->spent()) {
                 $this->mend();
             }
-            $this->grind($r);
+            $this->grind($r, $k);
             return true;
         }
         $this->mend();
@@ -179,13 +186,13 @@ final class Journey
         $this->arrange(false);
         $god = $w->actor($next['npc']);
         $levels = array_map(fn($f) => $f->level, $w->party);
-        [$this->trying, $this->tries[$r], $level] = [$r, ($this->tries[$r] ?? 0) + 1, $this->level()];
+        [$this->trying, $this->tries[$k], $level] = [$k, ($this->tries[$k] ?? 0) + 1, $this->level()];
         $this->talk($god->x, $god->y, []);
         $this->trying = null;
         if (!isset($w->flags[$next['flag']])) {
             throw new RuntimeException("the trial of range $r was talked through and neither passed nor lost");
         }
-        $this->passed[] = ['range' => $r, 'who' => $next['who'], 'tries' => $this->tries[$r], 'level' => $level, 'low' => min($levels), 'high' => max($levels), 'size' => count($levels), 'wild' => $this->wild, 'lost' => $this->lost, 'updates' => $this->updates, 'money' => $this->w->money];
+        $this->passed[] = ['range' => $r, 'who' => $next['who'], 'tries' => $this->tries[$k], 'level' => $level, 'low' => min($levels), 'high' => max($levels), 'size' => count($levels), 'wild' => $this->wild, 'lost' => $this->lost, 'updates' => $this->updates, 'money' => $this->w->money];
         return true;
     }
 
@@ -239,7 +246,7 @@ final class Journey
     }
 
     /** Fights in the wild of range $r until the party's mean level is the level wanted, or it is too worn to go on. */
-    private function grind(int $r): void
+    private function grind(int $r, int $k): void
     {
         $best = null;
         foreach ($this->maps as $map) {
@@ -254,7 +261,7 @@ final class Journey
             throw new RuntimeException("range $r has no wild beasts that can be come to");
         }
         $this->travel($best[0]);
-        $this->pace(fn() => $this->level() < $this->want[$r]);
+        $this->pace(fn() => $this->level() < $this->want[$k]);
     }
 
     /** Levels its party's lowest may be under its highest for the party to count as level: a new beast is not looked for while one is still catching up. */
@@ -634,7 +641,7 @@ final class Journey
             $pc = match (true) {
                 $cmd[0] === 'ifFlag' && $set, $cmd[0] === 'ifNotFlag' && !$set => $labels[$cmd[2]],
                 $cmd[0] === 'goto' => $labels[$cmd[1]],
-                in_array($cmd[0], ['end', 'trial', 'battle', 'warp'], true) => count($script),
+                in_array($cmd[0], ['end', 'trial', 'league', 'battle', 'warp'], true) => count($script),
                 default => $pc,
             };
         }
