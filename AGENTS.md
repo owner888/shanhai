@@ -5,7 +5,7 @@ Entry point for coding agents and contributors. `docs/rules.md` is the rule of t
 ## Rules
 
 1. **This file stays under 200 lines** (`wc -l AGENTS.md`): near the limit, condense first; only then move detail to `docs/`.
-2. **The rule of the game** (the developer's rule): how it plays and how it is shown follow the classic handheld
+2. **The rule of the game** (the developer's rule): how it plays and what its screens hold follow the classic handheld
    monster-collecting RPGs of the late 1990s — `docs/rules.md` lists what that means, and v1 keeps to it without
    exception; changes are considered only after a version is out.
 3. **All content is the Classic of Mountains and Seas' (山海经) or our own**: beasts, names, moves, maps, text,
@@ -43,6 +43,10 @@ Entry point for coding agents and contributors. `docs/rules.md` is the rule of t
 16. What the game shows is in characters its font draws: a character of the classic's that is beyond the basic
     plane is replaced, by a current other spelling or else its phonetic, and listed in `docs/bestiary.md`
     (生僻字的替换); a test keeps `data/` free of them.
+17. **The look is Octopath Traveler's** (the developer's rule): HD-2D — pixel sprites upright in a 3D diorama of
+    pixel-textured ground, a fixed slanted camera, tilt-shift, a vignette, its light. How a thing should look is
+    answered by how Octopath Traveler does it, not chosen anew; what cannot be done yet is listed in `docs/art.md`.
+    Its style only: nothing of it is copied, no sprite, map, UI or text (rule 3).
 
 ## Layout
 
