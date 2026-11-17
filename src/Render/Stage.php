@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Shanhai\Render;
 
 use MyPHP\Plugins\Scene\{Camera3D, Entity, Material, Scene};
+use MyPHP\UI\Image;
 use MyPHP\Plugins\Scene\Math\{Mat4, Vec3};
 use Shanhai\World\{Actor, Dir, Map, Tile, World};
 
@@ -11,13 +12,17 @@ use Shanhai\World\{Actor, Dir, Map, Tile, World};
  * The 3D scene of the map the player is on (MyPHP's Plugins\Scene): a tile is one unit, a map's x the scene's x
  * and its y the scene's z. Built once for a map: the ground and the walls each one mesh of the faces that can be
  * seen (faces()), each tile a little lighter or darker than its kind's color (Voxels::shade); each kind of thing standing
- * on it (a model of art/things) one instanced draw; the actors are art/people's person, robed in their look's color.
- * sync() then moves the actors and the camera, which looks down at the player from a fixed angle and never turns.
+ * on it (a model of art/things) one instanced draw. The ground and the walls are drawn through a grain of pixels
+ * (grain()), each tile's top turned one of eight ways so that the tiles do not repeat.
+ * The actors are HD-2D's sprites (docs/art.md): art/sprites' person, robed in their look's color, stood upright on
+ * their tile and drawn a little taller than written, so that the camera's slant shows them as written; a dithered
+ * shadow under each. sync() then moves them, shows each its frame for the way it faces and its step, and moves the
+ * camera, which looks down at the player from a fixed angle and never turns.
  */
 final class Stage
 {
     /** Where the camera stands from the player: up and back (south), and its vertical field of view in degrees. */
-    public const CAMERA_HEIGHT = 8.0, CAMERA_BACK = 6.5, CAMERA_FOV = 40.0;
+    public const CAMERA_HEIGHT = 6.0, CAMERA_BACK = 9.0, CAMERA_FOV = 32.0;
 
     /** The ground's color under each kind of tile: the blue-green landscape's (docs/art.md) 石绿 grass, 赭 paths, 石青 water. */
     public const GROUND = [
@@ -35,26 +40,29 @@ final class Stage
     ];
     /** An actor's robe color, by its look. */
     public const LOOKS = [
-        'player' => [0.85, 0.25, 0.25, 1.0],
-        'elder' => [0.55, 0.55, 0.60, 1.0],
-        'guard' => [0.30, 0.40, 0.70, 1.0],
-        'shaman' => [0.55, 0.30, 0.65, 1.0],
-        'god' => [0.95, 0.80, 0.30, 1.0],
-        'foe' => [0.60, 0.35, 0.20, 1.0],
+        'player' => '#d94040',
+        'elder' => '#8c8c99',
+        'guard' => '#4d66b3',
+        'shaman' => '#8c4da6',
+        'god' => '#f2cc4d',
+        'foe' => '#995933',
     ];
     /** How high the ground's top is, the water's, a wall's; and how far down the ground and the water go, which shows at a map's edge. */
     public const GROUND_TOP = 0.0, WATER_TOP = -0.12, WALL_TOP = 1.3, GROUND_BOTTOM = -0.2, WATER_BOTTOM = -0.32;
     private const WALL = [0.88, 0.85, 0.78, 1.0];
     /** What a model's own colors are drawn through: white, so they are as written. */
     private const AS_WRITTEN = [1.0, 1.0, 1.0, 1.0];
-    /** How high a walking actor's step lifts it. */
-    private const BOB = 0.05;
-    /** The turn about the vertical axis that faces an actor, built facing south, each way. */
-    private const TURN = ['down' => 0.0, 'right' => M_PI_2, 'up' => M_PI, 'left' => -M_PI_2];
+    /** The grain the ground and the walls are drawn through: its pixels' brightness, a tile's side of them, and how many of each. */
+    private const GRAIN = [[1.0, 6], [0.93, 3], [0.86, 1]];
+    /** The dithered shadow under an actor: its size in tiles, its pixels, and its color. */
+    private const SHADOW = [0.7, 0.35], SHADOW_PIXELS = [16, 8], SHADOW_COLOR = '#1c2a1c';
 
     public readonly Scene $scene;
     /** @var array<string, Entity> by actor id */
     private array $actors = [];
+    /** @var array<string, string> by actor id: its look's robe, '#rrggbb' */
+    private array $robes = [];
+    private static ?Image $grain = null, $shadow = null;
 
     public function __construct(World $w)
     {
@@ -92,6 +100,7 @@ final class Stage
         $this->instanced('things/sign', array_map(fn(array $at) => Mat4::translation($at[0], self::GROUND_TOP, $at[1]), $map->signs));
 
         foreach ([$w->player, ...array_values($w->npcs)] as $a) {
+            $this->robes[$a->id] = self::LOOKS[$a->look];
             $this->actors[$a->id] = $this->scene->add(self::figure($a));
         }
         $this->sync($w, 0.0);
@@ -102,24 +111,42 @@ final class Stage
     {
         foreach ([$w->player, ...array_values($w->npcs)] as $a) {
             [$x, $z] = $a->place($alpha);
-            $lift = $a->moving ? self::BOB * abs(sin(M_PI * 2.0 * ($a->progress + $alpha) / World::WALK_STEPS)) : 0.0;
             $e = $this->actors[$a->id];
-            $e->position = new Vec3($x, self::GROUND_TOP + $lift, $z);
-            $e->rotation->y = self::TURN[$a->dir->value];
+            $e->position = new Vec3($x, self::GROUND_TOP, $z);
+            $e->material->texture = Sprites::image('person', $a->dir->value, self::step($a, $alpha), ['r' => $this->robes[$a->id]]);
         }
         [$px, $pz] = $w->player->place($alpha);
         $this->scene->camera->target = new Vec3($px, 0.0, $pz);
         $this->scene->camera->position = new Vec3($px, self::CAMERA_HEIGHT, $pz + self::CAMERA_BACK);
     }
 
-    /** Works out ahead the models every map draws (Voxels::prepare): its things, and a person in each look's robe. Once, as the game starts. */
+    /** How much taller an actor stands than its sprite is written: an upright thing seen down the camera's slant shows
+     * shorter by the slant's cosine, so stood that much taller it shows as written. */
+    public static function stretch(): float
+    {
+        return hypot(self::CAMERA_HEIGHT, self::CAMERA_BACK) / self::CAMERA_BACK;
+    }
+
+    /**
+     * The frame of its sprite an actor shows, $alpha into the next update: standing still, the standing one (0); walking,
+     * a step's first half one foot forward (1, or 2 on every other tile), its second half standing, as a walk of four.
+     */
+    public static function step(Actor $a, float $alpha): int
+    {
+        if (!$a->moving || ($a->progress + $alpha) / World::WALK_STEPS >= 0.5) {
+            return 0;
+        }
+        return ($a->x + $a->y) % 2 === 0 ? 1 : 2;
+    }
+
+    /** Works out ahead what every map draws: its things' models (Voxels::prepare), and a person's sprite in each look's robe. Once, as the game starts. */
     public static function prepare(): void
     {
         foreach (['things/tree', 'things/tallGrass', 'things/rock', 'things/sign'] as $thing) {
             Voxels::prepare($thing);
         }
         foreach (self::LOOKS as $robe) {
-            Voxels::prepare('people/person', ['r' => $robe]);
+            Sprites::prepare('person', ['r' => $robe]);
         }
     }
 
@@ -143,7 +170,7 @@ final class Stage
      * block: at the line where two tops meet, such a face is as near as they are, and the depth test lets it through
      * now and then, a dark line across the ground as the camera moves. Corners are shared exactly, so the tops leave no gap.
      * @param \Closure(string, int, int): ?array{0: float, 1: float, 2: array} $block
-     * @return list<array{0: list<array{0: float, 1: float, 2: float}>, 1: array{0: float, 1: float, 2: float}, 2: array}> each [its four corners, counterclockwise seen from outside; its normal; its color]
+     * @return list<array{0: list<array{0: float, 1: float, 2: float}>, 1: array{0: float, 1: float, 2: float}, 2: array, 3?: list<array{0: float, 1: float}>}> each [its four corners, counterclockwise seen from outside; its normal; its color], and a top where it takes the grain from (turned())
      */
     public static function faces(Map $map, \Closure $block): array
     {
@@ -156,7 +183,7 @@ final class Stage
                 }
                 [$top, $bottom, $color] = $b;
                 [$x0, $x1, $z0, $z1] = [$x - 0.5, $x + 0.5, $y - 0.5, $y + 0.5];
-                $out[] = [[[$x0, $top, $z1], [$x1, $top, $z1], [$x1, $top, $z0], [$x0, $top, $z0]], [0.0, 1.0, 0.0], $color];
+                $out[] = [[[$x0, $top, $z1], [$x1, $top, $z1], [$x1, $top, $z0], [$x0, $top, $z0]], [0.0, 1.0, 0.0], $color, self::turned($x, $y)];
                 // each side, by the block beside it: south, north, east, west
                 foreach ([[0, 1], [0, -1], [1, 0], [-1, 0]] as [$dx, $dy]) {
                     $from = max($bottom, $at($x + $dx, $y + $dy)[0] ?? $bottom);
@@ -177,12 +204,66 @@ final class Stage
     }
 
     /** Adds one entity that draws faces() as a mesh; nothing when there are none. */
+    /**
+     * Where a tile's top takes the grain from, at its four corners: the grain turned and turned over one of eight ways,
+     * by the tile's place, the same each time.
+     * @return list<array{0: float, 1: float}>
+     */
+    public static function turned(int $x, int $y): array
+    {
+        $way = crc32("turn $x,$y") % 8;
+        $uv = [[0.0, 1.0], [1.0, 1.0], [1.0, 0.0], [0.0, 0.0]];
+        if ($way >= 4) {
+            $uv = array_reverse($uv);
+        }
+        return [...array_slice($uv, $way % 4), ...array_slice($uv, 0, $way % 4)];
+    }
+
+    /**
+     * The grain's pixels, RGBA: a tile's side of them (Sprites::PER_TILE), each a gray of GRAIN by its place,
+     * the same each time. The ground's and the walls' colors are drawn through it.
+     */
+    public static function grain(): string
+    {
+        $grays = [];
+        foreach (self::GRAIN as [$gray, $count]) {
+            array_push($grays, ...array_fill(0, $count, (int)round($gray * 255)));
+        }
+        $out = '';
+        for ($y = 0; $y < Sprites::PER_TILE; $y++) {
+            for ($x = 0; $x < Sprites::PER_TILE; $x++) {
+                $g = $grays[crc32("grain $x,$y") % count($grays)];
+                $out .= pack('C4', $g, $g, $g, 255);
+            }
+        }
+        return $out;
+    }
+
+    /**
+     * The shadow under an actor's pixels, RGBA (SHADOW_PIXELS): an oval of every other pixel, as a dither, so that the
+     * ground shows through without the scene blending.
+     */
+    public static function shadow(): string
+    {
+        [$w, $h] = self::SHADOW_PIXELS;
+        $color = array_map(fn(float $v) => (int)round($v * 255), array_slice(Sprites::color(self::SHADOW_COLOR), 0, 3));
+        $out = '';
+        for ($y = 0; $y < $h; $y++) {
+            for ($x = 0; $x < $w; $x++) {
+                $in = (($x + 0.5 - $w / 2) / ($w / 2)) ** 2 + (($y + 0.5 - $h / 2) / ($h / 2)) ** 2 <= 1.0;
+                $out .= $in && ($x + $y) % 2 === 0 ? pack('C4', ...[...$color, 255]) : "\0\0\0\0";
+            }
+        }
+        return $out;
+    }
+
     private function faced(array $faces, bool $shadow): void
     {
         if ($faces === []) {
             return;
         }
-        $e = new Entity(Voxels::mesh($faces), new Material(shininess: 8.0));
+        self::$grain ??= Image::fromPixels(Sprites::PER_TILE, Sprites::PER_TILE, self::grain())->pixelated();
+        $e = new Entity(Voxels::mesh($faces), new Material(shininess: 8.0, texture: self::$grain));
         $e->castShadow = $shadow;
         $e->pickable = false;
         $this->scene->add($e);
@@ -204,9 +285,26 @@ final class Stage
         $this->scene->add($e);
     }
 
-    /** An actor's figure, facing south: art/people's person, robed in the color of its look. */
+    /**
+     * An actor's figure: its sprite, upright on a quad the size it is written (stretch() taller), its bottom on the ground
+     * at its middle, facing the camera (+z), drawn as its pixels are, not lit; and the shadow under it. sync() gives the frame.
+     */
     private static function figure(Actor $a): Entity
     {
-        return Voxels::entity('people/person', ['r' => self::LOOKS[$a->look]], $a->id)[0];
+        [$w, $h] = Sprites::size('person');
+        [$hw, $h] = [$w / 2, $h * self::stretch()];
+        $quad = Voxels::mesh([[[[-$hw, 0.0, 0.0], [$hw, 0.0, 0.0], [$hw, $h, 0.0], [-$hw, $h, 0.0]], [0.0, 0.0, 1.0], self::AS_WRITTEN]]);
+        $e = new Entity($quad, Material::unlit(texture: Sprites::image('person', $a->dir->value, 0, ['r' => self::LOOKS[$a->look]])), name: $a->id);
+        $e->castShadow = false;
+        $e->pickable = false;
+
+        [$sw, $sd] = [self::SHADOW[0] / 2, self::SHADOW[1] / 2];
+        self::$shadow ??= Image::fromPixels(...[...self::SHADOW_PIXELS, self::shadow()])->pixelated();
+        $flat = Voxels::mesh([[[[-$sw, 0.01, $sd], [$sw, 0.01, $sd], [$sw, 0.01, -$sd], [-$sw, 0.01, -$sd]], [0.0, 1.0, 0.0], self::AS_WRITTEN]]);
+        $under = new Entity($flat, Material::unlit(texture: self::$shadow));
+        $under->castShadow = false;
+        $under->pickable = false;
+        $e->addChild($under);
+        return $e;
     }
 }

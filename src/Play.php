@@ -6,7 +6,7 @@ namespace Shanhai;
 use MyPHP\{App, Device, Logger};
 use MyPHP\Plugins\Game\{Game, GameAudio, Input, ScreenTransition, VirtualPad};
 use MyPHP\Plugins\Game\Gamepad\{Button, Gamepad, State};
-use MyPHP\UI\{Canvas, Key, Node, Painter};
+use MyPHP\UI\{Canvas, GradientStop, Key, Node, Painter, RadialGradient};
 use Shanhai\Battle\{Formulas, Screen};
 use Shanhai\Render\{Arena, Stage};
 use Shanhai\World\{Controls, Dir, Pen, World};
@@ -51,6 +51,14 @@ final class Play extends Game
     ];
     /** The 3D view's size in pixels, shown at the window's size. */
     private const VIEW_WIDTH = 960, VIEW_HEIGHT = 720;
+    /**
+     * lens()'s tilt-shift: each band [where its blur starts, where it is most, how much it is most], as parts of the
+     * view's height from its top; the far band longer and stronger than the near. And its levels: [from how much
+     * blur, wholly from, the sigma in points].
+     */
+    private const TILT = [[0.45, 0.0, 1.0], [0.75, 1.0, 0.7]], TILT_LEVELS = [[0.0, 0.5, 1.2], [0.5, 1.0, 3.0]];
+    /** How dark lens() makes the view's corners. */
+    private const VIGNETTE = 0.35;
 
     private Canvas $viewport;
     private Stage $stage;
@@ -266,6 +274,26 @@ final class Play extends Game
         return $done;
     }
 
+    /**
+     * HD-2D's lens over the 3D view (docs/art.md): what is far (the top) and what is near (the bottom) blurred, more
+     * toward the edge, so that the middle, where the player is, looks like a small world close up (tilt-shift); and
+     * the corners darkened. MyPHP's backdrop blur, a level a sigma, each taking over from the one before.
+     * @param array{0: float, 1: float, 2: float, 3: float} $r
+     */
+    private function lens(Painter $p, array $r): void
+    {
+        [$x, $y, $w, $h] = $r;
+        $s = $p->scale();
+        foreach (self::TILT as [$from, $to, $most]) {
+            [$y0, $y1] = [$y + $h * min($from, $to), $y + $h * max($from, $to)];
+            $line = [$x * $s, ($y + $h * $from) * $s, $x * $s, ($y + $h * $to) * $s];
+            foreach (self::TILT_LEVELS as [$lo, $hi, $sigma]) {
+                $p->blurLevel([$x, $y0, $w, $y1 - $y0], 0, $sigma * $s, $line, 0.0, $most, $lo, $hi);
+            }
+        }
+        $p->fillRadialGradient($r, new RadialGradient(stops: [new GradientStop(0x000000, 0.0, 0.0), new GradientStop(0x000000, 0.6, 0.0), new GradientStop(0x000000, 1.0, self::VIGNETTE)]));
+    }
+
     /** The view and what is over it, before the transition and the pad. */
     private function frame(Painter $p, array $r, float $alpha): void
     {
@@ -283,6 +311,7 @@ final class Play extends Game
         $scene->camera->aspect = $r[2] / max(1.0, $r[3]);
         $this->viewport->renderScene($scene);
         $p->image($this->viewport->bitmap(), $r, Node::FILL_BOX);
+        $this->lens($p, $r);
 
         if ($this->arena !== null) {
             if ($battle !== null) {

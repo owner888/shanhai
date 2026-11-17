@@ -43,6 +43,9 @@ final class Voxels
         [[-1, 0, 0], [[0, 0, 0], [0, 0, 1], [0, 1, 1], [0, 1, 0]]],
     ];
 
+    /** Where a face takes its texture from at its four corners, unless it says (a texture's top left is 0, 0). */
+    private const UV = [[0.0, 1.0], [1.0, 1.0], [1.0, 0.0], [0.0, 0.0]];
+
     /** @var array<string, array> by name, as read */
     private static array $read = [];
     /** @var array<string, array<string, array{0: string, 1: string, 2: int, 3: int}>> by name and colors: each part's vertices and indices, packed, and their counts */
@@ -64,7 +67,8 @@ final class Voxels
     public static function names(): array
     {
         $dir = realpath(self::DIR);
-        return array_map(fn(string $f) => substr($f, strlen($dir) + 1, -4), glob("$dir/*/*.php"));
+        $names = array_map(fn(string $f) => substr($f, strlen($dir) + 1, -4), glob("$dir/*/*.php"));
+        return array_values(array_filter($names, fn(string $n) => !str_starts_with($n, 'sprites/'))); // Sprites' pixels, not voxels
     }
 
     /**
@@ -171,7 +175,7 @@ final class Voxels
         return [min(1.0, $rgba[0] * $f), min(1.0, $rgba[1] * $f), min(1.0, $rgba[2] * $f), $rgba[3]];
     }
 
-    /** One mesh of faces in Stage::faces' form; each face's corners its vertices. */
+    /** One mesh of faces in Stage::faces' form: [corners, normal, color], and where it takes its texture from at the corners if not UV. */
     public static function mesh(array $faces): Mesh
     {
         return new Mesh(...self::pack($faces));
@@ -184,9 +188,11 @@ final class Voxels
     private static function pack(array $faces): array
     {
         $vertices = $indices = [];
-        foreach ($faces as $i => [$corners, $normal, $color]) {
+        foreach ($faces as $i => $face) {
+            [$corners, $normal, $color] = $face;
+            $uv = $face[3] ?? self::UV;
             foreach ($corners as $k => $corner) {
-                array_push($vertices, ...$corner, ...$normal, ...[[0.0, 1.0], [1.0, 1.0], [1.0, 0.0], [0.0, 0.0]][$k], ...$color);
+                array_push($vertices, ...$corner, ...$normal, ...$uv[$k], ...$color);
             }
             array_push($indices, 4 * $i, 4 * $i + 1, 4 * $i + 2, 4 * $i, 4 * $i + 2, 4 * $i + 3);
         }

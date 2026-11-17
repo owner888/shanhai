@@ -69,11 +69,12 @@ src/Save.php       the saved games, files of JSON in the app's own folder: three
 src/Data.php       reads data/
 src/Elements.php   what a move of one element does against a beast of others (double, even, half, in tenths)
 src/Render/Stage.php  a map's 3D scene: the ground and the walls as meshes of the faces that can be seen (faces()),
-                   instanced trees, grass, rocks, signs, the actors' figures, the fixed camera
+                   instanced trees, grass, rocks, signs, the actors as upright pixel sprites (Sprites), the fixed camera
 src/Render/Arena.php  a battle's 3D scene: the ground, the two beasts' figures on MyPHP's Animator3D, its camera shake
                    and particles for what the Screen's cue tells of; a camera that does not otherwise move
 src/Render/Voxels.php the models of art/ (boxes of voxels, thirty-two to a tile) read, checked and made meshes; the format is its doc comment
-art/               the models: beasts/ (each from its `looks`, carried in the file), people/, things/ (what a map draws many of)
+src/Render/Sprites.php the pixel sprites of art/sprites/ (HD-2D: rows of characters, a pixel each, outlined by code) read, checked and made Images; the format is its doc comment
+art/               the models: beasts/ (each from its `looks`, carried in the file), people/, things/ (what a map draws many of); sprites/ (the pixel sprites: person)
 src/Play.php       MyPHP's Game: keys and gamepad into Controls, World::step, draws the Stage and the dialog box,
                    or a battle's Arena, boxes, line and lists; MyPHP's ScreenTransition between them, its VirtualPad,
                    its GameAudio's tones
@@ -97,7 +98,7 @@ tools/             simulate.php (every beast against every other: win rates by b
                    at what level and after how many battles each trial is passed)
 docs/balance.md    what the simulator shows, what was changed for it, what is still open
 tests/             php tests/run.php [name]: world, script, data, formulas (each rule against a value worked out by hand),
-                   battle (turns with scripted rolls), screen (a battle played through), stage (the faces of ground and walls), voxels (every model of art/), save, journey (a game played through with each beast to choose from); check()/same(), no PHPUnit;
+                   battle (turns with scripted rolls), screen (a battle played through), stage (the faces of ground and walls), voxels (every model of art/), sprites (every sprite of art/sprites/, the walk's frames, the grain and the shadow), save, journey (a game played through with each beast to choose from); check()/same(), no PHPUnit;
                    each file runs in a scope of its own
 docs/rules.md      the rule of the game
 docs/roadmap.md    the order of the work, and when each step is done
