@@ -103,6 +103,7 @@ docs/numbers.md    the numbers' baseline: each formula and constant, and where i
 docs/atlas.md      every range, mountain, map, beast and level, and each trial: written by `php tools/atlas.php`, never by hand
 docs/todo.md       what is not yet as the reference has it, to come back to; what was written before it was read; what is open
 docs/elements.md   the elements' table and how a beast's elements are settled
+docs/art.md        the look: what is decided (our own, modern voxels, not the reference's screens), what binds it, how much there is to make, what is open
 ```
 
 ## How it works
