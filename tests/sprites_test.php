@@ -7,7 +7,7 @@ declare(strict_types=1);
 namespace Shanhai\Tests;
 
 use Shanhai\Render\{Sprites, Stage};
-use Shanhai\World\{Actor, Dir, Map, World};
+use Shanhai\World\{Actor, Dir, Map, Tile, World};
 
 /** A frame's pixel at x, y: [r, g, b, a]. */
 $at = fn(string $rgba, int $w, int $x, int $y) => array_values(unpack('C4', substr($rgba, ($y * $w + $x) * 4, 4)));
@@ -50,12 +50,12 @@ $right = Sprites::rgba('people/person', 'right', 1, ['r' => '#d94040']);
 $mirrored = true;
 for ($y = 0; $y < $h; $y++) {
     for ($x = 0; $x < $w; $x++) {
-        $mirrored = $mirrored && $at($left, $w, $x, $y) === $at($right, $w, $w - 1 - $x, $y);
+        $mirrored = $mirrored && $at($left, $w, $x, $y)[3] === $at($right, $w, $w - 1 - $x, $y)[3];
     }
 }
-check($mirrored, 'the person facing right is the left turned over');
-$robes = fn(string $rgba) => substr_count(bin2hex($rgba), 'd94040ff');
-check($robes(Sprites::rgba('people/person', 'down', 0, ['r' => '#d94040'])) > 100, 'the robe is the look\'s color');
+check($mirrored, 'the person facing right is the left turned over (its shape; the light still comes from the left)');
+$reds = fn(string $rgba) => count(array_filter(str_split($rgba, 4), fn(string $p) => ord($p[3]) && ord($p[0]) > 2 * ord($p[2])));
+check($reds(Sprites::rgba('people/person', 'down', 0, ['r' => '#d94040'])) > 100 && $reds(Sprites::rgba('people/person', 'down', 0, ['r' => '#4d66b3'])) < 40, 'the robe is the look\'s color');
 // the outline: the top of the knot has one over it, and the pixels at the corner, far from the figure, are empty
 $down = Sprites::rgba('people/person', 'down', 0, ['r' => '#d94040']);
 same(Sprites::load('people/person')['outline'], vsprintf('#%02x%02x%02x', array_slice($at($down, $w, 11, 0), 0, 3)), 'above the knot, the outline');
@@ -120,3 +120,26 @@ foreach ($pixels as $i => $on) {
     $touching += $on && ($i % $sw) + 1 < $sw && $pixels[$i + 1] ? 1 : 0;
 }
 check(array_sum($pixels) > 10 && $touching === 0 && !$pixels[0], 'the shadow is a dithered oval');
+
+// Outdoors the land goes on past the map's edges (Stage::surround): the map in the middle as it is; beyond an edge
+// with an exit what can be walked on goes on, and water; all else is wood.
+$m = Map::fromArray(['id' => 'm', 'name' => 'M', 'rows' => ['=.^', '...', '~.T'], 'exits' => ['left' => ['n', 0]]]);
+$land = Stage::surround($m);
+$b = Stage::BEYOND;
+same([3 + $b['left'] + $b['right'], 3 + $b['up'] + $b['down']], [$land->width, $land->height], 'the land: the map and BEYOND each way');
+$at = fn(int $x, int $y) => Tile::name($land->tile($x + $b['left'], $y + $b['up']));
+same(['path', 'grass', 'rock'], [$at(0, 0), $at(1, 0), $at(2, 0)], 'the map in the middle, as it is');
+same(['path', 'grass', 'water'], [$at(-1, 0), $at(-5, 1), $at(-3, 2)], 'past the edge with an exit: the path and the grass go on, and the water');
+same(['tree', 'tree', 'tree'], [$at(3, 1), $at(1, -1), $at(-1, -1)], 'past an edge with none, and past a corner: wood');
+same('water', $at(1 - 1, 3), 'water at the edge goes on past it');
+
+// What stands between the camera and the player is faded: a tree just before them, not one behind or far to the
+// side; never the tall grass or a rock, which are low.
+check(Stage::fades('tree', 0.0, 1.0) && Stage::fades('tree', 1.0, 2.0), 'a tree before the player fades');
+check(!Stage::fades('tree', 0.0, -1.0) && !Stage::fades('tree', 3.0, 1.0) && !Stage::fades('tree', 0.0, 9.0), 'not one behind them, beside them or far before them');
+check(!Stage::fades('tallGrass', 0.0, 0.3) && !Stage::fades('rock', 0.0, 1.0), 'tall grass and rocks never');
+
+// A round figure is shaded across as a body: on a row of it, the left lighter than the right.
+$light = Sprites::round(['.xxxxxxxxxxxxxxxx.']);
+check($light[0][1] > $light[0][16] && $light[0][0] === 1.0, 'a round figure: lit on the left, in shade on the right; nothing where it is empty');
+check(Sprites::load('people/person')['round'] ?? false, 'a person is drawn round');

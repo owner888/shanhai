@@ -49,16 +49,16 @@ final class Play extends Game
         'caught' => [660.0, 1320.0, 0.35, false],
         'level' => [523.0, 1046.0, 0.30, false],
     ];
-    /** The 3D view's size in pixels, shown at the window's size. */
-    private const VIEW_WIDTH = 960, VIEW_HEIGHT = 720;
+    /** The 3D view's height in pixels; its width is the window's shape at that height, so that its pixels stay square. */
+    private const VIEW_HEIGHT = 720;
     /**
      * lens()'s tilt-shift: each band [where its blur starts, where it is most, how much it is most], as parts of the
      * view's height from its top; the far band longer and stronger than the near. And its levels: [from how much
      * blur, wholly from, the sigma in points].
      */
-    private const TILT = [[0.45, 0.0, 1.0], [0.75, 1.0, 0.7]], TILT_LEVELS = [[0.0, 0.5, 1.2], [0.5, 1.0, 3.0]];
+    private const TILT = [[0.5, 0.0, 1.0], [0.72, 1.0, 0.8]], TILT_LEVELS = [[0.0, 0.5, 1.5], [0.5, 1.0, 4.0]];
     /** How dark lens() makes the view's corners. */
-    private const VIGNETTE = 0.35;
+    private const VIGNETTE = 0.55;
 
     private Canvas $viewport;
     private Stage $stage;
@@ -83,7 +83,7 @@ final class Play extends Game
 
     public function __construct(public readonly World $world, private readonly array $items)
     {
-        $this->viewport = new Canvas(self::VIEW_WIDTH, self::VIEW_HEIGHT);
+        $this->viewport = new Canvas(intdiv(self::VIEW_HEIGHT * 16, 9), self::VIEW_HEIGHT);
         Stage::prepare(); // so that no change of map stops to work out a model
         $this->stage = new Stage($world);
         $this->seenMap = $world->mapChanges;
@@ -309,6 +309,11 @@ final class Play extends Game
             $scene = $this->stage->scene;
         }
         $scene->camera->aspect = $r[2] / max(1.0, $r[3]);
+        // the view as wide as the window's shape, made again when the window takes another
+        $width = min(Canvas::MAX, max(1, (int)round(self::VIEW_HEIGHT * $scene->camera->aspect)));
+        if ($this->viewport->w !== $width) {
+            $this->viewport = new Canvas($width, self::VIEW_HEIGHT);
+        }
         $this->viewport->renderScene($scene);
         $p->image($this->viewport->bitmap(), $r, Node::FILL_BOX);
         $this->lens($p, $r);

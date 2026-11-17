@@ -35,15 +35,23 @@ final class Stage
     /**
      * The things a map stands on its tiles, by kind (the signs are the map's own list): the sprite, how far before
      * the tile's middle it stands (tall grass in front of who walks in it, so that it hides their legs; the others a
-     * little behind, so that who stands beside one is before what of it reaches over their tile), and the size of
-     * the shadow under it in tiles, if it has one.
+     * little behind, so that who stands beside one is before what of it reaches over their tile); how far it may
+     * stand off the middle sideways, by its place, so that a wood is not a grid (and two trees side by side, whose
+     * crowns meet, a little nearer and farther every other tile, so that one is always before the other); and the
+     * size of the shadow under it in tiles, if it has one.
      */
     public const THINGS = [
-        'tree' => ['things/tree', -0.05, [1.1, 0.5]],
-        'tallGrass' => ['things/tallGrass', 0.3, null],
-        'rock' => ['things/rock', -0.05, [0.9, 0.4]],
-        'sign' => ['things/sign', -0.05, [0.5, 0.25]],
+        'tree' => ['things/tree', -0.05, 0.15, [1.4, 0.6]],
+        'tallGrass' => ['things/tallGrass', 0.3, 0.0, null],
+        'rock' => ['things/rock', -0.05, 0.0, [0.9, 0.35]],
+        'sign' => ['things/sign', -0.05, 0.0, [0.5, 0.25]],
     ];
+    /**
+     * How many tiles of land beyond an outdoor map's edges are drawn, each way, so that the view never shows the end of
+     * the world (HD-2D's views are full to their edges): enough for the widest window's sides, and, the camera looking
+     * north and down, more before the player than behind. What they are is surround()'s.
+     */
+    public const BEYOND = ['up' => 20, 'down' => 10, 'left' => 16, 'right' => 16];
     /** An actor's robe color, by its look. */
     public const LOOKS = [
         'player' => '#d94040',
@@ -54,7 +62,7 @@ final class Stage
         'foe' => '#995933',
     ];
     /** How high the ground's top is, the water's, a wall's; and how far down the ground and the water go, which shows at a map's edge. */
-    public const GROUND_TOP = 0.0, WATER_TOP = -0.12, WALL_TOP = 1.3, GROUND_BOTTOM = -0.2, WATER_BOTTOM = -0.32;
+    public const GROUND_TOP = 0.0, WATER_TOP = -0.12, WALL_TOP = 2.2, GROUND_BOTTOM = -0.2, WATER_BOTTOM = -0.32;
     /** What a model's own colors are drawn through: white, so they are as written. */
     private const AS_WRITTEN = [1.0, 1.0, 1.0, 1.0];
     /** The dithered shadow under an actor: its size in tiles; and every shadow's pixels and color. */
@@ -65,6 +73,12 @@ final class Stage
     private array $actors = [];
     /** @var array<string, string> by actor id: its look's robe, '#rrggbb' */
     private array $robes = [];
+    /** @var array<string, list<array{0: float, 1: float, 2: Mat4}>> by kind of thing: where each stands, x and z, and its transform */
+    private array $standing = [];
+    /** @var array<string, array{0: Entity, 1: Entity}> by kind of thing: the entity drawing them, and the one drawing those faded (fades()) */
+    private array $stood = [];
+    /** The player's tile the things were last faded for. */
+    private string $fadedFor = '';
     private static ?Image $shadow = null;
 
     public function __construct(World $w)
@@ -77,17 +91,20 @@ final class Stage
             $this->scene->addSkyDome(); // MyPHP's: beyond the map's edge is sky and far ground, not the dark of a room
         }
 
+        // the land drawn: the map, and outdoors the land beyond its edges; its tile x, y is the scene's x - left, z - up
         $map = $w->map;
-        foreach (self::byTexture($map, self::faces($map, self::ground(...))) as $texture => $faces) {
-            $this->faced($faces, "ground/$texture", shadow: false);
+        $land = $map->indoor ? $map : self::surround($map);
+        [$left, $up] = $map->indoor ? [0, 0] : [self::BEYOND['left'], self::BEYOND['up']];
+        foreach (self::byTexture($land, self::faces($land, self::ground(...))) as $texture => $faces) {
+            $this->faced($faces, "ground/$texture", shadow: false, at: new Vec3(-$left, 0.0, -$up));
         }
-        $this->faced(self::faces($map, self::wall(...)), 'ground/wall', shadow: true);
+        $this->faced(self::faces($land, self::wall(...)), 'ground/wall', shadow: true, at: new Vec3(-$left, 0.0, -$up));
         $places = ['sign' => $map->signs];
-        for ($y = 0; $y < $map->height; $y++) {
-            for ($x = 0; $x < $map->width; $x++) {
-                $kind = Tile::name($map->tile($x, $y));
+        for ($y = 0; $y < $land->height; $y++) {
+            for ($x = 0; $x < $land->width; $x++) {
+                $kind = Tile::name($land->tile($x, $y));
                 if (isset(self::THINGS[$kind])) {
-                    $places[$kind][] = [$x, $y];
+                    $places[$kind][] = [$x - $left, $y - $up];
                 }
             }
         }
@@ -112,8 +129,49 @@ final class Stage
             $e->material->texture = Sprites::image('people/person', $a->dir->value, self::step($a, $alpha), ['r' => $this->robes[$a->id]]);
         }
         [$px, $pz] = $w->player->place($alpha);
+        $this->fade((int)round($px), (int)round($pz));
         $this->scene->camera->target = new Vec3($px, 0.0, $pz);
         $this->scene->camera->position = new Vec3($px, self::CAMERA_HEIGHT, $pz + self::CAMERA_BACK);
+    }
+
+    /**
+     * Whether a thing of a kind, $dx tiles beside the player and $dy before them (south, toward the camera), hides them:
+     * stands before them, wide enough to reach across them, and tall enough on the screen to cover more than half of
+     * them. Such a thing is drawn faded (Sprites::fade), as HD-2D fades what stands between the camera and the player.
+     */
+    public static function fades(string $kind, float $dx, float $dy): bool
+    {
+        [$w, $h] = Sprites::size(self::THINGS[$kind][0]);
+        [$pw, $ph] = Sprites::size('people/person');
+        $slant = atan2(self::CAMERA_HEIGHT, self::CAMERA_BACK);
+        return $dy > 0 && abs($dx) < ($w + $pw) / 2 && $h - $dy * sin($slant) > $ph / 2;
+    }
+
+    /**
+     * The map and the land around it, BEYOND: a larger map whose middle is $map. Beyond an edge the player can walk off
+     * (an exit), what can be walked on at the edge goes on (a path leads on, a meadow spreads); water goes on; all else
+     * is wood, the trees closing round the map as HD-2D's views are closed round, never ending in nothing.
+     */
+    public static function surround(Map $map): Map
+    {
+        $b = self::BEYOND;
+        $tree = array_search('tree', array_map(fn(array $k) => $k[0], Tile::KINDS), true);
+        $rows = [];
+        for ($y = -$b['up']; $y < $map->height + $b['down']; $y++) {
+            $row = '';
+            for ($x = -$b['left']; $x < $map->width + $b['right']; $x++) {
+                if ($map->inside($x, $y)) {
+                    $row .= $map->tile($x, $y);
+                    continue;
+                }
+                $edge = $map->tile(max(0, min($map->width - 1, $x)), max(0, min($map->height - 1, $y)));
+                $sides = array_filter(['left' => $x < 0, 'right' => $x >= $map->width, 'up' => $y < 0, 'down' => $y >= $map->height]);
+                $exit = count($sides) === 1 && isset($map->exits[array_key_first($sides)]);
+                $row .= Tile::name($edge) === 'water' || ($exit && Tile::walkable($edge)) ? $edge : $tree;
+            }
+            $rows[] = $row;
+        }
+        return Map::fromArray(['id' => $map->id, 'name' => $map->name, 'rows' => $rows]);
     }
 
     /** How much taller an actor stands than its sprite is written: an upright thing seen down the camera's slant shows
@@ -255,36 +313,64 @@ final class Stage
     }
 
     /** Adds one entity that draws faces() as a mesh through a texture of art/sprites; nothing when there are none. */
-    private function faced(array $faces, string $texture, bool $shadow): void
+    private function faced(array $faces, string $texture, bool $shadow, Vec3 $at): void
     {
         if ($faces === []) {
             return;
         }
-        $e = new Entity(Voxels::mesh($faces), new Material(shininess: 8.0, texture: Sprites::image($texture, 'down', 0)));
+        $e = new Entity(Voxels::mesh($faces), new Material(shininess: 8.0, texture: Sprites::image($texture, 'down', 0)), position: $at);
         $e->castShadow = $shadow;
         $e->pickable = false;
         $this->scene->add($e);
     }
 
     /**
-     * Adds a kind of thing (THINGS) at each of its places: its sprite upright, all in one instanced draw, and the
-     * shadow under each in another.
+     * Adds a kind of thing (THINGS) at each of its places: its sprite upright, all in one instanced draw, and those
+     * that hide the player in another, faded (fade()); and the shadow under each in a third.
      * @param list<array{0: int, 1: int}> $at
      */
     private function things(string $kind, array $at): void
     {
-        [$sprite, $before, $shadow] = self::THINGS[$kind];
-        $stood = new Entity(self::upright($sprite), Material::unlit(texture: Sprites::image($sprite, 'down', 0)));
-        $stood->setInstances(array_map(fn(array $p) => Mat4::translation($p[0], self::GROUND_TOP, $p[1] + $before), $at));
-        $stood->castShadow = false;
-        $stood->pickable = false;
-        $this->scene->add($stood);
+        [$sprite, $before, $off, $shadow] = self::THINGS[$kind];
+        foreach ($at as [$x, $y]) {
+            $sx = $x + $off * (2.0 * Sprites::noise($x, $y, 'stand') - 1.0);
+            $sz = $y + $before - ($off > 0.0 && $x % 2 !== 0 ? 0.04 : 0.0);
+            $this->standing[$kind][] = [$sx, $sz, Mat4::translation($sx, self::GROUND_TOP, $sz)];
+        }
+        $this->stood[$kind] = [];
+        foreach ([false, true] as $faded) {
+            $e = new Entity(self::upright($sprite), Material::unlit(texture: Sprites::image($sprite, 'down', 0, faded: $faded)));
+            $e->castShadow = false;
+            $e->pickable = false;
+            $this->stood[$kind][] = $this->scene->add($e);
+        }
+        $this->stood[$kind][0]->setInstances(array_column($this->standing[$kind], 2));
         if ($shadow !== null) {
             $under = new Entity(self::flat(1.0, 1.0), Material::unlit(texture: self::shadowImage()));
-            $under->setInstances(array_map(fn(array $p) => Mat4::translation($p[0], self::GROUND_TOP, $p[1])->multiply(Mat4::scaling($shadow[0], 1.0, $shadow[1])), $at));
+            $under->setInstances(array_map(fn(array $p) => Mat4::translation($p[0], self::GROUND_TOP, $p[1] - $before)->multiply(Mat4::scaling($shadow[0], 1.0, $shadow[1])), $this->standing[$kind]));
             $under->castShadow = false;
             $under->pickable = false;
             $this->scene->add($under);
+        }
+    }
+
+    /** Draws faded the things that hide the player on their tile ($px, $pz), the rest as they are (fades()); again only when the player is on another tile. */
+    private function fade(int $px, int $pz): void
+    {
+        if ($this->fadedFor === "$px,$pz") {
+            return;
+        }
+        $this->fadedFor = "$px,$pz";
+        foreach ($this->standing as $kind => $standing) {
+            $sorted = [[], []];
+            foreach ($standing as [$x, $z, $m]) {
+                $sorted[(int)self::fades($kind, $x - $px, $z - $pz)][] = $m;
+            }
+            foreach ($sorted as $i => $transforms) {
+                $e = $this->stood[$kind][$i];
+                $e->setInstances($transforms);
+                $e->scale = $transforms === [] ? new Vec3(0.0, 0.0, 0.0) : new Vec3(1.0, 1.0, 1.0);
+            }
         }
     }
 

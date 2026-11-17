@@ -2,7 +2,7 @@
 // A person of the classic's world, drawn as HD-2D's pixel sprites (docs/art.md): a robe crossed at the breast,
 // wide sleeves, a sash; hair bound in a knot with a pin. The robe is the color of who they are (Stage::LOOKS).
 // Three ways it faces, each standing and in the two steps of a walk; the right is the left turned over (Sprites).
-// 24 by 44 pixels, 32 to a tile. The outline is drawn around by Sprites, not written here.
+// 24 by 44 pixels, 32 to a tile. The outline and the shading across the body are drawn by Sprites, not written here.
 declare(strict_types=1);
 
 /** A row and itself turned over: who faces down or up is the same on both sides. */
@@ -183,6 +183,8 @@ return [
     // colors made from another: the robe in shade, and where the light falls on it
     'shades' => ['R' => ['r', 0.72], 'L' => ['r', 1.18]],
     'outline' => '#1c1418',
+    // drawn flat, shaded round by Sprites::round(): lit from the left, in shade on the right
+    'round' => true,
     'views' => [
         'down' => [[...$down, ...$legs[0]], [...$down, ...$legs[1]], [...$down, ...$other($legs[1])]],
         'up' => [[...$up, ...$legs[0]], [...$up, ...$legs[1]], [...$up, ...$other($legs[1])]],

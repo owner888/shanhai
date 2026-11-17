@@ -73,7 +73,7 @@ src/Save.php       the saved games, files of JSON in the app's own folder: three
 src/Data.php       reads data/
 src/Elements.php   what a move of one element does against a beast of others (double, even, half, in tenths)
 src/Render/Stage.php  a map's 3D scene: the ground and the walls as meshes of the faces that can be seen (faces()),
-                   each through a ground's texture; trees, grass, rocks, signs and the actors as upright pixel sprites, the fixed camera
+                   each through a ground's texture, outdoors wood all round (surround); trees, grass, rocks, signs and the actors as upright pixel sprites, what hides the player faded; the fixed camera
 src/Render/Arena.php  a battle's 3D scene: the ground, the two beasts' figures on MyPHP's Animator3D, its camera shake
                    and particles for what the Screen's cue tells of; a camera that does not otherwise move
 src/Render/Voxels.php the battle's models (boxes of voxels, thirty-two to a tile) read, checked and made meshes; the format is its doc comment

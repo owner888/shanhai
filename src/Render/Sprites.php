@@ -14,6 +14,7 @@ use MyPHP\UI\Image;
  *   shades   a character => [another character, a factor]: that one's color made lighter or darker (a robe in shade)
  *   outline  '#rrggbb': drawn round it, on every empty pixel beside one that is not (up, down, left or right);
  *            null for none (a ground's texture, which has no empty pixel)
+ *   round    true for a figure drawn round (a person): shaded across as a body is, lit from the left (round())
  *   views    a way it faces ('down', 'up', 'left') => its frames, standing first, then the steps of a walk;
  *            a frame is its rows, top first, a character a pixel, '.' empty. A thing that never turns (a tree,
  *            a ground's texture) has only 'down', and one frame.
@@ -32,6 +33,8 @@ final class Sprites
     /** The ways a sprite is written facing; right is left turned over. */
     public const VIEWS = ['down', 'up', 'left'];
 
+    /** The bands of a round figure's shading (round()), as factors of its colors, from the shaded side to the lit. */
+    private const ROUND = [0.52, 0.68, 0.84, 1.0, 1.14];
     /** The thresholds of ordered dithering, a 4 by 4 Bayer pattern, from 0 to 1. */
     private const BAYER = [[0 / 16, 8 / 16, 2 / 16, 10 / 16], [12 / 16, 4 / 16, 14 / 16, 6 / 16], [3 / 16, 11 / 16, 1 / 16, 9 / 16], [15 / 16, 7 / 16, 13 / 16, 5 / 16]];
 
@@ -94,12 +97,14 @@ final class Sprites
         }
         $outline = $s['outline'] === null ? null : self::bytes($s['outline']);
         $filled = fn(int $x, int $y) => $x >= 0 && $y >= 0 && $x < $w && $y < $h && $rows[$y][$x] !== '.';
+        $light = ($s['round'] ?? false) ? self::round($rows) : null;
         $out = '';
         for ($y = 0; $y < $h; $y++) {
             for ($x = 0; $x < $w; $x++) {
                 $c = $rows[$y][$x];
                 if ($c !== '.') {
-                    $out .= pack('C4', ...[...$palette[$c], 255]);
+                    $rgb = $light === null ? $palette[$c] : array_map(fn(int $v) => min(255, (int)round($v * $light[$y][$x])), $palette[$c]);
+                    $out .= pack('C4', ...[...$rgb, 255]);
                 } elseif ($outline !== null && ($filled($x - 1, $y) || $filled($x + 1, $y) || $filled($x, $y - 1) || $filled($x, $y + 1))) {
                     $out .= pack('C4', ...[...$outline, 255]);
                 } else {
@@ -110,11 +115,32 @@ final class Sprites
         return $out;
     }
 
-    /** A frame as MyPHP's Image, pixelated (drawn in hard pixels, not smoothed), made once. @param array<string, string> $colors */
-    public static function image(string $name, string $dir, int $frame, array $colors = []): Image
+    /**
+     * Pixels $w wide, RGBA, faded: every other one left out, as a checkerboard, so that what is behind shows through
+     * without the scene blending; as HD-2D fades what stands between the camera and the player.
+     */
+    public static function fade(string $rgba, int $w): string
+    {
+        $px = str_split($rgba, 4);
+        foreach ($px as $i => $p) {
+            if ((($i % $w) + intdiv($i, $w)) % 2 === 1) {
+                $px[$i] = "\0\0\0\0";
+            }
+        }
+        return implode('', $px);
+    }
+
+    /**
+     * A frame as MyPHP's Image, pixelated (drawn in hard pixels, not smoothed), made once; $faded, every other pixel left
+     * out (fade()).
+     * @param array<string, string> $colors
+     */
+    public static function image(string $name, string $dir, int $frame, array $colors = [], bool $faded = false): Image
     {
         [$w, $h] = self::load($name)['size'];
-        return self::$images[$name . json_encode($colors) . "$dir/$frame"] ??= Image::fromPixels($w, $h, self::rgba($name, $dir, $frame, $colors))->pixelated();
+        return self::$images[$name . json_encode($colors) . "$dir/$frame" . ($faded ? '/faded' : '')] ??= Image::fromPixels($w, $h, $faded
+            ? self::fade(self::rgba($name, $dir, $frame, $colors), $w)
+            : self::rgba($name, $dir, $frame, $colors))->pixelated();
     }
 
     /** Makes every frame of it, every way, ahead: once, as the game starts. @param array<string, string> $colors */
@@ -157,6 +183,44 @@ final class Sprites
         }
     }
 
+    /**
+     * How much lighter or darker each pixel of a round figure is (a factor of its color): each row's runs of pixels
+     * taken as the cross-section of something round (a leg, the body, the head), its normal turning from the left
+     * edge to the right, lit from the left and the front, and a little from above; in ROUND's bands, their edges
+     * dithered. So a figure drawn flat shows as a body, lit on one side and in shade on the other, as HD-2D's do.
+     * @param list<string> $rows
+     * @return list<list<float>>
+     */
+    public static function round(array $rows): array
+    {
+        $h = count($rows);
+        $w = strlen($rows[0]);
+        $n = count(self::ROUND);
+        $top = array_fill(0, $w, $h);
+        foreach ($rows as $y => $row) {
+            for ($x = 0; $x < $w; $x++) {
+                if ($row[$x] !== '.' && $top[$x] === $h) {
+                    $top[$x] = $y;
+                }
+            }
+        }
+        $out = [];
+        foreach ($rows as $y => $row) {
+            $out[$y] = array_fill(0, $w, 1.0);
+            preg_match_all('/[^.]+/', $row, $runs, PREG_OFFSET_CAPTURE);
+            foreach ($runs[0] as [$run, $from]) {
+                $len = strlen($run);
+                for ($x = $from; $x < $from + $len; $x++) {
+                    $u = $len < 2 ? 0.0 : 2.0 * ($x - $from + 0.5) / $len - 1.0; // -1 at the left edge, 1 at the right
+                    $lit = -0.85 * $u + 0.5 * sqrt(max(0.0, 1.0 - $u * $u)) + ($y - $top[$x] < 2 ? 0.25 : 0.0);
+                    $v = max(0.0, min(0.999, ($lit + 0.85) / 1.6)) * $n + self::BAYER[$y % 4][$x % 4] - 0.5;
+                    $out[$y][$x] = self::ROUND[max(0, min($n - 1, (int)floor($v)))];
+                }
+            }
+        }
+        return $out;
+    }
+
     /** A number from 0 to 1 by a place and a seed, the same each time: a sprite's or a texture's scatter. */
     public static function noise(int $x, int $y, string $seed = ''): float
     {
@@ -188,6 +252,7 @@ final class Sprites
             (is_array($shade) && array_key_exists($shade[0] ?? '', $s['colors']) && is_float($shade[1] ?? null)) || $fail("the shade '$c' is not [a color, a factor]");
         }
         $s['shades'] ??= [];
+        is_bool($s['round'] ?? false) || $fail('round is not true or false');
         array_key_exists('outline', $s) && (is_string($s['outline']) && $hex($s['outline']) || $s['outline'] === null) || $fail('no outline, nor null for none');
         $known = array_merge(['.'], array_map('strval', array_keys($s['colors'])), array_map('strval', array_keys($s['shades'])));
         $ways = array_keys($s['views'] ?? []);

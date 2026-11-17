@@ -1,34 +1,34 @@
 <?php
-// A tree, as the maps stand them: a trunk and a crown of leafy lumps, each lump shaded as a ball lit from the top
-// left (Sprites::blob), the back ones painted first. 48 by 72 pixels: a tile and a half wide, its crown over the tiles
-// around. Never turns.
+// A tree, as the maps stand them: a trunk and a tall crown of leafy lumps, each lump shaded as a ball lit from the top
+// left (Sprites::blob), the back ones painted first. 64 by 96 pixels: two tiles wide and three high, its crown over the
+// tiles around, a tree standing well over who walks under it. Never turns.
 declare(strict_types=1);
 
 use Shanhai\Render\Sprites;
 
-$rows = Sprites::blank(48, 72);
+$rows = Sprites::blank(64, 96);
 // the trunk, lighter on its left, and its roots
-foreach (range(46, 71) as $y) {
-    $half = $y > 66 ? 4 + ($y - 66) : 3;
-    for ($x = 24 - $half; $x < 24 + $half; $x++) {
-        $rows[$y][$x] = $x < 22 ? 'u' : ($x < 25 ? 't' : 'T');
+foreach (range(60, 95) as $y) {
+    $half = $y > 89 ? 4 + ($y - 89) : 4;
+    for ($x = 32 - $half; $x < 32 + $half; $x++) {
+        $rows[$y][$x] = $x < 30 ? 'u' : ($x < 33 ? 't' : 'T');
     }
 }
-// a branch or two, seen between the lumps
-foreach ([[18, 44], [19, 43], [29, 42], [30, 41]] as [$x, $y]) {
+// branches, seen between the lumps
+foreach ([[24, 60], [25, 59], [26, 58], [39, 57], [40, 56], [41, 55]] as [$x, $y]) {
     $rows[$y][$x] = 'T';
 }
 // the crown, back to front
 foreach ([
-    [24, 13, 11, 10], [13, 22, 9, 9], [35, 22, 9, 9],
-    [24, 24, 13, 11], [10, 34, 8, 8], [38, 34, 8, 8],
-    [18, 38, 11, 9], [31, 38, 11, 9], [24, 45, 9, 6],
+    [32, 14, 13, 13], [18, 26, 11, 11], [46, 26, 11, 11],
+    [32, 32, 16, 14], [12, 42, 10, 10], [52, 42, 10, 10],
+    [24, 48, 14, 11], [41, 48, 14, 11], [32, 58, 12, 8],
 ] as [$cx, $cy, $rx, $ry]) {
     Sprites::blob($rows, $cx, $cy, $rx, $ry, 'abcd');
 }
 
 return [
-    'size' => [48, 72],
+    'size' => [64, 96],
     'colors' => [
         'a' => '#1f4a36', // the leaves in the deepest shade
         'b' => '#2f6e3e',
