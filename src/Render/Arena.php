@@ -200,7 +200,13 @@ final class Arena
     /** The sprite a beast is drawn as, and the colors given it: its own, or the placeholder in its first element's color. @return array{0: string, 1: array<string, string>} */
     public static function sprite(Fighter $f): array
     {
-        return Sprites::has("beasts/{$f->id}") ? ["beasts/{$f->id}", []] : ['beasts/placeholder', ['c' => self::ELEMENTS[$f->species['elements'][0]]]];
+        return self::spriteOf($f->id, $f->species);
+    }
+
+    /** sprite() of a kind of beast, by its id and its entry of data/beasts.php (the record of beasts shows it). @return array{0: string, 1: array<string, string>} */
+    public static function spriteOf(string $id, array $species): array
+    {
+        return Sprites::has("beasts/$id") ? ["beasts/$id", []] : ['beasts/placeholder', ['c' => self::ELEMENTS[$species['elements'][0]]]];
     }
 
     /**

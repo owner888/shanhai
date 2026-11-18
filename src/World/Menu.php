@@ -71,7 +71,7 @@ final class Menu
     }
 
     /** The things of $bag a beast can hold. @return list<string> ids */
-    private static function holdable(array $bag, array $things): array
+    public static function holdable(array $bag, array $things): array
     {
         return array_values(array_filter(array_keys($bag), fn(string $id) => isset($things[$id]['hold'])));
     }

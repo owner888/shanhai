@@ -76,6 +76,8 @@ src/Render/Stage.php  a map's 3D scene: the ground and the walls as meshes of th
                    each through a ground's texture, outdoors houses with roofs, the maps beside it past its exits and open land all round (surround), indoors the near wall cut low; trees, grass, rocks, signs and the actors as upright pixel sprites, what hides the player faded; the fixed camera
 src/Render/Arena.php  a battle's 3D scene, drawn as the maps: a meadow, the two beasts as side-on sprites on MyPHP's Animator3D, its camera shake
                    and particles for what the Screen's cue tells of; a camera that does not otherwise move
+src/Render/Ui.php  the UI's pieces, every box, list, bar and line of text over the view (HD-2D's, docs/art.md); Play says what shows and draws none of it itself (a test holds it)
+src/Info.php       what the box beside a list says of its entry: a move, a thing
 src/Render/Sprites.php the pixel sprites of art/sprites/ (HD-2D: rows of characters, a pixel each, by hand or painted by code, outlined by code) read, checked and made Images; the format is its doc comment
 art/sprites/       the pixel sprites: people/, things/ (what a map stands on its tiles), ground/ (a tile's texture each kind of ground), beasts/ (seen from the side, each from its `looks`, carried in the file; the placeholder)
 src/Play.php       MyPHP's Game: keys and gamepad into Controls, World::step, draws the Stage and the dialog box,
