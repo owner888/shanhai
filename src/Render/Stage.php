@@ -13,7 +13,9 @@ use Shanhai\World\{Actor, Dir, Map, Tile, World};
  * a map's x the scene's x and its y the scene's z. Built once for a map:
  * - the ground and the walls: blocks, of which only the faces that can be seen (faces()), one mesh for each texture
  *   of art/sprites/ground (GROUND, by the kind of tile), each tile a little lighter or darker (Voxels::shade) and its
- *   top's texture turned over one of four ways (turned()), so that the tiles do not repeat;
+ *   top's texture turned over one of four ways (turned()), so that the tiles do not repeat. Outdoors the walls are
+ *   houses (blocks()): plastered and timbered, a door where the map has one, a thatched roof over each (roof());
+ *   indoors they are a room's, and the ones between the camera and the floor are cut low, so that the room shows;
  * - the things standing on it (art/sprites/things: trees, tall grass, rocks, signs): sprites stood upright, one
  *   instanced draw a kind, with a dithered shadow under them;
  * - the actors: art/sprites/people's person, robed in their look's color, a shadow under each.
@@ -52,6 +54,8 @@ final class Stage
      * north and down, more before the player than behind. What they are is surround()'s.
      */
     public const BEYOND = ['up' => 20, 'down' => 10, 'left' => 16, 'right' => 16];
+    /** What stands on the open land beyond a map's edges: each kind on a tile where the place's noise is below its number (and above the one before). */
+    public const WILD = ['tree' => 0.07, 'rock' => 0.09, 'tallGrass' => 0.15];
     /** An actor's robe color, by its look. */
     public const LOOKS = [
         'player' => '#d94040',
@@ -63,6 +67,14 @@ final class Stage
     ];
     /** How high the ground's top is, the water's, a wall's; and how far down the ground and the water go, which shows at a map's edge. */
     public const GROUND_TOP = 0.0, WATER_TOP = -0.12, WALL_TOP = 2.2, GROUND_BOTTOM = -0.2, WATER_BOTTOM = -0.32;
+    /**
+     * A room's wall cut low, between the camera and the floor (blocks()); a house's walls, outdoors; how much higher
+     * its roof's ridge is than they, and how far its eaves reach past them. Proportioned as HD-2D's: a door a head
+     * taller than who goes through it, a house about three times their height to the ridge.
+     */
+    public const LOW_WALL_TOP = 0.3, HOUSE_TOP = 2.4, RIDGE = 1.6, EAVES = 0.3;
+    /** What a house's walls are drawn with, outdoors, by the kind of tile; a room's, indoors. */
+    public const HOUSE = ['wall' => 'house', 'door' => 'houseDoor'], ROOM = ['wall' => 'wall'];
     /** What a model's own colors are drawn through: white, so they are as written. */
     private const AS_WRITTEN = [1.0, 1.0, 1.0, 1.0];
     /** The dithered shadow under an actor: its size in tiles; and every shadow's pixels and color. */
@@ -95,10 +107,16 @@ final class Stage
         $map = $w->map;
         $land = $map->indoor ? $map : self::surround($map);
         [$left, $up] = $map->indoor ? [0, 0] : [self::BEYOND['left'], self::BEYOND['up']];
-        foreach (self::byTexture($land, self::faces($land, self::ground(...))) as $texture => $faces) {
-            $this->faced($faces, "ground/$texture", shadow: false, at: new Vec3(-$left, 0.0, -$up));
+        $at = new Vec3(-$left, 0.0, -$up);
+        foreach (self::byTexture($land, self::faces($land, self::ground(...)), self::GROUND) as $texture => $faces) {
+            $this->faced($faces, "ground/$texture", shadow: false, at: $at);
         }
-        $this->faced(self::faces($land, self::wall(...)), 'ground/wall', shadow: true, at: new Vec3(-$left, 0.0, -$up));
+        foreach (self::byTexture($land, self::faces($land, self::blocks($land)), $map->indoor ? self::ROOM : self::HOUSE) as $texture => $faces) {
+            $this->faced($faces, "ground/$texture", shadow: true, at: $at);
+        }
+        if (!$map->indoor) {
+            $this->faced(self::roof($land), 'ground/thatch', shadow: true, at: $at);
+        }
         $places = ['sign' => $map->signs];
         for ($y = 0; $y < $land->height; $y++) {
             for ($x = 0; $x < $land->width; $x++) {
@@ -150,12 +168,14 @@ final class Stage
     /**
      * The map and the land around it, BEYOND: a larger map whose middle is $map. Beyond an edge the player can walk off
      * (an exit), what can be walked on at the edge goes on (a path leads on, a meadow spreads); water goes on; all else
-     * is wood, the trees closing round the map as HD-2D's views are closed round, never ending in nothing.
+     * is open land, as HD-2D's views are full to their edges and never end in nothing: grass, with a tree, a patch of
+     * tall grass or a rock here and there (WILD), by the place, the same each time, so that it is a landscape and
+     * not a wall of trees.
      */
     public static function surround(Map $map): Map
     {
         $b = self::BEYOND;
-        $tree = array_search('tree', array_map(fn(array $k) => $k[0], Tile::KINDS), true);
+        $char = array_flip(array_map(fn(array $k) => $k[0], Tile::KINDS));
         $rows = [];
         for ($y = -$b['up']; $y < $map->height + $b['down']; $y++) {
             $row = '';
@@ -167,7 +187,18 @@ final class Stage
                 $edge = $map->tile(max(0, min($map->width - 1, $x)), max(0, min($map->height - 1, $y)));
                 $sides = array_filter(['left' => $x < 0, 'right' => $x >= $map->width, 'up' => $y < 0, 'down' => $y >= $map->height]);
                 $exit = count($sides) === 1 && isset($map->exits[array_key_first($sides)]);
-                $row .= Tile::name($edge) === 'water' || ($exit && Tile::walkable($edge)) ? $edge : $tree;
+                if (Tile::name($edge) === 'water' || ($exit && Tile::walkable($edge))) {
+                    $row .= $edge;
+                    continue;
+                }
+                $n = Sprites::noise($x, $y, 'beyond');
+                $row .= $char['grass'];
+                foreach (self::WILD as $kind => $upTo) {
+                    if ($n < $upTo) {
+                        $row[strlen($row) - 1] = $char[$kind];
+                        break;
+                    }
+                }
             }
             $rows[] = $row;
         }
@@ -196,7 +227,7 @@ final class Stage
     /** Works out ahead the sprites every map draws: its grounds, its things, and a person in each look's robe. Once, as the game starts. */
     public static function prepare(): void
     {
-        foreach ([...array_unique(self::GROUND), 'wall'] as $ground) {
+        foreach ([...array_unique(self::GROUND), ...self::HOUSE, ...self::ROOM, 'thatch'] as $ground) {
             Sprites::prepare("ground/$ground");
         }
         foreach (self::THINGS as [$sprite]) {
@@ -214,10 +245,78 @@ final class Stage
         return $kind === 'water' ? [self::WATER_TOP, self::WATER_BOTTOM, $color] : [self::GROUND_TOP, self::GROUND_BOTTOM, $color];
     }
 
-    /** A wall tile's block, standing on the ground; none for another tile. */
-    public static function wall(string $kind, int $x, int $y): ?array
+    /**
+     * The blocks standing on a map's ground, as faces() takes them: indoors a room's walls, WALL_TOP high, but those
+     * with the floor behind them (north, away from the camera), which are cut LOW_WALL_TOP high, as HD-2D cuts away
+     * a room's near wall; outdoors houses, the walls and the door in them HOUSE_TOP high. None for another tile.
+     * @return \Closure(string, int, int): ?array{0: float, 1: float, 2: array}
+     */
+    public static function blocks(Map $map): \Closure
     {
-        return $kind === 'wall' ? [self::WALL_TOP, self::GROUND_TOP, Voxels::shade(self::AS_WRITTEN, $x, $y)] : null;
+        return function (string $kind, int $x, int $y) use ($map): ?array {
+            $shade = Voxels::shade(self::AS_WRITTEN, $x, $y);
+            if ($map->indoor) {
+                return $kind !== 'wall' ? null : [$map->walkable($x, $y - 1) ? self::LOW_WALL_TOP : self::WALL_TOP, self::GROUND_TOP, $shade];
+            }
+            $inWall = fn(int $dx) => $map->inside($x + $dx, $y) && Tile::name($map->tile($x + $dx, $y)) === 'wall';
+            return $kind === 'wall' || ($kind === 'door' && ($inWall(-1) || $inWall(1))) ? [self::HOUSE_TOP, self::GROUND_TOP, $shade] : null;
+        };
+    }
+
+    /**
+     * The roofs of a map's houses (blocks(), outdoors): over each house's tiles (those that touch, the walls and the
+     * door), a thatched roof from its eaves, EAVES beyond its walls, up to a ridge along its length (east to west,
+     * across the camera's view) RIDGE above them, and a gable at each end. In faces()' form, the thatch running down
+     * each slope a tile of it to a tile.
+     * @return list<array>
+     */
+    public static function roof(Map $map): array
+    {
+        $block = self::blocks($map);
+        $house = fn(int $x, int $y) => $map->inside($x, $y) && $block(Tile::name($map->tile($x, $y)), $x, $y) !== null;
+        $seen = [];
+        $out = [];
+        for ($y = 0; $y < $map->height; $y++) {
+            for ($x = 0; $x < $map->width; $x++) {
+                if (!$house($x, $y) || isset($seen["$x,$y"])) {
+                    continue;
+                }
+                // the house: the tiles that touch this one, and the box round them
+                [$x0, $x1, $y0, $y1] = [$x, $x, $y, $y];
+                $todo = [[$x, $y]];
+                $seen["$x,$y"] = true;
+                while ($todo !== []) {
+                    [$tx, $ty] = array_pop($todo);
+                    [$x0, $x1, $y0, $y1] = [min($x0, $tx), max($x1, $tx), min($y0, $ty), max($y1, $ty)];
+                    foreach ([[1, 0], [-1, 0], [0, 1], [0, -1]] as [$dx, $dy]) {
+                        if ($house($tx + $dx, $ty + $dy) && !isset($seen[($tx + $dx) . ',' . ($ty + $dy)])) {
+                            $seen[($tx + $dx) . ',' . ($ty + $dy)] = true;
+                            $todo[] = [$tx + $dx, $ty + $dy];
+                        }
+                    }
+                }
+                $top = self::HOUSE_TOP;
+                $ridge = $top + self::RIDGE;
+                [$wl, $wr, $zn, $zs] = [$x0 - 0.5, $x1 + 0.5, $y0 - 0.5, $y1 + 0.5];
+                [$el, $er, $en, $es] = [$wl - self::EAVES, $wr + self::EAVES, $zn - self::EAVES, $zs + self::EAVES];
+                $zm = ($zn + $zs) / 2;
+                $eave = $top - self::RIDGE * self::EAVES / ($zm - $zn); // the slope carried on past the wall
+                $slope = hypot($zm - $en, $ridge - $eave);
+                $long = $er - $el;
+                $run = [[0.0, $slope], [$long, $slope], [$long, 0.0], [0.0, 0.0]];
+                $white = self::AS_WRITTEN;
+                $up = 1.0 / hypot(self::RIDGE, $zm - $zn);
+                // the slope to the south, toward the camera, and the one to the north
+                $out[] = [[[$el, $eave, $es], [$er, $eave, $es], [$er, $ridge, $zm], [$el, $ridge, $zm]], [0.0, ($zm - $zn) * $up, self::RIDGE * $up], $white, $run];
+                $out[] = [[[$er, $eave, $en], [$el, $eave, $en], [$el, $ridge, $zm], [$er, $ridge, $zm]], [0.0, ($zm - $zn) * $up, -self::RIDGE * $up], $white, $run];
+                // the gables, a triangle each (a face whose two top corners are one)
+                $half = $zm - $zn;
+                $gable = [[0.0, 1.0], [2 * $half, 1.0], [$half, 0.0], [$half, 0.0]];
+                $out[] = [[[$wr, $top, $zs], [$wr, $top, $zn], [$wr, $ridge, $zm], [$wr, $ridge, $zm]], [1.0, 0.0, 0.0], $white, $gable];
+                $out[] = [[[$wl, $top, $zn], [$wl, $top, $zs], [$wl, $ridge, $zm], [$wl, $ridge, $zm]], [-1.0, 0.0, 0.0], $white, $gable];
+            }
+        }
+        return $out;
     }
 
     /**
@@ -264,18 +363,24 @@ final class Stage
     }
 
     /**
-     * faces() of the ground, by the texture each is drawn with: the one of the kind of tile it belongs to (GROUND),
-     * a top's the tile it covers, a side's the tile it stands at the edge of.
+     * faces() by the texture each is drawn with: the one of the kind of tile it belongs to ($textures: GROUND, HOUSE,
+     * ROOM), a top's the tile it covers, a side's the tile it stands at the edge of. A door's (houseDoor) is the whole
+     * of its texture on each face, not tiled, so that the door shows once, at its foot.
+     * @param array<string, string> $textures by kind of tile
      * @return array<string, list<array>>
      */
-    public static function byTexture(Map $map, array $faces): array
+    public static function byTexture(Map $map, array $faces, array $textures): array
     {
         $out = [];
         foreach ($faces as $f) {
             [$corners, $n] = $f;
             $x = (int)round(array_sum(array_column($corners, 0)) / 4 - $n[0] / 2);
             $y = (int)round(array_sum(array_column($corners, 2)) / 4 - $n[2] / 2);
-            $out[self::GROUND[Tile::name($map->tile($x, $y))]][] = $f;
+            $texture = $textures[Tile::name($map->tile($x, $y))];
+            if ($texture === 'houseDoor') {
+                $f[3] = [[0.0, 1.0], [1.0, 1.0], [1.0, 0.0], [0.0, 0.0]];
+            }
+            $out[$texture][] = $f;
         }
         return $out;
     }

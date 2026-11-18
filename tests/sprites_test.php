@@ -33,7 +33,7 @@ foreach ($names as $name) {
     }
     same($folder === 'people' ? 3 : 1, Sprites::frames($name), "$name: a person stands and steps with either foot; a thing is still");
     if ($folder === 'ground') {
-        same([Sprites::PER_TILE, Sprites::PER_TILE], $s['size'], "$name: a tile's side each way");
+        check($s['size'][0] === Sprites::PER_TILE && $s['size'][1] % Sprites::PER_TILE === 0, "$name: a tile wide, whole tiles high");
         same(null, $s['outline'], "$name: no outline");
         check(!str_contains(implode('', $s['views']['down'][0]), '.'), "$name: no pixel of it empty");
     }
@@ -104,7 +104,7 @@ same(Stage::turned(3, 4), Stage::turned(3, 4), 'a tile the same way each time');
 
 // The faces of the ground go to the texture of the tile they belong to: a top its tile's, a bank its tile's, not the water's.
 $m = Map::fromArray(['id' => 'm', 'name' => 'M', 'rows' => ['.~', '..']]);
-$by = Stage::byTexture($m, Stage::faces($m, Stage::ground(...)));
+$by = Stage::byTexture($m, Stage::faces($m, Stage::ground(...)), Stage::GROUND);
 $keys = array_keys($by);
 sort($keys);
 same(['grass', 'water'], $keys, 'grass and water');
@@ -122,7 +122,7 @@ foreach ($pixels as $i => $on) {
 check(array_sum($pixels) > 10 && $touching === 0 && !$pixels[0], 'the shadow is a dithered oval');
 
 // Outdoors the land goes on past the map's edges (Stage::surround): the map in the middle as it is; beyond an edge
-// with an exit what can be walked on goes on, and water; all else is wood.
+// with an exit what can be walked on goes on, and water; all else is open land.
 $m = Map::fromArray(['id' => 'm', 'name' => 'M', 'rows' => ['=.^', '...', '~.T'], 'exits' => ['left' => ['n', 0]]]);
 $land = Stage::surround($m);
 $b = Stage::BEYOND;
@@ -130,7 +130,14 @@ same([3 + $b['left'] + $b['right'], 3 + $b['up'] + $b['down']], [$land->width, $
 $at = fn(int $x, int $y) => Tile::name($land->tile($x + $b['left'], $y + $b['up']));
 same(['path', 'grass', 'rock'], [$at(0, 0), $at(1, 0), $at(2, 0)], 'the map in the middle, as it is');
 same(['path', 'grass', 'water'], [$at(-1, 0), $at(-5, 1), $at(-3, 2)], 'past the edge with an exit: the path and the grass go on, and the water');
-same(['tree', 'tree', 'tree'], [$at(3, 1), $at(1, -1), $at(-1, -1)], 'past an edge with none, and past a corner: wood');
+$wild = [];
+for ($y = -$b['up']; $y < 0; $y++) {
+    for ($x = -$b['left']; $x < 3 + $b['right']; $x++) {
+        $wild[$at($x, $y)] = ($wild[$at($x, $y)] ?? 0) + 1;
+    }
+}
+check(isset($wild['tree'], $wild['rock'], $wild['tallGrass']) && $wild['grass'] > 4 * $wild['tree'], 'past an edge with none: open land, mostly grass, a tree, a rock, tall grass here and there');
+check(!isset($wild['path']) && !isset($wild['water']), 'no path or water where the edge has none');
 same('water', $at(1 - 1, 3), 'water at the edge goes on past it');
 
 // What stands between the camera and the player is faded: a tree just before them, not one behind or far to the
