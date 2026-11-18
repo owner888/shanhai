@@ -15,19 +15,29 @@ $at = fn(string $rgba, int $w, int $x, int $y) => array_values(unpack('C4', subs
 // Every sprite reads, and every frame of it, every way, comes out its size, robed in every look; it is a person who
 // turns and walks, or a thing or a ground that never turns.
 $names = array_map(fn(string $f) => substr($f, strlen(Sprites::DIR) + 1, -4), glob(Sprites::DIR . '/*/*.php'));
-foreach (['people/person', 'things/tree', 'ground/grass'] as $name) {
+$beastsData = require __DIR__ . '/../data/beasts.php';
+foreach (['people/person', 'things/tree', 'ground/grass', 'beasts/lushu', 'beasts/placeholder'] as $name) {
     check(in_array($name, $names, true), "art/sprites has $name");
 }
 foreach ($names as $name) {
     $s = Sprites::load($name);
     $folder = explode('/', $name)[0];
-    check(in_array($folder, ['people', 'things', 'ground'], true), "$name: in a folder of art/sprites'");
+    check(in_array($folder, ['people', 'things', 'ground', 'beasts'], true), "$name: in a folder of art/sprites'");
     same($folder === 'people', Sprites::turns($name), "$name: turns if a person");
+    if ($folder === 'beasts') {
+        same(['left'], array_keys($s['views']), "$name: a beast is seen from the side, facing left");
+        if ($name !== 'beasts/placeholder') {
+            same($beastsData[substr($name, 7)]['looks'] ?? null, $s['looks'] ?? null, "$name: a beast of data/beasts.php, drawn from the passage its entry has");
+        }
+    }
     [$w, $h] = $s['size'];
     foreach ([...Sprites::VIEWS, 'right'] as $dir) {
         for ($f = 0; $f < Sprites::frames($name); $f++) {
             foreach (Stage::LOOKS as $look => $robe) {
-                same($w * $h * 4, strlen(Sprites::rgba($name, $dir, $f, ['r' => $robe])), "$name facing $dir, frame $f, in $look's robe: its size");
+                same($w * $h * 4, strlen(Sprites::rgba($name, $dir, $f, ['r' => $robe, 'c' => '#808080'])), "$name facing $dir, frame $f, in $look's robe: its size");
+            }
+            foreach (\Shanhai\Render\Arena::ELEMENTS as $element => $color) {
+                same($w * $h * 4, strlen(Sprites::rgba($name, $dir, $f, ['r' => $robe, 'c' => $color])), "$name facing $dir, frame $f, in $element's color: its size");
             }
         }
     }
@@ -150,3 +160,20 @@ check(!Stage::fades('tallGrass', 0.0, 0.3) && !Stage::fades('rock', 0.0, 1.0), '
 $light = Sprites::round(['.xxxxxxxxxxxxxxxx.']);
 check($light[0][1] > $light[0][16] && $light[0][0] === 1.0, 'a round figure: lit on the left, in shade on the right; nothing where it is empty');
 check(Sprites::load('people/person')['round'] ?? false, 'a person is drawn round');
+
+// Beyond an exit the map beside it lies, as it is (World::neighbours), the land going on across the seam.
+$here = Map::fromArray(['id' => 'h', 'name' => 'H', 'rows' => ['..', '..'], 'exits' => ['right' => ['n', 0]]]);
+$next = Map::fromArray(['id' => 'n', 'name' => 'N', 'rows' => ['=~', '^T']]);
+$land = Stage::surround($here, ['right' => [$next, 2, 0]]);
+$at = fn(int $x, int $y) => Tile::name($land->tile($x + $b['left'], $y + $b['up']));
+same(['path', 'water', 'rock', 'tree'], [$at(2, 0), $at(3, 0), $at(2, 1), $at(3, 1)], 'the map beside, as it is, where it lies');
+
+// A beast in battle: its sprite, facing right turned over from facing left; one with none, the placeholder in its element's color.
+[$w] = Sprites::size('beasts/lushu');
+$l = Sprites::rgba('beasts/lushu', 'left', 0);
+$r = Sprites::rgba('beasts/lushu', 'right', 0);
+$pixel = fn(string $rgba, int $w, int $x, int $y) => array_values(unpack('C4', substr($rgba, ($y * $w + $x) * 4, 4)));
+same($pixel($l, $w, 3, 12), $pixel($r, $w, $w - 4, 12), 'a beast facing right is the left turned over');
+same(['beasts/lushu', []], \Shanhai\Render\Arena::sprite(new \Shanhai\Battle\Fighter('lushu', $beastsData['lushu'], 5, [], [])), '鹿蜀 is its own sprite');
+$other = array_key_first(array_filter($beastsData, fn(array $b, string $id) => $id !== 'lushu', ARRAY_FILTER_USE_BOTH));
+same(['beasts/placeholder', ['c' => \Shanhai\Render\Arena::ELEMENTS[$beastsData[$other]['elements'][0]]]], \Shanhai\Render\Arena::sprite(new \Shanhai\Battle\Fighter($other, $beastsData[$other], 5, [], [])), 'one with none, the placeholder in its element\'s color');

@@ -791,6 +791,10 @@ final class Journey
             }
             $this->tick($dir);
         }
+        // across a map's edge the player is on the other map at once, still stepping onto it: the step is let finish
+        while ($w->player->moving && !$w->busy() && $w->battle === null) {
+            $this->tick();
+        }
         $this->tick();
         $this->settle();
     }

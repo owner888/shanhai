@@ -12,7 +12,7 @@ use Shanhai\World\{Actor, Dir, Map, Tile, World};
  * The 3D scene of the map the player is on (MyPHP's Plugins\Scene), drawn HD-2D (docs/art.md): a tile is one unit,
  * a map's x the scene's x and its y the scene's z. Built once for a map:
  * - the ground and the walls: blocks, of which only the faces that can be seen (faces()), one mesh for each texture
- *   of art/sprites/ground (GROUND, by the kind of tile), each tile a little lighter or darker (Voxels::shade) and its
+ *   of art/sprites/ground (GROUND, by the kind of tile), each tile a little lighter or darker (shade()) and its
  *   top's texture turned over one of four ways (turned()), so that the tiles do not repeat. Outdoors the walls are
  *   houses (blocks()): plastered and timbered, a door where the map has one, a thatched roof over each (roof());
  *   indoors they are a room's, and the ones between the camera and the floor are cut low, so that the room shows;
@@ -77,6 +77,10 @@ final class Stage
     public const HOUSE = ['wall' => 'house', 'door' => 'houseDoor'], ROOM = ['wall' => 'wall'];
     /** What a model's own colors are drawn through: white, so they are as written. */
     private const AS_WRITTEN = [1.0, 1.0, 1.0, 1.0];
+    /** How much lighter or darker a tile is than another, at most, by where it is (shade()). */
+    private const GRAIN = 0.05;
+    /** Where a face takes its texture from at its four corners, unless it says (a texture's top left is 0, 0). */
+    private const UV = [[0.0, 1.0], [1.0, 1.0], [1.0, 0.0], [0.0, 0.0]];
     /** The dithered shadow under an actor: its size in tiles; and every shadow's pixels and color. */
     private const SHADOW = [0.7, 0.35], SHADOW_PIXELS = [16, 8], SHADOW_COLOR = '#1c2a1c';
 
@@ -89,6 +93,8 @@ final class Stage
     private array $standing = [];
     /** @var array<string, array{0: Entity, 1: Entity}> by kind of thing: the entity drawing them, and the one drawing those faded (fades()) */
     private array $stood = [];
+    /** @var list<array{0: array{0: int, 1: int, 2: int, 3: int}, 1: list<array{0: Entity, 1: string}>}> the houses, outdoors: each its box in the scene's places, and its entities with their textures */
+    private array $houses = [];
     /** The player's tile the things were last faded for. */
     private string $fadedFor = '';
     private static ?Image $shadow = null;
@@ -105,19 +111,35 @@ final class Stage
 
         // the land drawn: the map, and outdoors the land beyond its edges; its tile x, y is the scene's x - left, z - up
         $map = $w->map;
-        $land = $map->indoor ? $map : self::surround($map);
+        $land = $map->indoor ? $map : self::surround($map, $w->neighbours());
         [$left, $up] = $map->indoor ? [0, 0] : [self::BEYOND['left'], self::BEYOND['up']];
         $at = new Vec3(-$left, 0.0, -$up);
         foreach (self::byTexture($land, self::faces($land, self::ground(...)), self::GROUND) as $texture => $faces) {
             $this->faced($faces, "ground/$texture", shadow: false, at: $at);
         }
-        foreach (self::byTexture($land, self::faces($land, self::blocks($land)), $map->indoor ? self::ROOM : self::HOUSE) as $texture => $faces) {
-            $this->faced($faces, "ground/$texture", shadow: true, at: $at);
-        }
-        if (!$map->indoor) {
-            $this->faced(self::roof($land), 'ground/thatch', shadow: true, at: $at);
+        if ($map->indoor) {
+            foreach (self::byTexture($land, self::faces($land, self::blocks($land)), self::ROOM) as $texture => $faces) {
+                $this->faced($faces, "ground/$texture", shadow: true, at: $at);
+            }
+        } else {
+            // each house its own entities, so that the one that hides the player can be drawn faded (fade())
+            $blocks = self::blocks($land);
+            foreach (self::houses($land) as [$box, $tiles]) {
+                $own = fn(string $kind, int $x, int $y) => isset($tiles["$x,$y"]) ? $blocks($kind, $x, $y) : null;
+                $drawn = [];
+                foreach ([...self::byTexture($land, self::faces($land, $own), self::HOUSE), 'thatch' => self::roof($box)] as $texture => $faces) {
+                    $drawn[] = [$this->faced($faces, "ground/$texture", shadow: true, at: $at), "ground/$texture"];
+                }
+                [$x0, $x1, $y0, $y1] = $box;
+                $this->houses[] = [[$x0 - $left, $x1 - $left, $y0 - $up, $y1 - $up], $drawn];
+            }
         }
         $places = ['sign' => $map->signs];
+        foreach ($map->indoor ? [] : $w->neighbours() as [$next, $nx, $ny]) {
+            foreach ($next->signs as [$sx, $sy]) {
+                $places['sign'][] = [$sx + $nx, $sy + $ny];
+            }
+        }
         for ($y = 0; $y < $land->height; $y++) {
             for ($x = 0; $x < $land->width; $x++) {
                 $kind = Tile::name($land->tile($x, $y));
@@ -140,16 +162,51 @@ final class Stage
     /** Puts the actors where the world has them, $alpha (0 to 1) into the next update, and the camera over the player. */
     public function sync(World $w, float $alpha): void
     {
+        $here = [];
         foreach ([$w->player, ...array_values($w->npcs)] as $a) {
             [$x, $z] = $a->place($alpha);
+            if (!isset($this->actors[$a->id])) { // one who was not on the map when this Stage was built (a Stage is kept, Play)
+                $this->robes[$a->id] = self::LOOKS[$a->look];
+                $this->actors[$a->id] = $this->scene->add(self::figure($a));
+            }
+            $here[$a->id] = true;
             $e = $this->actors[$a->id];
+            $e->scale = new Vec3(1.0, 1.0, 1.0);
             $e->position = new Vec3($x, self::GROUND_TOP, $z);
             $e->material->texture = Sprites::image('people/person', $a->dir->value, self::step($a, $alpha), ['r' => $this->robes[$a->id]]);
+        }
+        foreach (array_diff_key($this->actors, $here) as $gone) {
+            $gone->scale = new Vec3(0.0, 0.0, 0.0); // one who is not on the map now
         }
         [$px, $pz] = $w->player->place($alpha);
         $this->fade((int)round($px), (int)round($pz));
         $this->scene->camera->target = new Vec3($px, 0.0, $pz);
         $this->scene->camera->position = new Vec3($px, self::CAMERA_HEIGHT, $pz + self::CAMERA_BACK);
+    }
+
+    /** A color made a little lighter or darker by where it is (GRAIN), the same each time: a tile's. */
+    public static function shade(array $rgba, int ...$at): array
+    {
+        $f = 1.0 + self::GRAIN * (2.0 * (crc32(implode(',', $at)) % 1000) / 999.0 - 1.0);
+        return [min(1.0, $rgba[0] * $f), min(1.0, $rgba[1] * $f), min(1.0, $rgba[2] * $f), $rgba[3]];
+    }
+
+    /**
+     * One mesh of faces in faces()' form: [corners, normal, color], and where it takes its texture from at the
+     * corners, unless UV. Packed as MyPHP's Mesh takes them: position, normal, uv, color a vertex; two triangles a face.
+     */
+    public static function mesh(array $faces): Mesh
+    {
+        $vertices = $indices = [];
+        foreach ($faces as $i => $face) {
+            [$corners, $normal, $color] = $face;
+            $uv = $face[3] ?? self::UV;
+            foreach ($corners as $k => $corner) {
+                array_push($vertices, ...$corner, ...$normal, ...$uv[$k], ...$color);
+            }
+            array_push($indices, 4 * $i, 4 * $i + 1, 4 * $i + 2, 4 * $i, 4 * $i + 2, 4 * $i + 3);
+        }
+        return new Mesh(pack('f*', ...$vertices), pack('V*', ...$indices), 4 * count($faces), 6 * count($faces));
     }
 
     /**
@@ -167,12 +224,15 @@ final class Stage
 
     /**
      * The map and the land around it, BEYOND: a larger map whose middle is $map. Beyond an edge the player can walk off
-     * (an exit), what can be walked on at the edge goes on (a path leads on, a meadow spreads); water goes on; all else
+     * (an exit) lies the map it joins, as it is ($neighbours, World::neighbours), so that the land goes on across the
+     * seam as the classic's routes and towns join. Where none lies, beyond an exit what can be walked on at the edge
+     * goes on (a path leads on, a meadow spreads); water goes on; all else
      * is open land, as HD-2D's views are full to their edges and never end in nothing: grass, with a tree, a patch of
      * tall grass or a rock here and there (WILD), by the place, the same each time, so that it is a landscape and
      * not a wall of trees.
      */
-    public static function surround(Map $map): Map
+    /** @param array<string, array{0: Map, 1: int, 2: int}> $neighbours by the way off the map: a map and where its top left is */
+    public static function surround(Map $map, array $neighbours = []): Map
     {
         $b = self::BEYOND;
         $char = array_flip(array_map(fn(array $k) => $k[0], Tile::KINDS));
@@ -183,6 +243,12 @@ final class Stage
                 if ($map->inside($x, $y)) {
                     $row .= $map->tile($x, $y);
                     continue;
+                }
+                foreach ($neighbours as [$next, $nx, $ny]) {
+                    if (!$next->indoor && $next->inside($x - $nx, $y - $ny)) {
+                        $row .= $next->tile($x - $nx, $y - $ny);
+                        continue 2;
+                    }
                 }
                 $edge = $map->tile(max(0, min($map->width - 1, $x)), max(0, min($map->height - 1, $y)));
                 $sides = array_filter(['left' => $x < 0, 'right' => $x >= $map->width, 'up' => $y < 0, 'down' => $y >= $map->height]);
@@ -241,7 +307,7 @@ final class Stage
     /** The block of ground of a tile, a kind at a place: its top, its bottom, and the place's shade its texture is drawn through. Water lies lower. */
     public static function ground(string $kind, int $x, int $y): array
     {
-        $color = Voxels::shade(self::AS_WRITTEN, $x, $y);
+        $color = self::shade(self::AS_WRITTEN, $x, $y);
         return $kind === 'water' ? [self::WATER_TOP, self::WATER_BOTTOM, $color] : [self::GROUND_TOP, self::GROUND_BOTTOM, $color];
     }
 
@@ -254,7 +320,7 @@ final class Stage
     public static function blocks(Map $map): \Closure
     {
         return function (string $kind, int $x, int $y) use ($map): ?array {
-            $shade = Voxels::shade(self::AS_WRITTEN, $x, $y);
+            $shade = self::shade(self::AS_WRITTEN, $x, $y);
             if ($map->indoor) {
                 return $kind !== 'wall' ? null : [$map->walkable($x, $y - 1) ? self::LOW_WALL_TOP : self::WALL_TOP, self::GROUND_TOP, $shade];
             }
@@ -264,13 +330,11 @@ final class Stage
     }
 
     /**
-     * The roofs of a map's houses (blocks(), outdoors): over each house's tiles (those that touch, the walls and the
-     * door), a thatched roof from its eaves, EAVES beyond its walls, up to a ridge along its length (east to west,
-     * across the camera's view) RIDGE above them, and a gable at each end. In faces()' form, the thatch running down
-     * each slope a tile of it to a tile.
-     * @return list<array>
+     * The houses of a map (blocks(), outdoors): each the tiles that touch, the walls and the door, and the box round
+     * them, [x0, x1, y0, y1] in tiles.
+     * @return list<array{0: array{0: int, 1: int, 2: int, 3: int}, 1: array<string, true>}> each [its box, its tiles by "x,y"]
      */
-    public static function roof(Map $map): array
+    public static function houses(Map $map): array
     {
         $block = self::blocks($map);
         $house = fn(int $x, int $y) => $map->inside($x, $y) && $block(Tile::name($map->tile($x, $y)), $x, $y) !== null;
@@ -281,42 +345,75 @@ final class Stage
                 if (!$house($x, $y) || isset($seen["$x,$y"])) {
                     continue;
                 }
-                // the house: the tiles that touch this one, and the box round them
                 [$x0, $x1, $y0, $y1] = [$x, $x, $y, $y];
+                $tiles = ["$x,$y" => true];
                 $todo = [[$x, $y]];
                 $seen["$x,$y"] = true;
                 while ($todo !== []) {
                     [$tx, $ty] = array_pop($todo);
                     [$x0, $x1, $y0, $y1] = [min($x0, $tx), max($x1, $tx), min($y0, $ty), max($y1, $ty)];
                     foreach ([[1, 0], [-1, 0], [0, 1], [0, -1]] as [$dx, $dy]) {
-                        if ($house($tx + $dx, $ty + $dy) && !isset($seen[($tx + $dx) . ',' . ($ty + $dy)])) {
-                            $seen[($tx + $dx) . ',' . ($ty + $dy)] = true;
+                        $key = ($tx + $dx) . ',' . ($ty + $dy);
+                        if ($house($tx + $dx, $ty + $dy) && !isset($seen[$key])) {
+                            $seen[$key] = $tiles[$key] = true;
                             $todo[] = [$tx + $dx, $ty + $dy];
                         }
                     }
                 }
-                $top = self::HOUSE_TOP;
-                $ridge = $top + self::RIDGE;
-                [$wl, $wr, $zn, $zs] = [$x0 - 0.5, $x1 + 0.5, $y0 - 0.5, $y1 + 0.5];
-                [$el, $er, $en, $es] = [$wl - self::EAVES, $wr + self::EAVES, $zn - self::EAVES, $zs + self::EAVES];
-                $zm = ($zn + $zs) / 2;
-                $eave = $top - self::RIDGE * self::EAVES / ($zm - $zn); // the slope carried on past the wall
-                $slope = hypot($zm - $en, $ridge - $eave);
-                $long = $er - $el;
-                $run = [[0.0, $slope], [$long, $slope], [$long, 0.0], [0.0, 0.0]];
-                $white = self::AS_WRITTEN;
-                $up = 1.0 / hypot(self::RIDGE, $zm - $zn);
-                // the slope to the south, toward the camera, and the one to the north
-                $out[] = [[[$el, $eave, $es], [$er, $eave, $es], [$er, $ridge, $zm], [$el, $ridge, $zm]], [0.0, ($zm - $zn) * $up, self::RIDGE * $up], $white, $run];
-                $out[] = [[[$er, $eave, $en], [$el, $eave, $en], [$el, $ridge, $zm], [$er, $ridge, $zm]], [0.0, ($zm - $zn) * $up, -self::RIDGE * $up], $white, $run];
-                // the gables, a triangle each (a face whose two top corners are one)
-                $half = $zm - $zn;
-                $gable = [[0.0, 1.0], [2 * $half, 1.0], [$half, 0.0], [$half, 0.0]];
-                $out[] = [[[$wr, $top, $zs], [$wr, $top, $zn], [$wr, $ridge, $zm], [$wr, $ridge, $zm]], [1.0, 0.0, 0.0], $white, $gable];
-                $out[] = [[[$wl, $top, $zn], [$wl, $top, $zs], [$wl, $ridge, $zm], [$wl, $ridge, $zm]], [-1.0, 0.0, 0.0], $white, $gable];
+                $out[] = [[$x0, $x1, $y0, $y1], $tiles];
             }
         }
         return $out;
+    }
+
+    /**
+     * A house's roof (houses()' box): a thatched roof from its eaves, EAVES beyond its walls, up to a ridge along its
+     * length (east to west, across the camera's view) RIDGE above them, and a gable at each end. In faces()' form,
+     * the thatch running down each slope a tile of it to a tile.
+     * @param array{0: int, 1: int, 2: int, 3: int} $box
+     * @return list<array>
+     */
+    public static function roof(array $box): array
+    {
+        [$x0, $x1, $y0, $y1] = $box;
+        $top = self::HOUSE_TOP;
+        $ridge = $top + self::RIDGE;
+        [$wl, $wr, $zn, $zs] = [$x0 - 0.5, $x1 + 0.5, $y0 - 0.5, $y1 + 0.5];
+        [$el, $er, $en, $es] = [$wl - self::EAVES, $wr + self::EAVES, $zn - self::EAVES, $zs + self::EAVES];
+        $zm = ($zn + $zs) / 2;
+        $eave = $top - self::RIDGE * self::EAVES / ($zm - $zn); // the slope carried on past the wall
+        $slope = hypot($zm - $en, $ridge - $eave);
+        $long = $er - $el;
+        $run = [[0.0, $slope], [$long, $slope], [$long, 0.0], [0.0, 0.0]];
+        $white = self::AS_WRITTEN;
+        $up = 1.0 / hypot(self::RIDGE, $zm - $zn);
+        $half = $zm - $zn;
+        $gable = [[0.0, 1.0], [2 * $half, 1.0], [$half, 0.0], [$half, 0.0]];
+        return [
+            // the slope to the south, toward the camera, and the one to the north
+            [[[$el, $eave, $es], [$er, $eave, $es], [$er, $ridge, $zm], [$el, $ridge, $zm]], [0.0, $half * $up, self::RIDGE * $up], $white, $run],
+            [[[$er, $eave, $en], [$el, $eave, $en], [$el, $ridge, $zm], [$er, $ridge, $zm]], [0.0, $half * $up, -self::RIDGE * $up], $white, $run],
+            // the gables, a triangle each (a face whose two top corners are one)
+            [[[$wr, $top, $zs], [$wr, $top, $zn], [$wr, $ridge, $zm], [$wr, $ridge, $zm]], [1.0, 0.0, 0.0], $white, $gable],
+            [[[$wl, $top, $zn], [$wl, $top, $zs], [$wl, $ridge, $zm], [$wl, $ridge, $zm]], [-1.0, 0.0, 0.0], $white, $gable],
+        ];
+    }
+
+    /**
+     * Whether a house (houses()' box) hides the player, at $px, $pz in the same places: the player behind its front
+     * (its eaves), or in it (at the door), within its width, and near enough that its ridge shows above their middle
+     * on the screen. Such a house is drawn faded, as the things that hide the player (fades()).
+     * @param array{0: int, 1: int, 2: int, 3: int} $box
+     */
+    public static function hides(array $box, float $px, float $pz): bool
+    {
+        [$x0, $x1, $y0, $y1] = $box;
+        [$pw, $ph] = Sprites::size('people/person');
+        $slant = atan2(self::CAMERA_HEIGHT, self::CAMERA_BACK);
+        // on the screen, how far the ridge shows above the player's middle: the ridge lies (y0 + y1) / 2, and each
+        // tile farther from the camera shows sin(slant) higher, each tile of height cos(slant)
+        $over = ($pz - ($y0 + $y1) / 2) * sin($slant) + (self::HOUSE_TOP + self::RIDGE) * cos($slant) - $ph / 2;
+        return $px > $x0 - 0.5 - $pw / 2 && $px < $x1 + 0.5 + $pw / 2 && $pz < $y1 + 0.5 + self::EAVES && $over > 0;
     }
 
     /**
@@ -418,15 +515,15 @@ final class Stage
     }
 
     /** Adds one entity that draws faces() as a mesh through a texture of art/sprites; nothing when there are none. */
-    private function faced(array $faces, string $texture, bool $shadow, Vec3 $at): void
+    private function faced(array $faces, string $texture, bool $shadow, Vec3 $at): ?Entity
     {
         if ($faces === []) {
-            return;
+            return null;
         }
-        $e = new Entity(Voxels::mesh($faces), new Material(shininess: 8.0, texture: Sprites::image($texture, 'down', 0)), position: $at);
+        $e = new Entity(self::mesh($faces), new Material(shininess: 8.0, texture: Sprites::image($texture, 'down', 0)), position: $at);
         $e->castShadow = $shadow;
         $e->pickable = false;
-        $this->scene->add($e);
+        return $this->scene->add($e);
     }
 
     /**
@@ -459,7 +556,7 @@ final class Stage
         }
     }
 
-    /** Draws faded the things that hide the player on their tile ($px, $pz), the rest as they are (fades()); again only when the player is on another tile. */
+    /** Draws faded the things and the houses that hide the player on their tile ($px, $pz), the rest as they are (fades(), hides()); again only when the player is on another tile. */
     private function fade(int $px, int $pz): void
     {
         if ($this->fadedFor === "$px,$pz") {
@@ -475,6 +572,14 @@ final class Stage
                 $e = $this->stood[$kind][$i];
                 $e->setInstances($transforms);
                 $e->scale = $transforms === [] ? new Vec3(0.0, 0.0, 0.0) : new Vec3(1.0, 1.0, 1.0);
+            }
+        }
+        foreach ($this->houses as [$box, $drawn]) {
+            $faded = self::hides($box, $px, $pz);
+            foreach ($drawn as [$e, $texture]) {
+                if ($e !== null) {
+                    $e->material->texture = Sprites::image($texture, 'down', 0, faded: $faded);
+                }
             }
         }
     }
@@ -494,22 +599,23 @@ final class Stage
         return $e;
     }
 
-    /** A quad the size a sprite is written (stretch() taller), upright, its bottom's middle at the origin, facing +z. */
-    private static function upright(string $sprite): Mesh
+    /** A quad the size a sprite is written ($stretch taller, by default the map's stretch()), upright, its bottom's middle at the origin, facing +z. */
+    public static function upright(string $sprite, ?float $stretch = null): Mesh
     {
         [$w, $h] = Sprites::size($sprite);
-        [$hw, $h] = [$w / 2, $h * self::stretch()];
-        return Voxels::mesh([[[[-$hw, 0.0, 0.0], [$hw, 0.0, 0.0], [$hw, $h, 0.0], [-$hw, $h, 0.0]], [0.0, 0.0, 1.0], self::AS_WRITTEN]]);
+        [$hw, $h] = [$w / 2, $h * ($stretch ?? self::stretch())];
+        return self::mesh([[[[-$hw, 0.0, 0.0], [$hw, 0.0, 0.0], [$hw, $h, 0.0], [-$hw, $h, 0.0]], [0.0, 0.0, 1.0], self::AS_WRITTEN]]);
     }
 
     /** A quad lying a hair over the ground, $w by $d tiles, its middle at the origin. */
-    private static function flat(float $w, float $d): Mesh
+    public static function flat(float $w, float $d): Mesh
     {
         [$hw, $hd] = [$w / 2, $d / 2];
-        return Voxels::mesh([[[[-$hw, 0.01, $hd], [$hw, 0.01, $hd], [$hw, 0.01, -$hd], [-$hw, 0.01, -$hd]], [0.0, 1.0, 0.0], self::AS_WRITTEN]]);
+        return self::mesh([[[[-$hw, 0.01, $hd], [$hw, 0.01, $hd], [$hw, 0.01, -$hd], [-$hw, 0.01, -$hd]], [0.0, 1.0, 0.0], self::AS_WRITTEN]]);
     }
 
-    private static function shadowImage(): Image
+    /** The dithered shadow (shadow()) as MyPHP's Image, made once. */
+    public static function shadowImage(): Image
     {
         return self::$shadow ??= Image::fromPixels(...[...self::SHADOW_PIXELS, self::shadow()])->pixelated();
     }

@@ -226,14 +226,26 @@ $walk = function (Dir $dir) use (&$w): void {
         $w->step(new Controls($dir));
     }
 };
+// where the maps it joins lie, in its places: b east of it, a row higher (a's row 1 is b's row 2); c south, a tile east
+$next = array_map(fn(array $n) => [$n[0]->id, $n[1], $n[2]], $w->neighbours());
+same(['right' => ['b', 3, -1], 'down' => ['c', 1, 3]], $next, 'the maps beside it, where they lie');
 $changes = $w->mapChanges;
 $w->step(new Controls(Dir::Right));
-same(['b', 0, 2, Dir::Right, $changes + 1], [$w->map->id, $w->player->x, $w->player->y, $w->player->dir, $w->mapChanges], 'off the east edge at row 1: the next map\'s west edge, a row lower as the exit says');
+same(['b', 0, 2, Dir::Right, $changes + 1], [$w->map->id, $w->player->toX, $w->player->toY, $w->player->dir, $w->mapChanges], 'off the east edge at row 1: the next map\'s west edge, a row lower as the exit says');
+same([-1, 2, true, true], [$w->player->x, $w->player->y, $w->player->moving, $w->seamless], 'stepping onto it from beside it, across the seam, no fade');
+$finish = function () use (&$w): void {
+    while ($w->player->moving) {
+        $w->step(new Controls());
+    }
+};
+$finish();
+same([0, 2, false], [$w->player->x, $w->player->y, $w->player->moving], 'and on it when the step is done');
 $w->step(new Controls(Dir::Left));
 $w->step(new Controls());
 for ($i = 0; $i <= World::TURN_STEPS; $i++) {
     $w->step(new Controls(Dir::Left));
 }
+$finish();
 same(['a', 2, 1], [$w->map->id, $w->player->x, $w->player->y], 'and back, to where the player left');
 $w->enter('a', 2, 0, Dir::Right);
 $walk(Dir::Right);
@@ -243,16 +255,19 @@ $walk(Dir::Up);
 same(['a', 1, 0], [$w->map->id, $w->player->x, $w->player->y], 'and so it is where the map has no exit');
 $w->enter('a', 1, 2, Dir::Down);
 $w->step(new Controls(Dir::Down));
+$finish();
 same(['c', 0, 0], [$w->map->id, $w->player->x, $w->player->y], 'off the south edge: the next map\'s north edge, a tile to the west as the exit says');
+$w->enter('c', 0, 0, Dir::Down);
+check(!$w->seamless, 'a map entered otherwise (a door, a load) is not across a seam');
 
 // The road east from 招摇之山 leads to 堂庭之山, and on to the foot of 猨翼之山.
 $w = Data::newWorld(1);
 $w->enter('zhaoyao', 19, 6, Dir::Right);
 $w->step(new Controls(Dir::Right));
-same(['tangting', 0, 7], [$w->map->id, $w->player->x, $w->player->y], 'east of 招摇之山 is 堂庭之山');
+same(['tangting', 0, 7], [$w->map->id, $w->player->toX, $w->player->toY], 'east of 招摇之山 is 堂庭之山');
 $w->enter('tangting', 19, 7, Dir::Right);
 $w->step(new Controls(Dir::Right));
-same(['yuanyi', 0, 7], [$w->map->id, $w->player->x, $w->player->y], 'and east of it 猨翼之山');
+same(['yuanyi', 0, 7], [$w->map->id, $w->player->toX, $w->player->toY], 'and east of it 猨翼之山');
 
 // Water: a beast of the water element carries the player over it, and the water holds its own wild beasts.
 $lake = \Shanhai\World\Map::fromArray(['id' => 'lake', 'name' => 'Lake', 'rows' => ['.~~~.', '.....'],

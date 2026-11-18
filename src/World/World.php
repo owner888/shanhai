@@ -65,6 +65,11 @@ final class World
     public ?Screen $battle = null;
     /** won, lost or fled: how the last battle ended. */
     public ?string $lastBattle = null;
+    /**
+     * Whether the last map entered was walked into across an edge (an exit), outdoors, as the classic's routes and
+     * towns join: no fade, the land going on. Else (a door, a cave's mouth, a game loaded, a faint) false.
+     */
+    public bool $seamless = false;
     /** Counts the maps entered, for what draws the world to notice a new one. */
     public int $mapChanges = 0;
 
@@ -229,7 +234,8 @@ final class World
 
     /**
      * The player walks off the map's edge: when the map has an exit that way, and the tile it comes to on the other
-     * map can be walked on, the player is there. False when there is nothing to cross to.
+     * map can be walked on, the player is on the other map, stepping onto that tile from beside it, as across a
+     * seam (seamless). False when there is nothing to cross to.
      */
     private function cross(Dir $dir): bool
     {
@@ -251,7 +257,31 @@ final class World
             return false;
         }
         $this->enter($id, $tx, $ty, $dir);
+        $this->seamless = true;
+        // the step across: from beside the other map's edge onto it, where the player stood on this one
+        [$p->x, $p->y] = [$tx - $dir->dx(), $ty - $dir->dy()];
+        [$p->toX, $p->toY, $p->moving, $p->progress] = [$tx, $ty, true, 0];
         return true;
+    }
+
+    /**
+     * The maps the map joins at its edges (its exits), each where it lies: by the direction walked off it, the map and
+     * where its top left tile is in this map's places (the exit's offset along the edge).
+     * @return array<string, array{0: Map, 1: int, 2: int}>
+     */
+    public function neighbours(): array
+    {
+        $out = [];
+        foreach ($this->map->exits as $dir => [$id, $offset]) {
+            $to = $this->maps[$id] ?? throw new InvalidArgumentException("no map '$id'");
+            $out[$dir] = [$to, ...match ($dir) {
+                'right' => [$this->map->width, -$offset],
+                'left' => [-$to->width, -$offset],
+                'down' => [-$offset, $this->map->height],
+                'up' => [-$offset, -$to->height],
+            }];
+        }
+        return $out;
     }
 
     private function water(Map $map, int $x, int $y): bool
@@ -277,6 +307,7 @@ final class World
     public function enter(string $map, int $x, int $y, Dir $dir, bool $autosave = true): void
     {
         $another = !isset($this->map) || $map !== $this->map->id;
+        $this->seamless = false;
         $this->map = $this->maps[$map] ?? throw new InvalidArgumentException("no map '$map'");
         [$this->player->x, $this->player->y, $this->player->dir] = [$x, $y, $dir];
         [$this->player->moving, $this->player->progress] = [false, 0];

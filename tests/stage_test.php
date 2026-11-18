@@ -44,7 +44,10 @@ $heights = array_count_values(array_map(fn(array $f) => (string)$f[0][0][1], $to
 same([(string)Stage::WALL_TOP => 9, (string)Stage::LOW_WALL_TOP => 2], $heights, 'a room: the two walls before the floor low, the rest full');
 
 // A house's roof: two slopes and two gables over it, the ridge RIDGE over the walls along its length.
-$roof = Stage::roof($map(['....', '.HH.', '.HD.']));
+$houses = Stage::houses($map(['....', '.HH.', '.HD.', '....', 'H...']));
+same([[1, 2, 1, 2], [0, 0, 4, 4]], array_column($houses, 0), 'two houses, each the tiles that touch, the door with them');
+same(4, count($houses[0][1]), 'the first, four tiles');
+$roof = Stage::roof($houses[0][0]);
 same(4, count($roof), 'a house: two slopes, two gables');
 same(Stage::HOUSE_TOP + Stage::RIDGE, max(array_merge(...array_map(fn(array $f) => array_column($f[0], 1), $roof))), 'its ridge over the walls');
 
@@ -52,7 +55,7 @@ same(Stage::HOUSE_TOP + Stage::RIDGE, max(array_merge(...array_map(fn(array $f) 
 foreach (Data::maps() as $m) {
     foreach (['ground' => Stage::ground(...), 'wall' => Stage::blocks($m), 'roof' => null] as $what => $block) {
         $bad = $hidden = 0;
-        foreach ($block === null ? Stage::roof($m) : Stage::faces($m, $block) as [$c, $n]) {
+        foreach ($block === null ? array_merge([], ...array_map(fn(array $h) => Stage::roof($h[0]), Stage::houses($m))) : Stage::faces($m, $block) as [$c, $n]) {
             [$u, $v] = [[$c[1][0] - $c[0][0], $c[1][1] - $c[0][1], $c[1][2] - $c[0][2]], [$c[2][0] - $c[0][0], $c[2][1] - $c[0][1], $c[2][2] - $c[0][2]]];
             $cross = [$u[1] * $v[2] - $u[2] * $v[1], $u[2] * $v[0] - $u[0] * $v[2], $u[0] * $v[1] - $u[1] * $v[0]];
             $bad += $cross[0] * $n[0] + $cross[1] * $n[1] + $cross[2] * $n[2] > 0 ? 0 : 1;
@@ -68,3 +71,8 @@ foreach (Data::maps() as $m) {
         same([0, 0], [$bad, $hidden], "{$m->id}: its $what's faces all face out, and none is hidden against the block beside it");
     }
 }
+
+// A house hides the player behind it, near enough, within its width (it is drawn faded then); not one before it, beside it, or far behind.
+$box = [2, 4, 3, 5];
+check(Stage::hides($box, 3.0, 4.0) && Stage::hides($box, 3.0, 1.0) && Stage::hides($box, 4.0, 5.0), 'a house hides who stands behind it, or in its door');
+check(!Stage::hides($box, 3.0, 7.0) && !Stage::hides($box, 7.0, 3.0) && !Stage::hides($box, 3.0, -9.0), 'not who is before it, beside it, or far behind');

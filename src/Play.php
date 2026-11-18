@@ -57,11 +57,15 @@ final class Play extends Game
      * blur, wholly from, the sigma in points].
      */
     private const TILT = [[0.5, 0.0, 1.0], [0.72, 1.0, 0.8]], TILT_LEVELS = [[0.0, 0.5, 1.5], [0.5, 1.0, 4.0]];
+    /** How many maps' Stages are kept (stageFor()): the map, the two beside it a road joins, and one more. */
+    private const STAGES = 4;
     /** How dark lens() makes the view's corners. */
     private const VIGNETTE = 0.55;
 
     private Canvas $viewport;
     private Stage $stage;
+    /** @var array<string, Stage> the maps' scenes built last, by map id, the newest last: walked back into, one is not built again (STAGES of them) */
+    private array $stages = [];
     /** The scene of the battle going on; null outside one. */
     private ?Arena $arena = null;
     /** The count of maps entered that the Stage was built at: behind the World's while the screen closes on the old map. */
@@ -84,8 +88,9 @@ final class Play extends Game
     public function __construct(public readonly World $world, private readonly array $items)
     {
         $this->viewport = new Canvas(intdiv(self::VIEW_HEIGHT * 16, 9), self::VIEW_HEIGHT);
-        Stage::prepare(); // so that no change of map stops to work out a model
-        $this->stage = new Stage($world);
+        Stage::prepare(); // so that no change of map, nor a battle, stops to draw a sprite
+        Arena::prepare();
+        $this->stage = $this->stageFor();
         $this->seenMap = $world->mapChanges;
         $this->lastPad = new State();
         $this->transition = new ScreenTransition();
@@ -190,13 +195,18 @@ final class Play extends Game
                 $this->cued = $battle->lines; // the lines it opens with tell of nothing to show
                 gc_collect_cycles(); // while the screen is shut, as at the end of a battle (below)
             });
+        } elseif ($battle === null && $this->arena === null && $this->world->mapChanges !== $this->seenMap && $this->world->seamless) {
+            // across a seam to the map beside (an exit): no fade; the new map's Stage, which draws the one left beside it,
+            // the player in the step across, so that the land goes on as it was
+            $this->seenMap = $this->world->mapChanges;
+            $this->stage = $this->stageFor();
         } elseif (($battle === null && $this->arena !== null) || $this->world->mapChanges !== $this->seenMap) {
             // a battle has ended, or the map is another: a fade, the new Stage behind it when it is dark
             $this->transition->start(ScreenTransition::FADE, self::FADE_SECONDS, onMidpoint: function (): void {
                 $this->arena = null;
                 if ($this->world->mapChanges !== $this->seenMap) {
                     $this->seenMap = $this->world->mapChanges;
-                    $this->stage = $this->timed('building the map\'s scene', fn() => new Stage($this->world));
+                    $this->stage = $this->stageFor();
                 }
                 // The scene let go of holds itself (an entity and its children point at each other): PHP frees it only when
                 // it collects cycles, which, left to itself or to MyPHP's MemoryWatch, it does at some moment of play, and the
@@ -272,6 +282,22 @@ final class Play extends Game
         $done = $do();
         $this->spent[$what] = ($this->spent[$what] ?? 0.0) + (hrtime(true) - $started) / 1e6;
         return $done;
+    }
+
+    /**
+     * The Stage of the map the player is on: the one kept from the last time on it, or a new one, kept (the oldest
+     * let go past STAGES), so that walking back and forth across a seam builds nothing.
+     */
+    private function stageFor(): Stage
+    {
+        $id = $this->world->map->id;
+        $stage = $this->stages[$id] ?? $this->timed('building the map\'s scene', fn() => new Stage($this->world));
+        unset($this->stages[$id]);
+        $this->stages[$id] = $stage;
+        if (count($this->stages) > self::STAGES) {
+            array_shift($this->stages);
+        }
+        return $stage;
     }
 
     /**

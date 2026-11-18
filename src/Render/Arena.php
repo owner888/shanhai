@@ -6,29 +6,49 @@ namespace Shanhai\Render;
 use MyPHP\Plugins\Scene\{Animator3D, Camera3D, Entity, Material, Mesh, ParticleEmitter3D, Scene};
 use MyPHP\Plugins\Scene\Math\Vec3;
 use Shanhai\Battle\{Fighter, Screen};
+use Shanhai\World\{Map, Tile};
 
 /**
- * The 3D scene of a battle (MyPHP's Plugins\Scene): a round of ground, the player's beast near and to the left with
- * its back to the camera, the other far and to the right, facing it; the camera does not move. sync() shows the
- * beasts the Screen shows, and none for a side whose beast has fallen. A beast's figure is its model of art/beasts;
- * one that has none yet (docs/art.md says how many do) is a body of its first element's color, a head and a tail.
- * What moves is MyPHP's: each figure has an Animator3D (it breathes, its parts swing as its model says, it lunges
- * with its move, recoils when struck), cue() shakes the camera
- * and bursts a ParticleEmitter3D with what the Screen's line tells of.
+ * The 3D scene of a battle (MyPHP's Plugins\Scene), drawn HD-2D as the maps are (docs/art.md): a meadow (FIELD) of the
+ * maps' grounds and things, the player's beast near and to the left facing right, the other far and to the right
+ * facing left, toward each other; the camera does not move. A beast is its sprite of art/sprites/beasts, seen from the
+ * side, stood upright and not lit, a dithered shadow under it; one that has none yet (docs/art.md says how many do)
+ * is the placeholder, in its first element's color. sync() shows the beasts the Screen shows, and none for a side
+ * whose beast has fallen. What moves is MyPHP's: each figure has an Animator3D (it breathes, it lunges with its move,
+ * recoils when struck), cue() shakes the camera and bursts a ParticleEmitter3D with what the Screen's line tells of.
  */
 final class Arena
 {
-    /** A figure's color by its beast's first element. */
+    /** The placeholder's color by its beast's first element. */
     public const ELEMENTS = [
-        'wood' => [0.30, 0.62, 0.32, 1.0],
-        'fire' => [0.85, 0.33, 0.20, 1.0],
-        'earth' => [0.70, 0.56, 0.30, 1.0],
-        'metal' => [0.78, 0.78, 0.82, 1.0],
-        'water' => [0.25, 0.48, 0.80, 1.0],
+        'wood' => '#4f9e52',
+        'fire' => '#d8543a',
+        'earth' => '#b48e4c',
+        'metal' => '#c8c8d0',
+        'water' => '#4078c8',
     ];
-    private const GROUND = [0.45, 0.66, 0.42, 1.0];
-    /** Where each side's beast stands, and the turn about the vertical axis that faces it to the other. */
-    private const PLACE = [[-1.6, 1.4, M_PI * 0.75], [1.6, -1.4, -M_PI * 0.25]];
+    /**
+     * Where the battle is fought: a meadow as a map's rows (Tile's characters), the beasts in its middle, trees and
+     * rocks round its back and sides, tall grass here and there; its middle the scene's origin.
+     */
+    public const FIELD = [
+        'TTTTTTTTTTTTTTTT',
+        'TTT.TTTT.TTT.TTT',
+        'T.TT.T..TT.TT.TT',
+        '.T^..T...T..^.T.',
+        '..,,........,,..',
+        '................',
+        '.,..............',
+        '..............,.',
+        '................',
+        '^.............,^',
+        '..,,..........,,',
+        '................',
+    ];
+    /** Where each side's beast stands, x and z, and the way it faces (toward the other). */
+    private const PLACE = [[-2.2, 1.6, 'right'], [2.2, -1.2, 'left']];
+    /** The camera: where it stands and what it looks at; a sprite stands taller by its slant, as on the maps (Stage::stretch). */
+    private const CAMERA = [0.0, 3.4, 8.6], LOOK = [0.0, 0.8, 0.0];
 
     /** Seconds after a move's lunge begins that it lands: when the one struck recoils. */
     private const LANDS = 0.2;
@@ -52,17 +72,14 @@ final class Arena
     public function __construct(Screen $s, \Closure $onStruck)
     {
         $this->onStruck = $onStruck;
-        $this->scene = new Scene(new Camera3D(fovYDegrees: 40.0));
+        $this->scene = new Scene(new Camera3D(fovYDegrees: Stage::CAMERA_FOV));
         $this->scene->clearColor = [0.62, 0.78, 0.90, 1.0];
         $this->scene->shadowsEnabled = true;
-        $this->scene->shadowBounds = 8.0;
+        $this->scene->shadowBounds = 12.0;
         $this->scene->addSkyDome();
-        $this->scene->camera->position = new Vec3(-3.2, 3.0, 6.0);
-        $this->scene->camera->target = new Vec3(0.2, 0.5, 0.0);
-        $ground = new Entity(Mesh::cylinder(5.0, 5.0, 0.2, 40), new Material(self::GROUND, shininess: 4.0), position: new Vec3(0.0, -0.1, 0.0));
-        $ground->castShadow = false;
-        $ground->pickable = false;
-        $this->scene->add($ground);
+        $this->scene->camera->position = new Vec3(...self::CAMERA);
+        $this->scene->camera->target = new Vec3(...self::LOOK);
+        $this->field();
         $this->sparks = $this->scene->addEmitter(new ParticleEmitter3D(Mesh::cube(0.12)));
         $this->sync($s);
     }
@@ -82,17 +99,12 @@ final class Arena
                 [$this->figures[$side], $this->animators[$side]] = [null, null];
             }
             if ($which !== null) {
-                [$x, $z, $turn] = self::PLACE[$side];
-                [$e, $y, $limbs] = self::figure($s->battle->parties[$side][$which]);
-                $e->position = new Vec3($x, $y, $z);
-                $e->rotation->y = $turn;
+                [$x, $z, $facing] = self::PLACE[$side];
+                $e = self::figure($s->battle->parties[$side][$which], $facing);
+                $e->position = new Vec3($x, 0.0, $z);
                 $this->figures[$side] = $this->scene->add($e);
                 // made once the figure stands where it will: the animator moves it about that place
-                $animator = $this->scene->addAnimator(new Animator3D($e));
-                foreach ($limbs as [$limb, $axis, $amplitude, $frequency]) {
-                    $animator->addLimb($limb, axis: $axis, amplitude: $amplitude, frequency: $frequency);
-                }
-                $this->animators[$side] = $animator->play(Animator3D::IDLE);
+                $this->animators[$side] = $this->scene->addAnimator(new Animator3D($e))->play(Animator3D::IDLE);
             }
             $this->drawn[$side] = $which;
         }
@@ -165,38 +177,83 @@ final class Arena
         return new Vec3(self::PLACE[$side][0], 0.6, self::PLACE[$side][1]);
     }
 
-    /**
-     * A beast's figure, built facing south: its model, its parts swinging as the model says; or, with none yet, a body;
-     * a head, with a snout that shows which way it faces and two eyes that the light does not dim; a tail.
-     * @return array{0: Entity, 1: float, 2: list<array{0: Entity, 1: string, 2: float, 3: float}>} the figure, how high it
-     *     stands (a model from its feet, the placeholder from its middle), and each limb that swings with its axis, amplitude, frequency
-     */
-    private static function figure(Fighter $f): array
+    /** Makes every beast's sprite ahead, both ways, and the placeholder in each element's color: once, as the game starts. */
+    public static function prepare(): void
     {
-        if (Voxels::has("beasts/{$f->id}")) {
-            $model = Voxels::load("beasts/{$f->id}");
-            [$body, $parts] = Voxels::entity("beasts/{$f->id}", name: $f->id);
-            $limbs = [];
-            foreach ($model['parts'] as $part => $p) {
-                if (isset($p['swing'])) {
-                    $limbs[] = [$parts[$part], ...$p['swing']];
-                }
+        foreach (glob(Sprites::DIR . '/beasts/*.php') as $file) {
+            if (basename($file) !== 'placeholder.php') {
+                Sprites::prepare('beasts/' . basename($file, '.php'));
             }
-            return [$body, 0.0, $limbs];
         }
-        $color = self::ELEMENTS[$f->species['elements'][0]];
-        $skin = fn() => new Material($color, shininess: 16.0);
-        $body = new Entity(Mesh::sphere(0.45, 16, 12, $color), $skin(), name: $f->id);
-        $head = new Entity(Mesh::sphere(0.28, 14, 10, $color), $skin(), position: new Vec3(0.0, 0.42, 0.30));
-        $head->addChild(new Entity(Mesh::cube(0.12, $color), $skin(), position: new Vec3(0.0, -0.02, 0.28)));
-        foreach ([-0.11, 0.11] as $x) {
-            $head->addChild(new Entity(Mesh::sphere(0.045, 8, 6), Material::unlit([0.06, 0.06, 0.08, 1.0]), position: new Vec3($x, 0.08, 0.24)));
+        foreach (self::ELEMENTS as $color) {
+            Sprites::prepare('beasts/placeholder', ['c' => $color]);
         }
-        // a cone lying back from the body: stood on end by Mesh::cone, so turned about x to point behind
-        $tail = new Entity(Mesh::cone(0.12, 0.5, 10, $color), $skin(), position: new Vec3(0.0, 0.05, -0.55));
-        $tail->rotation->x = -M_PI / 2;
-        $body->addChild($head);
-        $body->addChild($tail);
-        return [$body, 0.45, [[$head, 'x', 0.10, 2.5], [$tail, 'z', 0.30, 3.0]]];
+    }
+
+    /** How much taller a sprite stands than written, so that the camera's slant shows it as written (Stage::stretch). */
+    public static function stretch(): float
+    {
+        [$dy, $dz] = [self::CAMERA[1] - self::LOOK[1], self::CAMERA[2] - self::LOOK[2]];
+        return hypot($dy, $dz) / $dz;
+    }
+
+    /** The sprite a beast is drawn as, and the colors given it: its own, or the placeholder in its first element's color. @return array{0: string, 1: array<string, string>} */
+    public static function sprite(Fighter $f): array
+    {
+        return Sprites::has("beasts/{$f->id}") ? ["beasts/{$f->id}", []] : ['beasts/placeholder', ['c' => self::ELEMENTS[$f->species['elements'][0]]]];
+    }
+
+    /**
+     * A beast's figure: its sprite upright, facing $facing ('left' or 'right'), the side toward the camera, not lit;
+     * the shadow under it as wide as it is.
+     */
+    private static function figure(Fighter $f, string $facing): Entity
+    {
+        [$sprite, $colors] = self::sprite($f);
+        $e = new Entity(Stage::upright($sprite, self::stretch()), Material::unlit(texture: Sprites::image($sprite, $facing, 0, $colors)), name: $f->id);
+        $e->castShadow = false;
+        $e->pickable = false;
+        [$w] = Sprites::size($sprite);
+        $under = new Entity(Stage::flat($w * 0.9, $w * 0.35), Material::unlit(texture: Stage::shadowImage()));
+        $under->castShadow = false;
+        $under->pickable = false;
+        $e->addChild($under);
+        return $e;
+    }
+
+    /** Adds the meadow (FIELD): its ground through its textures, and its things upright, a shadow under each that has one (Stage::THINGS). */
+    private function field(): void
+    {
+        $map = Map::fromArray(['id' => 'field', 'name' => 'field', 'rows' => self::FIELD]);
+        $at = new Vec3(-$map->width / 2 + 0.5, 0.0, -$map->height / 2 + 0.5);
+        foreach (Stage::byTexture($map, Stage::faces($map, Stage::ground(...)), Stage::GROUND) as $texture => $faces) {
+            $e = new Entity(Stage::mesh($faces), new Material(shininess: 8.0, texture: Sprites::image("ground/$texture", 'down', 0)), position: $at);
+            $e->castShadow = false;
+            $e->pickable = false;
+            $this->scene->add($e);
+        }
+        for ($y = 0; $y < $map->height; $y++) {
+            for ($x = 0; $x < $map->width; $x++) {
+                $kind = Tile::name($map->tile($x, $y));
+                if (!isset(Stage::THINGS[$kind])) {
+                    continue;
+                }
+                [$sprite, $before, $off, $shadow] = Stage::THINGS[$kind];
+                // off the tile's middle as on the maps, so that a wood is not a grid, and trees side by side one before the other
+                $sx = $x + $off * (2.0 * Sprites::noise($x, $y, 'stand') - 1.0);
+                $sz = $y + $before - ($off > 0.0 && $x % 2 !== 0 ? 0.04 : 0.0);
+                $place = new Vec3($sx + $at->x, 0.0, $sz + $at->z);
+                $thing = new Entity(Stage::upright($sprite, self::stretch()), Material::unlit(texture: Sprites::image($sprite, 'down', 0)), position: $place);
+                $thing->castShadow = false;
+                $thing->pickable = false;
+                if ($shadow !== null) {
+                    $under = new Entity(Stage::flat(...$shadow), Material::unlit(texture: Stage::shadowImage()), position: new Vec3(0.0, 0.0, -$before));
+                    $under->castShadow = false;
+                    $under->pickable = false;
+                    $thing->addChild($under);
+                }
+                $this->scene->add($thing);
+            }
+        }
     }
 }

@@ -9,6 +9,7 @@ use MyPHP\UI\Image;
  * The pixel sprites of art/sprites/: HD-2D's figures (docs/art.md), drawn flat in pixels and stood up in the 3D scene.
  *
  * A sprite is a PHP file that returns
+ *   looks    a beast's: the passage of its entry it is drawn from (data/beasts.php's looks), word for word
  *   size     [width, height] in pixels, Sprites::PER_TILE to a tile
  *   colors   a character => '#rrggbb', or null for a color given when it is drawn (a person's robe by their look)
  *   shades   a character => [another character, a factor]: that one's color made lighter or darker (a robe in shade)
@@ -17,17 +18,18 @@ use MyPHP\UI\Image;
  *   round    true for a figure drawn round (a person): shaded across as a body is, lit from the left (round())
  *   views    a way it faces ('down', 'up', 'left') => its frames, standing first, then the steps of a walk;
  *            a frame is its rows, top first, a character a pixel, '.' empty. A thing that never turns (a tree,
- *            a ground's texture) has only 'down', and one frame.
+ *            a ground's texture) has only 'down', and one frame; a beast, seen from the side in battle, only
+ *            'left', and one frame: facing right it is turned over.
  * Facing right is facing left turned over. What is wrong with one throws where it is read.
  * A sprite's rows may be written by hand or painted by code in its file, with the helpers here (blank(), blob(),
- * noise()), as Voxels::ball writes a model's boxes: the same each time, so it is still the file that says what it is.
+ * noise()): the same each time, so it is still the file that says what it is.
  *
  * rgba() is PHP alone, so the tests read every sprite with no window; image() makes MyPHP's Image of a frame,
  * pixelated, once for each set of colors, and keeps it.
  */
 final class Sprites
 {
-    /** How many pixels make a tile's side, as the voxels' (Voxels::PER_TILE). */
+    /** How many pixels make a tile's side. */
     public const PER_TILE = 32;
     public const DIR = __DIR__ . '/../../art/sprites';
     /** The ways a sprite is written facing; right is left turned over. */
@@ -63,7 +65,7 @@ final class Sprites
     /** How many frames it has a way (a standing one and the walk's). */
     public static function frames(string $name): int
     {
-        return count(self::load($name)['views']['down']);
+        return count(array_values(self::load($name)['views'])[0]);
     }
 
     /** Its size in tiles: [width, height]. @return array{0: float, 1: float} */
@@ -82,7 +84,11 @@ final class Sprites
     {
         $s = self::load($name);
         [$w, $h] = $s['size'];
-        $dir = count($s['views']) === 1 ? 'down' : $dir;
+        $dir = match (array_keys($s['views'])) {
+            ['down'] => 'down',
+            ['left'] => $dir === 'right' ? 'right' : 'left',
+            default => $dir,
+        };
         $rows = $s['views'][$dir === 'right' ? 'left' : $dir][$frame] ?? throw new \OutOfRangeException("$name: no frame $frame facing $dir");
         if ($dir === 'right') {
             $rows = array_map(strrev(...), $rows);
@@ -146,7 +152,7 @@ final class Sprites
     /** Makes every frame of it, every way, ahead: once, as the game starts. @param array<string, string> $colors */
     public static function prepare(string $name, array $colors = []): void
     {
-        foreach (self::turns($name) ? [...self::VIEWS, 'right'] : ['down'] as $dir) {
+        foreach (match (array_keys(self::load($name)['views'])) { ['down'] => ['down'], ['left'] => ['left', 'right'], default => [...self::VIEWS, 'right'] } as $dir) {
             for ($f = 0; $f < self::frames($name); $f++) {
                 self::image($name, $dir, $f, $colors);
             }
@@ -256,9 +262,9 @@ final class Sprites
         array_key_exists('outline', $s) && (is_string($s['outline']) && $hex($s['outline']) || $s['outline'] === null) || $fail('no outline, nor null for none');
         $known = array_merge(['.'], array_map('strval', array_keys($s['colors'])), array_map('strval', array_keys($s['shades'])));
         $ways = array_keys($s['views'] ?? []);
-        $ways === self::VIEWS || $ways === ['down'] || $fail('the views are not ' . implode(', ', self::VIEWS) . ', in that order, nor down alone');
-        $count = count($s['views']['down']);
-        $ways === ['down'] && $count !== 1 && $fail('a thing that never turns has one frame');
+        $ways === self::VIEWS || $ways === ['down'] || $ways === ['left'] || $fail('the views are not ' . implode(', ', self::VIEWS) . ', in that order, nor down or left alone');
+        $count = count($s['views'][$ways[0]]);
+        count($ways) === 1 && $count !== 1 && $fail('a sprite seen one way has one frame');
         foreach ($s['views'] as $dir => $frames) {
             count($frames) === $count || $fail("$dir has " . count($frames) . " frames, down $count");
             foreach ($frames as $f => $rows) {
