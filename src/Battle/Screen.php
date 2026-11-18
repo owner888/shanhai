@@ -33,6 +33,8 @@ final class Screen
     /** text: a line is showing; menu, moves, party, bag, forget: a list is, with $cursor on one of it. */
     public string $phase = 'text';
     public Cursor $cursor;
+    /** Where the battle's menu was left: it opens there again, the next turn, as the classic's does. */
+    private int $menuAt = 0;
     public ?string $line = null;
     /** @var array{0: array{which: int, hp: int, status: ?string, level: int, exp: int}, 1: array} what is shown of each side: which beast, and its hp, status, level and experience */
     public array $shown;
@@ -116,7 +118,7 @@ final class Screen
             $this->open('menu');
         } elseif ($c->confirm) {
             match ($this->phase) {
-                'menu' => $this->chosen(array_keys(self::MENU)[$this->cursor->at]),
+                'menu' => $this->chosen(array_keys(self::MENU)[$this->menuAt = $this->cursor->at]),
                 'moves' => $this->move($this->cursor->at),
                 'party' => $this->send($this->cursor->at),
                 'bag' => $this->use(array_keys($this->bag)[$this->cursor->at]),
@@ -164,9 +166,15 @@ final class Screen
         return $lines;
     }
 
+    /** Shows a list: the menu on where it was left, the moves on the one chosen last for the beast out, the others on their first. */
     private function open(string $phase): void
     {
         [$this->phase, $this->cursor, $this->line, $this->cue] = [$phase, new Cursor(), null, null];
+        $this->cursor->at = match ($phase) {
+            'menu' => $this->menuAt,
+            'moves' => min($this->battle->fighter(0)->lastMove, count($this->battle->fighter(0)->moves) - 1),
+            default => 0,
+        };
     }
 
     private function chosen(string $what): void
@@ -191,6 +199,7 @@ final class Screen
 
     private function move(int $which): void
     {
+        $this->battle->fighter(0)->lastMove = $which;
         if ($this->battle->fighter(0)->moves[$which]['pp'] === 0) {
             $this->say('这个招式已经用不了了。');
             $this->next();

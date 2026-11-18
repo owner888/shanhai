@@ -24,6 +24,11 @@ final class Fighter
     public array $stats;
     /** @var list<array{id: string, pp: int}> */
     public array $moves = [];
+    /**
+     * Which of its moves was chosen for it last (Screen): the list of moves opens on it, as the classic's does, the
+     * next turn and the next battle. Not kept in a save: a game loaded opens on the first.
+     */
+    public int $lastMove = 0;
     /** poison, burn, paralyze or sleep; one at a time */
     public ?string $status = null;
     /** How close it is to the player (docs/numbers.md 25), 0 to Formulas::BOND_MAX. */

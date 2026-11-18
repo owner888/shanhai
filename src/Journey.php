@@ -895,6 +895,9 @@ final class Journey
                 // outmatched: it is called back for the strongest, and both will have fought
                 $this->relieved = $s;
                 $this->cursorTo(array_search('party', $keys, true), fn() => $s->cursor->at);
+            } else {
+                // the menu opens where it was left (Screen): to fight is to go back to it
+                $this->cursorTo(0, fn() => $s->cursor->at);
             }
         } elseif ($s->phase === 'moves') {
             $pick = $binds ? $gentle : null;

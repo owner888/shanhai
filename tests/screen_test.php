@@ -56,7 +56,10 @@ $s->step($confirm);
 same(['text', '鹿蜀已经在场上了。'], [$s->phase, $s->line], 'the beast that is out cannot be sent');
 $s->step($confirm);
 same('menu', $s->phase, 'and the menu is back');
+same(1, $s->cursor->at, 'on the entry it was left on, as the classic\'s');
 same(0, $s->battle->turns, 'no turn was taken');
+$s->step($up);
+$s->step($none);
 
 // Cancel leaves a list for the menu.
 $s->step($confirm);
@@ -160,7 +163,7 @@ for ($seed = 1; $seed <= 150; $seed++) {
         } elseif ($any(3) === 0) {
             $s->step($any(8) === 0 ? $cancel : $confirm);
         } else {
-            $s->step($any(2) === 0 ? $down : $none);
+            $s->step([$down, $up, $none, $none][$any(4)]); // up as well as down: a menu opens where it was left
         }
     }
     check($s->done, "battle $seed comes to an end");
@@ -335,7 +338,7 @@ foreach ($open as $c) {
 same(['bag', ['玉  ×1', '契印  ×2  成功率 25%']], [$s->phase, $s->items()], 'the bag\'s list; beside the seal, how likely it is to bind: 64 bytes of 256');
 $s->step($confirm);
 same(['玉在这里用不上。', ['jade' => 1, 'seal' => 2], 0], [$s->line, $bag, $s->battle->turns], 'a thing of no use in battle is not used');
-foreach ([$confirm, $none, $down, $none, $down, $confirm, $none, $down, $confirm] as $c) { // back to the menu; the bag; its second
+foreach ([$confirm, $confirm, $none, $down, $confirm] as $c) { // back to the menu, on the bag where it was left; the bag; its second
     $s->step($c);
 }
 same(['使用了契印！', ['jade' => 1, 'seal' => 1]], [$s->line, $bag], 'a seal is used: one fewer in the bag');
@@ -397,13 +400,14 @@ same(['队伍和兽栏的第三栏都满了，没法再结契。', ['seal' => 1]
 
 // Experience (docs/numbers.md 7.1, 7.3). 鹿蜀 at level 5 has 135; a 狌狌 of level 4 (base experience 81) gives 81 × 4 ÷ 7 = 46,
 // which makes 181: level 6 begins at 179. Its hp at most goes from 23 to 26, and at level 6 it learns 歌谣.
-$win = function (Screen $s) use ($confirm, $none): array {
+$win = function (Screen $s) use ($confirm, $none, $up): array {
     $lines = [];
     for ($i = 0; !$s->done && $s->phase !== 'forget' && $i < 4000; $i++) {
         if ($s->phase === 'text' && $i % 2 === 0) {
             $lines[] = [$s->line, $s->shown[0]['hp']];
         }
-        $s->step($i % 2 === 0 ? $confirm : $none); // every list's first entry: the first move
+        // every list's first entry: the first move (up to it, as a list opens where it was left)
+        $s->step($i % 2 === 1 ? $none : ($s->phase !== 'text' && $s->cursor->at > 0 ? $up : $confirm));
     }
     return $lines;
 };
@@ -520,13 +524,13 @@ foreach ([$confirm, $confirm, $down, $none, $down, $none, $down, $confirm] as $c
     $w->step($c);
 }
 same(['试炼不能逃！', 0], [$s->line, $s->battle->turns], 'a trial cannot be fled, and trying takes no turn');
-foreach ([$confirm, $none, $down, $none, $down, $confirm, $confirm] as $c) { // the menu's third entry; the bag's seal
+foreach ([$confirm, $none, $up, $confirm, $confirm] as $c) { // the menu, on its last entry where it was left; its third; the bag's seal
     $w->step($c);
 }
 same(['试炼中的异兽不能结契。', ['seal' => 1], 0], [$s->line, $w->items, $s->battle->turns], 'nor its beasts bound: the seal is kept');
 $before = $w->party[0]->exp;
 $lines = [];
-foreach ([$confirm, $confirm, $confirm] as $c) { // the menu's first entry; the first move
+foreach ([$confirm, $none, $up, $none, $up, $confirm, $confirm] as $c) { // the menu, on its third entry where it was left; its first; the first move
     $w->step($c);
 }
 while ($s->phase === 'text' && !$s->done) {
@@ -549,11 +553,8 @@ foreach ([$down, $confirm, $none, $down, $confirm] as $c) { // the menu's second
 $used = array_keys(array_filter(array_column($theirs->moves, 'pp'), fn(int $pp, int $i) => $pp < $uses[$i], ARRAY_FILTER_USE_BOTH));
 same([1, 1], [$s->battle->active[0], count($used)], 'in a turn the god uses one move');
 for ($i = 0; $w->battle !== null && $i < 4000; $i++) {
-    if ($s->phase === 'party') {
-        $w->step($i % 2 === 0 ? $confirm : $none); // 鹿蜀 again, when 旋龟 falls
-    } else {
-        $w->step($i % 2 === 0 ? $confirm : $none);
-    }
+    // the first entry of each list (鹿蜀 again, when 旋龟 falls; the first move): up to it, as a list opens where it was left
+    $w->step($i % 2 === 1 ? $none : ($s->phase !== 'text' && $s->cursor->at > 0 ? $up : $confirm));
     if ($w->battle !== null && $s->phase === 'text') {
         $lines[] = $s->line;
     }
@@ -684,12 +685,12 @@ same(['给鹿蜀用了祝余。', 30, ['zhuyu' => 1, 'jibai' => 1], 1], [$s->lin
 while ($s->phase === 'text') {
     $s->step($confirm);
 }
-foreach ([$down, $none, $down, $none, $confirm, $down, $none, $confirm, $confirm] as $c) { // the bag; its second; the first beast
+foreach ([$confirm, $down, $none, $confirm, $confirm] as $c) { // the bag, where the menu was left; its second; the first beast
     $s->step($c);
 }
 same(['用了也没有效果。', ['zhuyu' => 1, 'jibai' => 1], 1], [$s->line, $bag, $s->battle->turns], 'what would do nothing is not used, and no turn is spent');
 $rng->more([0]);
-foreach ([$confirm, $down, $none, $down, $none, $confirm, $down, $none, $confirm, $down, $none, $confirm] as $c) { // the bag; its second; the second beast
+foreach ([$confirm, $confirm, $down, $none, $confirm, $down, $none, $confirm] as $c) { // the bag, where the menu was left; its second; the second beast
     $s->step($c);
 }
 same(['给旋龟用了葪柏。', intdiv($fallen->maxHp, 2), ['zhuyu' => 1]], [$s->line, $fallen->hp, $bag], 'one that has fallen is stood up with half its hp');
@@ -860,3 +861,30 @@ for ($i = 0; $s->battle->active[1] === 0 && $i < 60; $i++) {
     $w->step($i % 2 === 0 ? $confirm : $none);
 }
 same(['fire', 2, 'xuangui'], [$w->party[0]->species['elements'][0], $s->battle->active[1], $s->battle->fighter(1)->id], 'the third, not the second');
+
+// The lists open where they were left, as the classic's do: the menu on the entry chosen last in this battle, the
+// moves on the move chosen last for the beast, the next turn and the next battle.
+$mine = $fighter('lushu', 30);
+same(true, count($mine->moves) >= 2, '鹿蜀 at level 30 knows two moves at least');
+$s = $screen([$mine], ['xingxing', 30], Rng::seeded(21));
+$toMenu = function (Screen $s) use ($confirm): void {
+    while ($s->phase === 'text' && !$s->done) {
+        $s->step($confirm);
+    }
+};
+$toMenu($s);
+same(['menu', 0], [$s->phase, $s->cursor->at], 'the first menu opens on its first entry');
+$s->step($confirm);
+same(['moves', 0], [$s->phase, $s->cursor->at], 'and the moves, the first time, on the first');
+foreach ([$down, $none, $confirm] as $c) {
+    $s->step($c);
+}
+same(1, $mine->lastMove, 'the second chosen, it is kept for the beast');
+$toMenu($s);
+same(0, $s->cursor->at, 'the menu opens on fighting, chosen last');
+$s->step($confirm);
+same(['moves', 1], [$s->phase, $s->cursor->at], 'the moves on the second, the next turn');
+$again = $screen([$mine], ['xingxing', 30], Rng::seeded(22));
+$toMenu($again);
+$again->step($confirm);
+same(1, $again->cursor->at, 'and the next battle');

@@ -533,6 +533,9 @@ final class Stage
      */
     private function things(string $kind, array $at): void
     {
+        if ($at === []) {
+            return; // none of them (a map with no signs)
+        }
         [$sprite, $before, $off, $shadow] = self::THINGS[$kind];
         foreach ($at as [$x, $y]) {
             $sx = $x + $off * (2.0 * Sprites::noise($x, $y, 'stand') - 1.0);
