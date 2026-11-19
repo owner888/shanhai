@@ -228,6 +228,42 @@ final class Ui
         }
     }
 
+    /**
+     * A beast's page (the menu's details): a panel in the middle of the view, its sprite on the left, drawn whole in
+     * pixels; on the right, its first line (what it is and how it stands) over its hp as a bar, then the others.
+     * @param list<string> $lines Menu::detail's
+     */
+    public function sheet(array $r, array $lines, ?Image $picture, float $hp): void
+    {
+        [$w, $h] = [min(860.0, $r[2] - 2 * self::MARGIN), 360.0];
+        [$x, $y] = [$r[0] + ($r[2] - $w) / 2, $r[1] + ($r[3] - $h) / 2 - 20];
+        $this->panel([$x, $y, $w, $h]);
+        $side = 260.0; // the sprite's part
+        if ($picture !== null) {
+            [$pw, $ph] = $picture->size();
+            $s = max(1.0, floor(min(($side - 2 * Text::BOX_PADDING) / $pw, ($h - 2 * Text::BOX_PADDING) / $ph)));
+            $this->p->image($picture, [$x + ($side - $pw * $s) / 2, $y + ($h - $ph * $s) / 2, $pw * $s, $ph * $s], Node::FILL_BOX);
+        }
+        $this->p->fillGradient([$x + $side, $y + 16, 1.0, $h - 32], new LinearGradient(stops: [new GradientStop(self::GOLD, 0.0, 0.0), new GradientStop(self::GOLD, 0.5, 0.7), new GradientStop(self::GOLD, 1.0, 0.0)]));
+        $left = $x + $side + Text::BOX_PADDING;
+        $width = $x + $w - Text::BOX_PADDING - $left;
+        $columns = intdiv((int)($width * 2), (int)self::SMALL);
+        $ty = $y + Text::BOX_PADDING + 4;
+        foreach ($lines as $i => $line) {
+            if ($i === 0) {
+                $this->write($left, $ty, $line, Text::SIZE);
+                $this->bar([$left, $ty + Text::SIZE + 12, $width, 6.0], $hp);
+                $ty += Text::SIZE + 36;
+                continue;
+            }
+            foreach (Text::wrap($line, $columns) as $part) {
+                $this->write($left, $ty, $part, self::SMALL, self::INK_DIM);
+                $ty += self::SMALL * self::DIALOG_LINE;
+            }
+            $ty += 8;
+        }
+    }
+
     /** How high the dialog box stands, with the room under it: a list asked over it is lifted this much. */
     public static function dialogHeight(): float
     {

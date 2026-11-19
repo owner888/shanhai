@@ -14,7 +14,7 @@ final class Menu
 {
     public const ENTRIES = ['party' => '异兽', 'hold' => '携带', 'bag' => '背包', 'detail' => '详情', 'dex' => '图鉴', 'save' => '存档'];
 
-    /** top, party, detail (the party, to look at one), dex (the record of beasts), bag, hold (the party, each with what it holds), give (the things of the bag a beast can hold), use (the party, to use a thing of the bag on one), slots (the saves, to save to one) or overwrite (asked whether to write over the one chosen) */
+    /** top, party, detail (the party, to look at one), sheet (one beast's page, Menu::detail, the cursor's; up and down go through the party), dex (the record of beasts), bag, hold (the party, each with what it holds), give (the things of the bag a beast can hold), use (the party, to use a thing of the bag on one), slots (the saves, to save to one) or overwrite (asked whether to write over the one chosen) */
     public string $phase = 'top';
     public Cursor $cursor;
     public ?PartyMenu $party = null;
@@ -91,6 +91,11 @@ final class Menu
             }
         } elseif ($c->menu) {
             $this->done = true;
+        } elseif ($this->phase === 'sheet') {
+            // a beast's page: up and down to the one before or after; confirm or cancel back to the list, on it
+            if (!$this->cursor->move($c, max(1, count($party))) && ($c->confirm || $c->cancel)) {
+                $this->phase = 'detail';
+            }
         } elseif ($this->phase === 'party') {
             $this->party->step($c, $party);
             if ($this->party->done) {
@@ -123,8 +128,7 @@ final class Menu
             $party[$this->holder]->item = $id;
             [$this->phase, $this->cursor] = ['hold', new Cursor()];
         } elseif ($c->confirm && $this->phase === 'detail') {
-            $this->more = self::detail($party[$this->cursor->at], $book);
-            $this->note = array_shift($this->more);
+            $this->phase = 'sheet';
         } elseif ($c->confirm && $this->phase === 'dex') {
             $this->more = $dex->entry($book['beasts'], $book['elements'], $this->cursor->at) ?? ['还没有见过。'];
             $this->note = array_shift($this->more);
@@ -194,7 +198,7 @@ final class Menu
     {
         return match ($this->phase) {
             'top' => array_map(fn(string $key) => self::ENTRIES[$key], $this->entries($party, $bag, $table, $dex)),
-            'detail' => array_map(PartyMenu::line(...), $party),
+            'detail', 'sheet' => array_map(PartyMenu::line(...), $party),
             'dex' => $dex->lines($beasts),
             'party' => $this->party->items($party),
             'hold' => array_map(fn(Fighter $f) => $f->species['name'] . '  Lv' . $f->level . '  ' . ($f->item === null ? '（空手）' : '持：' . $table[$f->item]['name']), $party),

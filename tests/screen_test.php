@@ -745,15 +745,15 @@ same(['异兽', '背包', '详情', '图鉴'], $list(), 'with a kind seen, the m
 foreach ([$down, $none, $down, $none, $confirm, $confirm] as $c) {
     $d->step($c);
 }
-same(sprintf('鹿蜀（牡）  Lv5  %s  体力 %d/%d', $book['elements'][$f->species['elements'][0]]['name'], $f->hp, $f->maxHp), $d->menu->note, 'the look at a beast: what it is and how it stands');
-$shown = [];
-for ($i = 0; $i < 6 && $d->menu->note !== null; $i++) {
-    $shown[] = $d->menu->note;
-    $d->step($confirm);
-}
-same(5, count($shown), 'five screenfuls');
+same(['sheet', null, 0], [$d->menu->phase, $d->menu->note, $d->menu->at()], 'confirm opens the beast\'s page, on the one the cursor was on');
+$shown = \Shanhai\World\Menu::detail($f, $book);
+same(sprintf('鹿蜀（牡）  Lv5  %s  体力 %d/%d', $book['elements'][$f->species['elements'][0]]['name'], $f->hp, $f->maxHp), $shown[0], 'the page: what it is and how it stands');
+same(5, count($shown), 'five lines');
 check(str_starts_with($shown[1], '攻击 ' . $f->stats['atk'] . '  防御 ') && str_contains($shown[2], '到下一级还差 ') && str_ends_with($shown[2], '空手') && str_starts_with($shown[3], '招式：'), 'its stats; its experience and what it holds; its moves');
 same('天分：' . Formulas::talent($f->state()['dvs']) . '  和你：还生分', $shown[4], 'and the words for its individual values and for its bond, which begins at 70');
+$d->step($confirm);
+same('detail', $d->menu->phase, 'confirm goes back to the list');
+$d->step($none);
 same(['万里挑一', '出众', '出众', '寻常', '寻常', '平平'], array_map(fn(int $each) => Formulas::talent(['atk' => $each, 'def' => $each, 'spe' => $each, 'spc' => $each]), [12, 11, 10, 9, 6, 5]), 'the words go by what the four add up to: 48, 38 and 23 and over');
 foreach ([$cancel, $down, $none, $down, $none, $down, $none, $confirm] as $c) { // back to the first list; the record, its fourth
     $d->step($c);

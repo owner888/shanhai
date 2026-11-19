@@ -8,13 +8,7 @@ declare(strict_types=1);
 use Shanhai\Render\Sprites;
 
 $rows = Sprites::blank(64, 48);
-$line = function (array &$rows, array $from, array $to, float $r, string $ramp): void {
-    $steps = (int)ceil(hypot($to[0] - $from[0], $to[1] - $from[1]));
-    for ($i = 0; $i <= $steps; $i++) {
-        $t = $steps === 0 ? 0.0 : $i / $steps;
-        Sprites::blob($rows, $from[0] + ($to[0] - $from[0]) * $t, $from[1] + ($to[1] - $from[1]) * $t, $r, $r, $ramp);
-    }
-};
+$line = fn(array &$rows, array $from, array $to, float $r, string $ramp) => Sprites::limb($rows, $from, $to, $r, $r, $ramp);
 // the far legs, in shade, behind all
 $line($rows, [24, 28], [22, 44], 1.6, 'aabb');
 $line($rows, [44, 28], [46, 44], 1.6, 'aabb');

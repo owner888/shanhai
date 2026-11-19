@@ -428,6 +428,12 @@ final class Play extends Game
             return;
         }
         $party = $this->world->party;
+        if ($menu->phase === 'sheet' && ($f = $party[$menu->at()] ?? null) !== null) {
+            [$sprite, $colors] = Arena::sprite($f);
+            $book = ['elements' => $this->elements ??= Data::elements(), 'items' => $this->items, 'moves' => $this->moves ??= Data::moves()];
+            $this->ui->sheet($r, \Shanhai\World\Menu::detail($f, $book), Sprites::image($sprite, 'left', 0, $colors), $f->hp / max(1, $f->maxHp));
+            return;
+        }
         if (in_array($menu->phase, ['party', 'detail', 'use'], true) && $party !== []) {
             $ui->party($r, $party, $menu->at(), $menu->phase === 'party' ? $menu->party->picked : null);
             return;

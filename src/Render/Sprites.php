@@ -22,7 +22,7 @@ use MyPHP\UI\Image;
  *            'left', and one frame: facing right it is turned over.
  * Facing right is facing left turned over. What is wrong with one throws where it is read.
  * A sprite's rows may be written by hand or painted by code in its file, with the helpers here (blank(), blob(),
- * noise()): the same each time, so it is still the file that says what it is.
+ * limb(), dots(), pattern(), noise()): the same each time, so it is still the file that says what it is.
  *
  * rgba() is PHP alone, so the tests read every sprite with no window; image() makes MyPHP's Image of a frame,
  * pixelated, once for each set of colors, and keeps it.
@@ -225,6 +225,53 @@ final class Sprites
             }
         }
         return $out;
+    }
+
+    /**
+     * Paints a limb, a neck or a tail: blob()s along the line from $from to $to, their radius going from $r0 to $r1,
+     * so that it tapers; shaded as blob()'s. Over what was painted before.
+     * @param list<string> $rows
+     * @param array{0: float, 1: float} $from
+     * @param array{0: float, 1: float} $to
+     */
+    public static function limb(array &$rows, array $from, array $to, float $r0, float $r1, string $ramp): void
+    {
+        $steps = max(1, (int)ceil(hypot($to[0] - $from[0], $to[1] - $from[1]) * 2));
+        for ($i = 0; $i <= $steps; $i++) {
+            $t = $i / $steps;
+            $r = $r0 + ($r1 - $r0) * $t;
+            self::blob($rows, $from[0] + ($to[0] - $from[0]) * $t, $from[1] + ($to[1] - $from[1]) * $t, $r, $r, $ramp);
+        }
+    }
+
+    /**
+     * Paints $char at each of $at, [x, y] (an eye, a horn's tip, a crack); those off the sprite left alone.
+     * @param list<string> $rows
+     * @param list<array{0: int, 1: int}> $at
+     */
+    public static function dots(array &$rows, array $at, string $char): void
+    {
+        foreach ($at as [$x, $y]) {
+            if ($y >= 0 && $y < count($rows) && $x >= 0 && $x < strlen($rows[0])) {
+                $rows[$y][$x] = $char;
+            }
+        }
+    }
+
+    /**
+     * Paints $char over the pixels of $on (characters) where $where(x, y) holds: stripes, spots, a pattern on a hide.
+     * @param list<string> $rows
+     * @param \Closure(int, int): bool $where
+     */
+    public static function pattern(array &$rows, string $on, string $char, \Closure $where): void
+    {
+        foreach ($rows as $y => $row) {
+            for ($x = 0; $x < strlen($row); $x++) {
+                if (str_contains($on, $row[$x]) && $where($x, $y)) {
+                    $rows[$y][$x] = $char;
+                }
+            }
+        }
     }
 
     /** A number from 0 to 1 by a place and a seed, the same each time: a sprite's or a texture's scatter. */

@@ -175,5 +175,5 @@ $r = Sprites::rgba('beasts/lushu', 'right', 0);
 $pixel = fn(string $rgba, int $w, int $x, int $y) => array_values(unpack('C4', substr($rgba, ($y * $w + $x) * 4, 4)));
 same($pixel($l, $w, 3, 12), $pixel($r, $w, $w - 4, 12), 'a beast facing right is the left turned over');
 same(['beasts/lushu', []], \Shanhai\Render\Arena::sprite(new \Shanhai\Battle\Fighter('lushu', $beastsData['lushu'], 5, [], [])), '鹿蜀 is its own sprite');
-$other = array_key_first(array_filter($beastsData, fn(array $b, string $id) => $id !== 'lushu', ARRAY_FILTER_USE_BOTH));
+$other = array_key_first(array_filter($beastsData, fn(array $b, string $id) => !Sprites::has("beasts/$id"), ARRAY_FILTER_USE_BOTH));
 same(['beasts/placeholder', ['c' => \Shanhai\Render\Arena::ELEMENTS[$beastsData[$other]['elements'][0]]]], \Shanhai\Render\Arena::sprite(new \Shanhai\Battle\Fighter($other, $beastsData[$other], 5, [], [])), 'one with none, the placeholder in its element\'s color');
