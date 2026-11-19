@@ -78,6 +78,7 @@ src/Render/Arena.php  a battle's 3D scene, drawn as the maps: a meadow, the two 
                    and particles for what the Screen's cue tells of; a camera that does not otherwise move
 src/Render/Ui.php  the UI's pieces, every box, list, bar and line of text over the view (HD-2D's, docs/art.md); Play says what shows and draws none of it itself (a test holds it)
 src/Info.php       what the box beside a list says of its entry: a move, a thing
+src/Bestiary.php   the record of every beast as a page to read outside the game, docs/bestiary.html, made by tools/bestiary.php from tools/bestiary.html (a test says when it is behind)
 src/Render/Sprites.php the pixel sprites of art/sprites/ (HD-2D: rows of characters, a pixel each, by hand or painted by code, outlined by code) read, checked and made Images; the format is its doc comment
 art/sprites/       the pixel sprites: people/, things/ (what a map stands on its tiles), ground/ (a tile's texture each kind of ground), beasts/ (seen from the side, each from its `looks`, carried in the file; the placeholder)
 src/Play.php       MyPHP's Game: keys and gamepad into Controls, World::step, draws the Stage and the dialog box,

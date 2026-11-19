@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>山海驭兽录 异兽名录</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;800&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE work: a catalogue to scan, filter and check progress against
+   IDEA the game's own bestiary ledger, kept by mountain range like the classic's chapters
+   PICTURE a grid of every beast, one cell each, grouped in rows by range, filled where the sprite is drawn
+   COLOUR white ground, ink, 石绿 green leads, 石青 blue supports, 朱砂 red marks rarity
+   TYPE Noto Serif SC for names and titles + Noto Sans SC for text
+   LAYOUT title and four figures across the top, the grid full width beneath, then filters and the table; one column on a phone */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#0e1513);--ink:light-dark(#18211d,#e4ebe7);--mute:light-dark(#5d6a64,#9aa8a1);--rule:light-dark(#dde3df,#26322d);--panel:light-dark(#f2f6f3,#15201c);--green:light-dark(#2f7d5b,#5fb48a);--blue:light-dark(#2b5a8a,#7aa6d6);--red:light-dark(#c23b22,#ef7a5f);--band:light-dark(#2f7d5b,#173d2d)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;overflow-x:clip}
+h1,h2,.serif{font-family:"Noto Serif SC","Songti SC",serif}
+.band{padding:clamp(24px,4vw,48px) max(5vw,16px)}
+.top{background:var(--band);color:#f4f8f5}
+.wrap{max-width:1240px;margin:0 auto}
+h1{font-size:clamp(32px,5vw,48px);line-height:1.05;letter-spacing:-.02em;margin:0 0 6px;font-weight:800;text-wrap:balance}
+.lede{margin:0;color:#d7e6dd;max-width:62ch}
+.figs{display:grid;grid-template-columns:repeat(auto-fit,minmax(9em,1fr));gap:12px;margin-top:22px}
+.fig1{border-top:1px solid rgba(255,255,255,.35);padding-top:8px}
+.fig1 b{display:block;font:800 clamp(28px,4vw,40px)/1 "Noto Serif SC",serif;white-space:nowrap}
+.fig1 span{font-size:14px;color:#d7e6dd}
+.bar{height:8px;background:rgba(255,255,255,.2);margin-top:8px}.bar i{display:block;height:100%;background:#f4f8f5}
+h2{font-size:24px;line-height:1.2;margin:0 0 4px}
+.sub{color:var(--mute);margin:0 0 16px;font-size:15px}
+.grid{display:grid;grid-template-columns:minmax(7em,11em) minmax(0,1fr) auto;gap:6px 12px;align-items:center}
+.rname{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cells{display:flex;flex-wrap:wrap;gap:3px}
+.cell{width:14px;height:14px;border:1.5px solid var(--c);background:transparent;padding:0;cursor:pointer}
+.cell.done{background:var(--c)}
+.cell:hover,.cell:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
+.rcount{font-size:13px;color:var(--mute);white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}
+.key{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:14px;font-size:13px;color:var(--mute)}
+.key span{display:inline-flex;align-items:center;gap:6px}.key i{width:12px;height:12px;border:1.5px solid var(--c);display:inline-block}.key i.f{background:var(--c)}
+.gallery{display:flex;flex-wrap:wrap;gap:10px 18px;margin-top:20px;padding-top:18px;border-top:1px solid var(--rule)}
+.gallery figure{margin:0;text-align:center}.gallery img{height:72px;image-rendering:pixelated;display:block;margin:0 auto}
+.gallery figcaption{font-size:13px;font-family:"Noto Serif SC",serif}
+.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(10em,1fr));gap:10px;margin:0 0 14px}
+label{font-size:13px;color:var(--mute);display:block}
+input,select{font:16px "Noto Sans SC",sans-serif;width:100%;min-height:44px;padding:6px 10px;border:1px solid var(--rule);background:var(--bg);color:var(--ink);margin-top:3px}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--green);outline-offset:1px}
+.count{font-size:14px;color:var(--mute);margin:0 0 8px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th{text-align:left;font-weight:500;font-size:13px;color:var(--mute);border-bottom:1px solid var(--ink);padding:8px 8px;white-space:nowrap;cursor:pointer;user-select:none}
+th[aria-sort]::after{content:" ↓"}th[aria-sort=ascending]::after{content:" ↑"}
+td{border-bottom:1px solid var(--rule);padding:8px;vertical-align:middle}
+tr.row{cursor:pointer}tr.row:hover td{background:var(--panel)}tr.hit td{background:color-mix(in srgb,var(--green) 14%,transparent)}
+.pic{width:76px}.pic img{height:44px;image-rendering:pixelated;display:block}
+.pic img.ph{opacity:.5}
+.nm{font:600 17px "Noto Serif SC",serif;white-space:nowrap}.nm small{display:block;font:12px "Noto Sans SC",sans-serif;color:var(--mute)}
+.mt{font-size:13px;color:var(--mute)}
+.el{display:inline-block;padding:0 6px;margin-right:4px;font-size:13px;color:#fff;background:var(--c);white-space:nowrap}
+.tier{white-space:nowrap}.tier i{display:inline-block;width:8px;height:8px;margin-right:2px;background:var(--rule);transform:rotate(45deg)}.tier i.on{background:var(--red)}
+.tier span{display:block;font-size:12px;color:var(--mute)}
+.state{font-size:13px;white-space:nowrap}.state.done{color:var(--green);font-weight:700}.state.no{color:var(--mute)}
+.star{color:var(--blue);font-size:12px;margin-left:4px}
+tr.more td{background:var(--panel);padding:12px 8px 16px}
+.looks{margin:0 0 10px;font-family:"Noto Serif SC",serif}
+.learn{display:grid;grid-template-columns:repeat(auto-fill,minmax(15em,1fr));gap:4px 16px;margin:0;padding:0;list-style:none;font-size:14px}
+.learn li{display:flex;gap:10px;align-items:baseline;border-bottom:1px dotted var(--rule);padding:3px 0}
+.learn b{width:3.2em;flex:none;font-variant-numeric:tabular-nums;color:var(--blue);white-space:nowrap}
+.learn em{font-style:normal;color:var(--mute);font-size:12px;margin-left:auto;white-space:nowrap}
+.empty{padding:24px 8px;color:var(--mute)}
+@media(max-width:600px){.grid{grid-template-columns:minmax(0,1fr) auto}.rname{grid-column:1/-1;margin-top:6px}.cells{grid-column:1}.cell{width:12px;height:12px}table{font-size:13px}.pic{width:56px}.pic img{height:32px}td,th{padding:6px 4px}.hide-s{display:none}}
+</style>
+</head>
+<body>
+<header class="band top"><div class="wrap">
+<h1>山海驭兽录 异兽名录</h1>
+<p class="lede">每一种异兽的出现地区、名字、类型、稀有程度、像素图进度和可学的招式。由 tools/bestiary.php 从游戏的数据和像素图生成。</p>
+<div class="figs" id="figs"></div>
+</div></header>
+
+<section class="band"><div class="wrap">
+<h2 id="gridTitle">像素图进度</h2>
+<p class="sub">一格一种，按山系排成行，实心的已经画了像素图，空心的还是占位图。颜色是它的第一属性。点一格跳到表里那一行。</p>
+<div class="grid" id="grid"></div>
+<div class="key" id="key"></div>
+<div class="gallery" id="gallery"></div>
+</div></section>
+
+<section class="band" style="padding-top:0"><div class="wrap">
+<h2>名录</h2>
+<p class="sub">点一行展开它的原文和可学招式。点表头排序。</p>
+<div class="filters">
+<div><label for="q">名字</label><input id="q" type="search" placeholder="例如 九尾狐"></div>
+<div><label for="fBook">经</label><select id="fBook"><option value="">全部</option></select></div>
+<div><label for="fRange">山系</label><select id="fRange"><option value="">全部</option></select></div>
+<div><label for="fKind">类型</label><select id="fKind"><option value="">全部</option><option>异兽</option><option>常兽</option></select></div>
+<div><label for="fEl">属性</label><select id="fEl"><option value="">全部</option><option>木</option><option>火</option><option>土</option><option>金</option><option>水</option></select></div>
+<div><label for="fTier">稀有程度</label><select id="fTier"><option value="">全部</option></select></div>
+<div><label for="fDone">像素图</label><select id="fDone"><option value="">全部</option><option value="1">已画</option><option value="0">占位</option></select></div>
+</div>
+<p class="count" id="count"></p>
+<div class="scroll"><table id="tbl">
+<thead><tr><th class="pic" data-k="sprite">图</th><th data-k="name">名字</th><th data-k="range" aria-sort="ascending">出现地区</th><th data-k="kind">类型</th><th data-k="el" class="hide-s">属性</th><th data-k="tier">稀有程度</th><th data-k="done">像素图</th></tr></thead>
+<tbody id="rows"><tr><td colspan="7" class="empty">载入中……</td></tr></tbody>
+</table></div>
+</div></section>
+
+<script>
+{
+const EL = {'木':'#4f9e52','火':'#d8543a','土':'#b48e4c','金':'#9a9aa8','水':'#4078c8'};
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let D, sortK = 'range', sortDir = 1, open = null;
+
+const start = data => {
+  D = data;
+  const B = D.beasts, R = Object.fromEntries(D.ranges.map(r => [r.id, r]));
+  const done = B.filter(b => b.sprite).length;
+  const pct = Math.round(done / B.length * 1000) / 10;
+  $('figs').innerHTML = [
+    [B.length, '种异兽和常兽'],
+    [B.filter(b => b.kind === '异兽').length, '种异兽，其余是常兽'],
+    [D.ranges.length, '个山系'],
+    [done, `种已画像素图（${pct}%）`, pct]
+  ].map(([n, t, p]) => `<div class="fig1"><b>${n}</b><span>${t}</span>${p !== undefined ? `<div class="bar"><i style="width:${Math.max(p, 1)}%"></i></div>` : ''}</div>`).join('');
+
+  // the grid: a row a range, a cell a beast
+  $('grid').innerHTML = D.ranges.map(r => {
+    const of = B.filter(b => b.range === r.id);
+    const n = of.filter(b => b.sprite).length;
+    return `<div class="rname" title="${esc(r.name)}">${esc(r.name)}</div><div class="cells">${of.map(b => `<button class="cell${b.sprite ? ' done' : ''}" style="--c:${EL[b.el[0]]}" title="${esc(b.name)}${b.sprite ? '（已画）' : ''}" data-id="${b.id}" aria-label="${esc(b.name)}"></button>`).join('')}</div><div class="rcount">${n} / ${of.length}</div>`;
+  }).join('');
+  $('key').innerHTML = Object.entries(EL).map(([k, c]) => `<span><i style="--c:${c}"></i>${k}</span>`).join('') + `<span><i class="f" style="--c:var(--ink)"></i>已画</span><span><i style="--c:var(--ink)"></i>占位</span>`;
+  $('gallery').innerHTML = B.filter(b => b.sprite).map(b => `<figure><img src="${b.sprite}" alt="${esc(b.name)}"><figcaption>${esc(b.name)}</figcaption></figure>`).join('');
+
+  const books = [...new Set(D.ranges.map(r => r.book))];
+  $('fBook').innerHTML += books.map(b => `<option>${b}</option>`).join('');
+  const fillRanges = () => {
+    const bk = $('fBook').value;
+    $('fRange').innerHTML = '<option value="">全部</option>' + D.ranges.filter(r => !bk || r.book === bk).map(r => `<option value="${r.id}">${esc(r.name)}</option>`).join('');
+  };
+  fillRanges();
+  $('fTier').innerHTML += Object.entries(D.tiers).map(([k, v]) => `<option value="${k}">${k}　${esc(v)}</option>`).join('');
+
+  ['q', 'fRange', 'fKind', 'fEl', 'fTier', 'fDone'].forEach(id => $(id).addEventListener('input', render));
+  $('fBook').addEventListener('input', () => { fillRanges(); render(); });
+  document.querySelectorAll('th[data-k]').forEach(th => th.addEventListener('click', () => {
+    const k = th.dataset.k;
+    sortDir = sortK === k ? -sortDir : 1; sortK = k;
+    document.querySelectorAll('th').forEach(t => t.removeAttribute('aria-sort'));
+    th.setAttribute('aria-sort', sortDir > 0 ? 'ascending' : 'descending');
+    render();
+  }));
+  $('rows').addEventListener('click', e => {
+    const tr = e.target.closest('tr.row'); if (!tr) return;
+    open = open === tr.dataset.id ? null : tr.dataset.id; render();
+  });
+  $('grid').addEventListener('click', e => {
+    const c = e.target.closest('.cell'); if (!c) return;
+    ['q', 'fBook', 'fKind', 'fEl', 'fTier', 'fDone'].forEach(id => $(id).value = ''); fillRanges();
+    open = c.dataset.id; render();
+    const tr = document.querySelector(`tr.row[data-id="${c.dataset.id}"]`);
+    if (tr) { tr.scrollIntoView({block: 'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'}); }
+  });
+  render();
+
+  function key(b) {
+    return {sprite: b.sprite ? 0 : 1, name: b.name, range: b.range * 1000 + B.indexOf(b), kind: b.kind, el: b.el[0], tier: b.tier, done: b.sprite ? 0 : 1}[sortK];
+  }
+  function render() {
+    const q = $('q').value.trim(), bk = $('fBook').value, rg = $('fRange').value, kd = $('fKind').value, el = $('fEl').value, tr = $('fTier').value, dn = $('fDone').value;
+    const list = B.filter(b => (!q || b.name.includes(q) || b.mountain.includes(q))
+      && (!bk || R[b.range].book === bk) && (!rg || b.range == rg) && (!kd || b.kind === kd)
+      && (!el || b.el.includes(el)) && (!tr || b.tier == tr) && (dn === '' || (!!b.sprite) == (dn === '1')))
+      .sort((a, c) => { const x = key(a), y = key(c); return (x < y ? -1 : x > y ? 1 : 0) * sortDir || B.indexOf(a) - B.indexOf(c); });
+    $('count').textContent = `${list.length} 种`;
+    $('rows').innerHTML = list.length ? list.map(b => {
+      const img = b.sprite ? `<img src="${b.sprite}" alt="">` : `<img class="ph" src="${D.placeholders[b.el0]}" alt="">`;
+      const row = `<tr class="row${open === b.id ? ' hit' : ''}" data-id="${b.id}">
+        <td class="pic">${img}</td>
+        <td><span class="nm">${esc(b.name)}${b.starter ? '<span class="star">初始</span>' : ''}<small>${esc(b.id)}</small></span></td>
+        <td>${esc(R[b.range].name)}<div class="mt">${esc(b.mountain)}</div></td>
+        <td>${b.kind}</td>
+        <td class="hide-s">${b.el.map(e => `<span class="el" style="--c:${EL[e]}">${e}</span>`).join('')}</td>
+        <td class="tier">${[1, 2, 3, 4, 5].map(i => `<i class="${i <= b.tier ? 'on' : ''}"></i>`).join('')}<span>${esc(D.tiers[b.tier])}</span></td>
+        <td class="state ${b.sprite ? 'done' : 'no'}">${b.sprite ? '已画' : '占位'}</td></tr>`;
+      if (open !== b.id) return row;
+      const learn = b.learn.map(([lv, id]) => { const m = D.moves[id] || [id, '', 0, 0, 0];
+        return `<li><b>Lv ${lv}</b><span>${esc(m[0])}</span><em>${m[1]}　${m[2] ? '威力 ' + m[2] : '变化'}　命中 ${m[3]}　${m[4]} 次</em></li>`; }).join('');
+      return row + `<tr class="more"><td colspan="7"><p class="looks">${esc(b.looks)}</p><ul class="learn">${learn || '<li>还没有可学的招式。</li>'}</ul></td></tr>`;
+    }).join('') : '<tr><td colspan="7" class="empty">没有符合的异兽。</td></tr>';
+  }
+};
+
+start(/*DATA*/null); // tools/bestiary.php puts the data here (src/Bestiary.php)
+}
+</script>
+</body>
+</html>

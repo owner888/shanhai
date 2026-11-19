@@ -29,3 +29,9 @@ foreach ($items as $id => $t) {
 $play = file_get_contents(__DIR__ . '/../src/Play.php');
 preg_match_all('/\$p->(\w+)\(/', $play, $calls);
 same([], array_values(array_diff(array_unique($calls[1]), ['scale', 'blurLevel', 'fillRadialGradient', 'image'])), 'Play paints only the view and its lens; the rest is Ui\'s');
+
+// The record of every beast to read outside the game (docs/bestiary.html) is what tools/bestiary.php makes now: when a
+// beast is drawn or its data changes, the page is made again (php tools/bestiary.php).
+same(\Shanhai\Bestiary::page(), file_get_contents(\Shanhai\Bestiary::PAGE), 'docs/bestiary.html is up to date: run php tools/bestiary.php');
+$png = \Shanhai\Bestiary::png(str_repeat("\xff\0\0\xff", 4), 2, 2);
+same("\x89PNG\r\n\x1a\n", substr($png, 0, 8), 'the sprites are PNGs');
